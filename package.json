@@ -1,16 +1,11 @@
 {
-  "name": "travel-assistant",
+  "name": "travel-assistant-sso",
   "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "@azure/msal-browser": "^2.38.2",
-    "@azure/msal-react": "^1.4.8"
-  },
+  "main": "server.js",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build"
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.4"
   }
 }
