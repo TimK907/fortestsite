@@ -1,12 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Travel Assistant</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <title>Travel Assistant</title>
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- MSAL.js -->
+  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+
+  <!-- Custom scripts -->
+  <script defer src="scripts/auth.js"></script>
+  <script defer src="scripts/ui.js"></script>
+</head>
+
+<body>
+  <div id="top-bar">
+    <span id="user-ico"   class="icon">👤</span>
+    <span id="logout-ico" class="icon" style="display:none">↩️</span>
+    <span id="hello">Hello, Anonymous User</span>
+    <button id="login-btn">Sign-in with Microsoft</button>
+  </div>
+
+  <h1>Welcome to Travel Assistant</h1>
+
+  <!-- бот-фрейм -->
+  <iframe id="bot-frame"></iframe>
+</body>
 </html>
