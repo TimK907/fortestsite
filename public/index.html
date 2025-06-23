@@ -4,10 +4,71 @@
   <meta charset="UTF-8">
   <title>Travel Assistant</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- ...STYLE як раніше... -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #fff;
+      font-family: 'Roboto', Arial, sans-serif;
+      background: url('https://images.pexels.com/photos/163856/sunset-train-road-163856.jpeg') center center/cover no-repeat;
+      overflow-x: hidden;
+    }
+    #topbar {
+      width: 100vw;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.6);
+      padding: 26px 0 8px 0;
+    }
+    .user-block {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .user-icon, .logout-icon {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+      color: #fff;
+      cursor: pointer;
+    }
+    .user-icon svg, .logout-icon svg {
+      width: 22px; height: 22px;
+    }
+    #ms-login-btn {
+      color: #fff;
+      background: #0078D4;
+      font-size: 17px;
+      padding: 10px 42px;
+      margin-left: 28px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 3px;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 38px;
+      font-size: 2.7em;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 30px #000a, 0 1px 0px #0047;
+      font-weight: bold;
+    }
+    #webchat {
+      margin: 40px auto 0 auto;
+      border-radius: 13px;
+      overflow: hidden;
+      max-width: 450px;
+      max-height: 610px;
+      min-height: 480px;
+      box-shadow: 0 0 38px 3px #0038;
+      background: rgba(0,0,0,0.55);
+    }
+  </style>
 </head>
 <body>
-  <!-- ...HTML markup як у попередньому файлі... -->
   <div id="topbar">
     <div class="user-block" id="user-block">
       <span class="user-icon" id="userIcon">
@@ -20,118 +81,128 @@
   <h1>Welcome to Travel Assistant.</h1>
   <div id="webchat"></div>
 
-  <!-- Підключення бібліотек через CDN, з defer! -->
+  <!-- MSAL.js v2.x (CDN) [DEFER] -->
   <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js" defer></script>
+  <!-- BotFramework Web Chat CDN (ES5) [DEFER] -->
   <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat-es5.js" defer></script>
-
-  <!-- Весь твій js тепер в окремому <script defer> -->
+  <!-- Весь твій JS тут, після бібліотек [DEFER] -->
   <script defer>
-window.addEventListener('DOMContentLoaded', function () {
-  // ====  PARAMS ----
-  const msalConfig = {
-    auth: {
-      clientId: "05bdb70e-0233-4120-8a95-5e64e9801c84",
-      authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182",
-      redirectUri: window.location.origin + '/', // ДОДАВАТИ цей URI в Azure
-    },
-    cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
-  };
-  const msalInstance = new msal.PublicClientApplication(msalConfig);
+    window.addEventListener('DOMContentLoaded', function () {
+      // ======== SSO конфіг ==========
+      const msalConfig = {
+        auth: {
+          clientId: "05bdb70e-0233-4120-8a95-5e64e9801c84",
+          authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182",
+          redirectUri: window.location.origin + '/', // ДОДАЙТЕ цей redirect також в App Registration!
+        },
+        cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
+      };
+      let msalInstance; // ініціалізуємо тільки коли msal підвантажиться
 
-  const loginRequest = { scopes: ["user.read"] };
+      const loginRequest = { scopes: ["user.read"] };
 
-  const DIRECT_LINE_SSO_URL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview";
+      // Direct Line endpoint для SSO
+      const DIRECT_LINE_SSO_URL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview";
 
-  const helloText = document.getElementById('hello-text');
-  const loginBtn = document.getElementById('ms-login-btn');
-  const userIconContainer = document.getElementById('userIcon');
-  let msalAccount = null;
+      // ======== ELEMENTS ==========
+      const helloText = document.getElementById('hello-text');
+      const loginBtn = document.getElementById('ms-login-btn');
+      const userIconContainer = document.getElementById('userIcon');
+      let msalAccount = null;
 
-  function setLoggedUser(name) {
-    helloText.textContent = "Hello, " + name;
-    loginBtn.style.display = 'none';
-    userIconContainer.innerHTML = `<svg viewBox="0 0 24 24"><path d="M10,17V21H4V3H10V7H8V19H10M17.65,11.65L19.5,13.5L17,16V13.5H12V10.5H17V8L19.5,10.5L17.65,11.65Z" /></svg>`;
-    userIconContainer.className = "logout-icon";
-    userIconContainer.title = "Logout";
-  }
-  function setAnonymous() {
-    helloText.textContent = "Hello, Anonymous User";
-    loginBtn.style.display = 'inline-block';
-    userIconContainer.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4.5"/><path d="M21 21c0-4.418-3.582-8-8-8s-8 3.582-8 8"/></svg>`;
-    userIconContainer.className = "user-icon";
-    userIconContainer.title = "";
-  }
-
-  function trySilentLogin() {
-    msalInstance.handleRedirectPromise().then(res => {
-      let account = res && res.account ? res.account : msalInstance.getAllAccounts()[0];
-      if(account) {
-        msalAccount = account;
-        showLoggedIn();
-      } else {
-        setAnonymous();
+      function setLoggedUser(name) {
+        helloText.textContent = "Hello, " + name;
+        loginBtn.style.display = 'none';
+        userIconContainer.innerHTML = `<svg viewBox="0 0 24 24"><path d="M10,17V21H4V3H10V7H8V19H10M17.65,11.65L19.5,13.5L17,16V13.5H12V10.5H17V8L19.5,10.5L17.65,11.65Z" /></svg>`;
+        userIconContainer.className = "logout-icon";
+        userIconContainer.title = "Logout";
       }
-    }).catch(e=>{ setAnonymous(); });
-  }
-  function showLoggedIn() {
-    msalInstance.acquireTokenSilent(loginRequest).then(response=>{
-      if(response && response.account) {
-        msalAccount = response.account;
-        setLoggedUser(msalAccount.username);
-        renderWebChatWithSSO(response.accessToken);
+      function setAnonymous() {
+        helloText.textContent = "Hello, Anonymous User";
+        loginBtn.style.display = 'inline-block';
+        userIconContainer.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4.5"/><path d="M21 21c0-4.418-3.582-8-8-8s-8 3.582-8 8"/></svg>`;
+        userIconContainer.className = "user-icon";
+        userIconContainer.title = "";
       }
-    }).catch(err=>{
-      if (err instanceof msal.InteractionRequiredAuthError) {
-        setAnonymous();
-      }
-    });
-  }
-  loginBtn.onclick = function() {
-    msalInstance.loginRedirect(loginRequest);
-  };
-  userIconContainer.onclick = function() {
-    if (msalAccount) {
-      msalInstance.logoutRedirect();
-    }
-  };
 
-  let webchatRendered = false;
-  function renderWebChatWithSSO(msAccessToken) {
-    if (webchatRendered) return;
-    fetch(DIRECT_LINE_SSO_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + msAccessToken,
-        'Content-Type': 'application/json'
+      // ======== MSAL login/logout =========
+      function trySilentLogin() {
+        if (!window.msal) { setTimeout(trySilentLogin, 200); return; } // msal ще не підвантажився
+        msalInstance = new msal.PublicClientApplication(msalConfig);
+        msalInstance.handleRedirectPromise().then(res => {
+          let account = res && res.account ? res.account : msalInstance.getAllAccounts()[0];
+          if(account) {
+            msalAccount = account;
+            showLoggedIn();
+          } else {
+            setAnonymous();
+          }
+        }).catch(e=>{ setAnonymous(); });
       }
-    })
-    .then(res => res.json())
-    .then(data => {
-      const { token } = data;
-      if(!token) throw new Error("Failed to obtain DirectLine SSO token");
-      window.WebChat.renderWebChat({
-        directLine: window.WebChat.createDirectLine({ token }),
-        userID: msalAccount.homeAccountId || msalAccount.localAccountId || msalAccount.username,
-        locale: 'en-US',
-        styleOptions: {
-          backgroundColor: 'rgba(0,0,0,0.18)',
-          botAvatarInitials: 'TA',
-          userAvatarInitials: 'ME',
-          bubbleBackground: 'rgba(11,60,170,0.19)',
-          bubbleTextColor: '#fff',
-          bubbleBorder: '1px solid #0078D4',
-          bubbleBorderRadius: 15,
-          bubbleFromUserTextColor: '#fff',
-          bubbleFromUserBackground: '#0078D4',
+      function showLoggedIn() {
+        msalInstance.acquireTokenSilent(loginRequest).then(response=>{
+          if(response && response.account) {
+            msalAccount = response.account;
+            setLoggedUser(msalAccount.username);
+            renderWebChatWithSSO(response.accessToken);
+          }
+        }).catch(err=>{
+          if (err instanceof msal.InteractionRequiredAuthError) {
+            setAnonymous();
+          }
+        });
+      }
+      loginBtn.onclick = function() {
+        if (!msalInstance) {return;}
+        msalInstance.loginRedirect(loginRequest);
+      };
+      userIconContainer.onclick = function() {
+        if (msalAccount && msalInstance) {
+          msalInstance.logoutRedirect();
         }
-      }, document.getElementById('webchat'));
-      webchatRendered = true;
-    }).catch(err => {
-      document.getElementById('webchat').innerHTML = '<div style="color:#fff; background:#F33; padding:14px; border-radius:10px;">Failed to load bot chat.<br>' + err + '</div>';
+      };
+
+      // ======== Web Chat SSO ========
+      let webchatRendered = false;
+      function renderWebChatWithSSO(msAccessToken) {
+        if (webchatRendered || !window.WebChat) return;
+        fetch(DIRECT_LINE_SSO_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + msAccessToken,
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          const { token } = data;
+          if(!token) throw new Error("Failed to obtain DirectLine SSO token");
+          window.WebChat.renderWebChat({
+            directLine: window.WebChat.createDirectLine({ token }),
+            userID: msalAccount.homeAccountId || msalAccount.localAccountId || msalAccount.username,
+            locale: 'en-US',
+            styleOptions: {
+              backgroundColor: 'rgba(0,0,0,0.18)',
+              botAvatarInitials: 'TA',
+              userAvatarInitials: 'ME',
+              bubbleBackground: 'rgba(11,60,170,0.19)',
+              bubbleTextColor: '#fff',
+              bubbleBorder: '1px solid #0078D4',
+              bubbleBorderRadius: 15,
+              bubbleFromUserTextColor: '#fff',
+              bubbleFromUserBackground: '#0078D4',
+            }
+          }, document.getElementById('webchat'));
+          webchatRendered = true;
+        }).catch(err => {
+          document.getElementById('webchat').innerHTML = '<div style="color:#fff; background:#F33; padding:14px; border-radius:10px;">Failed to load bot chat.<br>' + err + '</div>';
+        });
+      }
+
+      // ======== Запуск ==========
+      setAnonymous();
+      trySilentLogin();
     });
-  }
-  trySilentLogin();
-});
   </script>
 </body>
 </html>
