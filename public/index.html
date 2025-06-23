@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Travel Assistant</title>
-  <link rel="icon" type="image/png" href="favicon.ico"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -73,53 +72,45 @@
   <div id="topbar">
     <div class="user-block" id="user-block">
       <span class="user-icon" id="userIcon">
-        <!-- User icon SVG (white) -->
         <svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4.5"/><path d="M21 21c0-4.418-3.582-8-8-8s-8 3.582-8 8"/></svg>
       </span>
       <span id="hello-text">Hello, Anonymous User</span>
       <button id="ms-login-btn">Login with Microsoft</button>
     </div>
   </div>
-
   <h1>Welcome to Travel Assistant.</h1>
   <div id="webchat"></div>
 
-  <!-- MSAL.js v2.x CDN -->
-  <script src="./msal.js"></script>
-
-  <!-- BotFramework Web Chat CDN min -->
-  <script src="./webchat.js"></script>
-
+  <!-- MSAL.js v2.x (CDN) -->
+  <script src="https://alcdn.msauth.net/browser/2.37.2/js/msal-browser.min.js"></script>
+  <!-- BotFramework Web Chat CDN (ES5) -->
+  <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat-es5.js"></script>
   <script>
-    // ====  Параметри MSAL та бота: ЗАПОВНИ ----
+    // ====  PARAMS ----
     const msalConfig = {
       auth: {
         clientId: "05bdb70e-0233-4120-8a95-5e64e9801c84",
         authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182",
-        redirectUri: window.location.origin + '/', // для github/render це так
+        redirectUri: window.location.origin + '/', // ДОДАВАТИ цей URI в Azure
       },
       cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
     };
     const msalInstance = new msal.PublicClientApplication(msalConfig);
 
     const loginRequest = {
-      scopes: ["user.read"], // щоб отримати username (profile)
+      scopes: ["user.read"]
     };
 
-    // Для Direct Line SSO
-    // ("Direct Line endpoint для отримання токена" з Copilot, що у вас в info)
     const DIRECT_LINE_SSO_URL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview";
 
-    // ---- UI логіка -----
     const helloText = document.getElementById('hello-text');
     const loginBtn = document.getElementById('ms-login-btn');
     const userIconContainer = document.getElementById('userIcon');
-    let logoutIconSpan = null;
+    let msalAccount = null;
 
     function setLoggedUser(name) {
       helloText.textContent = "Hello, " + name;
       loginBtn.style.display = 'none';
-      // Add logout icon
       userIconContainer.innerHTML = `<svg viewBox="0 0 24 24"><path d="M10,17V21H4V3H10V7H8V19H10M17.65,11.65L19.5,13.5L17,16V13.5H12V10.5H17V8L19.5,10.5L17.65,11.65Z" /></svg>`;
       userIconContainer.className = "logout-icon";
       userIconContainer.title = "Logout";
@@ -127,14 +118,11 @@
     function setAnonymous() {
       helloText.textContent = "Hello, Anonymous User";
       loginBtn.style.display = 'inline-block';
-      // Add user icon
       userIconContainer.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4.5"/><path d="M21 21c0-4.418-3.582-8-8-8s-8 3.582-8 8"/></svg>`;
       userIconContainer.className = "user-icon";
       userIconContainer.title = "";
     }
 
-    // ==== MSAL login / Logout ====
-    let msalAccount = null;
     function trySilentLogin() {
       msalInstance.handleRedirectPromise().then(res => {
         let account = res && res.account ? res.account : msalInstance.getAllAccounts()[0];
@@ -144,16 +132,14 @@
         } else {
           setAnonymous();
         }
-      }).catch(e=>{
-        setAnonymous();
-      });
+      }).catch(e=>{ setAnonymous(); });
     }
     function showLoggedIn() {
       msalInstance.acquireTokenSilent(loginRequest).then(response=>{
         if(response && response.account) {
           msalAccount = response.account;
           setLoggedUser(msalAccount.username);
-          renderWebChatWithSSO(response.accessToken); // Запуск чату
+          renderWebChatWithSSO(response.accessToken);
         }
       }).catch(err=>{
         if (err instanceof msal.InteractionRequiredAuthError) {
@@ -165,17 +151,14 @@
       msalInstance.loginRedirect(loginRequest);
     };
     userIconContainer.onclick = function() {
-      // Logout (if logged in)
       if (msalAccount) {
         msalInstance.logoutRedirect();
       }
     };
 
-    // ==== Web Chat SSO ====
     let webchatRendered = false;
     function renderWebChatWithSSO(msAccessToken) {
-      if (webchatRendered) return; // одноразово!
-      // 1. Отримати Direct Line SSO token від copilot:
+      if (webchatRendered) return;
       fetch(DIRECT_LINE_SSO_URL, {
         method: 'POST',
         headers: {
@@ -185,9 +168,8 @@
       })
       .then(res => res.json())
       .then(data => {
-        const { token, conversationId, streamUrl } = data;
+        const { token } = data;
         if(!token) throw new Error("Failed to obtain DirectLine SSO token");
-        // 2. Запустити webchat
         window.WebChat.renderWebChat({
           directLine: window.WebChat.createDirectLine({ token }),
           userID: msalAccount.homeAccountId || msalAccount.localAccountId || msalAccount.username,
@@ -209,7 +191,6 @@
         document.getElementById('webchat').innerHTML = '<div style="color:#fff; background:#F33; padding:14px; border-radius:10px;">Failed to load bot chat.<br>' + err + '</div>';
       });
     }
-    // ==== Ініціалізація ====
     trySilentLogin();
   </script>
 </body>
