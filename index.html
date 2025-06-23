@@ -6,7 +6,7 @@
   <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 2em; }
-    #token, #endpoint, #response { white-space: pre; background: #f4f4f4; padding: 1em; border-radius: 8px; }
+    #token, #endpoint, #userId, #response { white-space: pre; background: #f4f4f4; padding: 1em; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -17,41 +17,50 @@
     <div id="token"></div>
     <h3>Token Endpoint:</h3>
     <div id="endpoint"></div>
+    <h3>Custom userId (з префіксом):</h3>
+    <div id="userId"></div>
     <button id="call-endpoint-btn">Call Copilot Studio SSO endpoint</button>
     <h3>Endpoint Response:</h3>
     <div id="response"></div>
   </div>
   <script>
-    // === ПІДСТАВТЕ ВИНЯТКОВО ПРАВИЛЬНІ ДАНІ ===
-    const clientId = "20432056-2b97-43ca-9cfc-ec900428bbd4";
-    const tenantId = "d06629ae-56db-44af-880b-80afafa24182";
-    const authority = "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182";
-    const scopes = [ "openid", "profile", "email" ];
-    const theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_TouristInformationAgen/conversations?api-version=2022-03-01-preview";
+    // === MSAL config (strictly per your instructions) ===
+    var clientApplication;
+    (function (){
+      var msalConfig = {
+        auth: {
+          clientId: "20432056-2b97-43ca-9cfc-ec900428bbd4",
+          authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182"
+        }
+      };
+      clientApplication = new msal.PublicClientApplication(msalConfig);
+    })();
 
-    // MSAL config
-    const msalConfig = {
-      auth: {
-        clientId: clientId,
-        authority: authority,
-        redirectUri: window.location.href
-      }
-    };
-    const msalInstance = new msal.PublicClientApplication(msalConfig);
+    // === The token endpoint ===
+    var theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_TouristInformationAgen/conversations?api-version=2022-03-01-preview";
+    document.getElementById('endpoint').textContent = theURL;
 
-    let accessToken = null;
+    var scopes = [ "openid", "profile", "email" ];
+    var userId = "";
+    var accessToken = null;
 
-    document.getElementById('signin-btn').onclick = async () => {
+    document.getElementById('signin-btn').onclick = async function() {
       try {
-        // Step 1: Login via popup
-        const loginResponse = await msalInstance.loginPopup({ scopes });
-        // Step 2: Acquire token
-        const account = msalInstance.getAllAccounts()[0];
-        const tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account })
-          .catch(() => msalInstance.acquireTokenPopup({ scopes }));
+        // Interactive login
+        const loginResponse = await clientApplication.loginPopup({ scopes });
+        const account = clientApplication.getAllAccounts()[0];
+
+        // === Custom prefix for userId, strictly per manual ===
+        userId = account?.accountIdentifier != null ?
+            ("My-custom-prefix" + account.accountIdentifier).substr(0, 64) :
+            (Math.random().toString() + Date.now().toString()).substr(0,64);
+        document.getElementById('userId').textContent = userId;
+
+        // Silent token
+        const tokenResponse = await clientApplication.acquireTokenSilent({ scopes, account })
+          .catch(() => clientApplication.acquireTokenPopup({ scopes }));
         accessToken = tokenResponse.accessToken;
         document.getElementById('token').textContent = accessToken;
-        document.getElementById('endpoint').textContent = theURL;
         document.getElementById('token-section').style.display = "block";
         document.getElementById('response').textContent = '';
       } catch (err) {
@@ -59,7 +68,7 @@
       }
     };
 
-    document.getElementById('call-endpoint-btn').onclick = async () => {
+    document.getElementById('call-endpoint-btn').onclick = async function() {
       if (!accessToken) return;
       document.getElementById('response').innerText = 'Loading...';
       try {
