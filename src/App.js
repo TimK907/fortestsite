@@ -26,12 +26,10 @@ function App() {
     const signOut = () => {
         msalInstance.logoutPopup();
         setAccount(null);
-        // видаляємо віджет бота при логауті
         const oldScript = document.getElementById("Microsoft_Omnichannel_LCWidget");
         if (oldScript) oldScript.parentNode.removeChild(oldScript);
     };
 
-    // ініціалізувати чат-бот віджет тільки після логіну!
     useEffect(() => {
         if (!account) return;
         msalInstance.acquireTokenSilent({
@@ -39,18 +37,16 @@ function App() {
             account,
         })
         .then(({ accessToken }) => {
-            // Встановлюємо кастомізацію для LiveChatWidget згідно статті з Microsoft
-            window.liveChatWidgetCustomizations = {
+            // ОБОВ'ЯЗКОВО: саме це ім'я ("liveChatCustomization")!
+            window.liveChatCustomization = {
                 authentication: {
                     getAuthToken: () => Promise.resolve(accessToken)
                 }
             };
 
-            // Видаляємо попередній скрипт, якщо був
             const oldScript = document.getElementById("Microsoft_Omnichannel_LCWidget");
             if (oldScript) oldScript.parentNode.removeChild(oldScript);
 
-            // Додаємо скрипт з data-customization-callback як у документації
             const script = document.createElement("script");
             script.id = "Microsoft_Omnichannel_LCWidget";
             script.src = "https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js";
@@ -59,7 +55,7 @@ function App() {
             script.setAttribute("data-lcw-version", "prod");
             script.setAttribute("data-org-id", "44e3fe33-032f-f011-9a43-002248282d3c");
             script.setAttribute("data-org-url", "https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com");
-            script.setAttribute("data-customization-callback", "liveChatWidgetCustomizations");
+            script.setAttribute("data-customization-callback", "liveChatCustomization");
             document.body.appendChild(script);
         })
         .catch((e) => {
