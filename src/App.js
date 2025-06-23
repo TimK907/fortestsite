@@ -5,11 +5,14 @@ import { msalConfig, loginRequest } from "./msalConfig";
 const msalInstance = new PublicClientApplication(msalConfig);
 
 function loadLiveChatWidget(token) {
-  // видаляємо, якщо вже є
+  // Remove old script if exists
   const oldScript = document.getElementById("Microsoft_Omnichannel_LCWidget");
   if (oldScript) oldScript.parentNode.removeChild(oldScript);
 
+  // set up widget authentication before loading script
   window.LiveChatWidget = window.LiveChatWidget || {};
+  window.LiveChatWidget.on = window.LiveChatWidget.on || function(){};
+  window.LiveChatWidget.setAuthToken = () => token;
   window.LiveChatWidget.init = window.LiveChatWidget.init || function (cfg) { window.LiveChatWidget.cfg = cfg; };
   window.LiveChatWidget.init({
     authentication: {
@@ -23,6 +26,10 @@ function loadLiveChatWidget(token) {
   script.src =
     "https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js";
   script.async = true;
+  script.setAttribute('data-app-id', '94a00fa7-b51f-4222-825f-bdaec1435217');
+  script.setAttribute('data-lcw-version', 'prod');
+  script.setAttribute('data-org-id', '44e3fe33-032f-f011-9a43-002248282d3c');
+  script.setAttribute('data-org-url', 'https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com');
   document.body.appendChild(script);
 }
 
@@ -33,12 +40,12 @@ function App() {
     const current = msalInstance.getAllAccounts();
     if (current && current.length > 0) {
       setAccount(current[0]);
-      // отримай токен і ініціалізуй чат
       msalInstance
-        .acquireTokenSilent(loginRequest)
+        .acquireTokenSilent({ ...loginRequest, account: current[0] })
         .then(({ accessToken }) => {
           loadLiveChatWidget(accessToken);
-        });
+        })
+        .catch(() => {}); // ігноруємо помилку на старті якщо її немає
     }
   }, []);
 
@@ -46,8 +53,11 @@ function App() {
     try {
       const loginResponse = await msalInstance.loginPopup(loginRequest);
       setAccount(loginResponse.account);
-      // отримай токен і ініціалізуй чат
-      const token = (await msalInstance.acquireTokenSilent(loginRequest)).accessToken;
+
+      const token = (await msalInstance.acquireTokenSilent({
+        ...loginRequest,
+        account: loginResponse.account
+      })).accessToken;
       loadLiveChatWidget(token);
     } catch (e) {
       alert(e.message);
@@ -57,7 +67,7 @@ function App() {
   const signOut = () => {
     msalInstance.logoutPopup();
     setAccount(null);
-    // можливо видалити віджет тут
+    // Видалити LiveChat script
     const oldScript = document.getElementById("Microsoft_Omnichannel_LCWidget");
     if (oldScript) oldScript.parentNode.removeChild(oldScript);
   };
