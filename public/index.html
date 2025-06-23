@@ -38,16 +38,16 @@
     </div>
 
     <script>
-        // ==== ПАРАМЕТРИ З ТВОГО КЕЙСУ ====
-        const clientId = "05bdb70e-0233-4120-8a95-5e64e9801c84";
-        const tenantId = "d06629ae-56db-44af-880b-80afafa24182";
-        const tokenEndpoint = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview";
+        // Пряме підставлення параметрів у всі відповідні місця:
+        // clientId = "05bdb70e-0233-4120-8a95-5e64e9801c84"
+        // tenantId = "d06629ae-56db-44af-880b-80afafa24182"
+        // tokenEndpoint = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview"
 
         // Config object to be passed to Msal on creation
         const msalConfig = {
             auth: {
-                clientId: clientId,
-                authority: "https://login.microsoftonline.com/" + tenantId
+                clientId: "05bdb70e-0233-4120-8a95-5e64e9801c84",
+                authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182"
             },
             cache: {
                 cacheLocation: "sessionStorage", // This configures where your cache will be stored
@@ -168,7 +168,8 @@
                 (user.localAccountId).substr(0, 36) :
                 (Math.random().toString() + Date.now().toString()).substr(0, 64);
 
-            const { token } = await fetchJSON(tokenEndpoint);
+            // <-- тут ПРЯМО підставлено tokenEndpoint з твого ТЗ
+            const { token } = await fetchJSON("https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview");
             const directLine = window.WebChat.createDirectLine({ token });
 
             const store = WebChat.createStore(
