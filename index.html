@@ -2,64 +2,80 @@
 <html lang="en-US">
 <head>
   <meta charset="utf-8"/>
-  <title>Simple Microsoft SSO Demo — Always works</title>
+  <title>Copilot Studio SSO with EntraID sample</title>
   <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 2em; }
-    #token, #claims, #response { white-space: pre; background: #f4f4f4; padding: 1em; border-radius: 8px; }
+    #token, #endpoint, #response { white-space: pre; background: #f4f4f4; padding: 1em; border-radius: 8px; }
   </style>
 </head>
 <body>
-  <h2>Simple Microsoft SSO (id/email claims) — demo</h2>
+  <h2>SSO with EntraID — Copilot Studio Sample</h2>
   <button id="signin-btn">Sign in with Microsoft</button>
   <div id="token-section" style="display:none;">
-    <h3>ID Token:</h3>
+    <h3>Access Token:</h3>
     <div id="token"></div>
-    <button id="show-claims-btn">Show Decoded Claims</button>
-    <div id="claims"></div>
+    <h3>Token Endpoint:</h3>
+    <div id="endpoint"></div>
+    <button id="call-endpoint-btn">Call Copilot Studio SSO endpoint</button>
+    <h3>Endpoint Response:</h3>
+    <div id="response"></div>
   </div>
-<script>
-  // ТВОЇ ДАНІ!
-  const clientId = "20432056-2b97-43ca-9cfc-ec900428bbd4";
-  const tenantId = "d06629ae-56db-44af-880b-80afafa24182";
-  const authority = "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182";
-  const scopes = [ "openid", "profile", "email" ];
+  <script>
+    // === ПІДСТАВТЕ ВИНЯТКОВО ПРАВИЛЬНІ ДАНІ ===
+    const clientId = "20432056-2b97-43ca-9cfc-ec900428bbd4";
+    const tenantId = "d06629ae-56db-44af-880b-80afafa24182";
+    const authority = "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182";
+    const scopes = [ "openid", "profile", "email" ];
+    const theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_TouristInformationAgen/conversations?api-version=2022-03-01-preview";
 
-  const msalConfig = {
-    auth: { clientId, authority, redirectUri: window.location.href }
-  };
-  const msalInstance = new msal.PublicClientApplication(msalConfig);
+    // MSAL config
+    const msalConfig = {
+      auth: {
+        clientId: clientId,
+        authority: authority,
+        redirectUri: window.location.href
+      }
+    };
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-  let idToken = null;
+    let accessToken = null;
 
-  document.getElementById('signin-btn').onclick = async () => {
-    try {
-      const loginResponse = await msalInstance.loginPopup({ scopes });
-      idToken = loginResponse.idToken;
-      document.getElementById('token').textContent = idToken;
-      document.getElementById('token-section').style.display = "block";
-      document.getElementById('claims').innerText = '';
-    } catch (err) {
-      alert('Login error: ' + (err.message || err.toString()));
-    }
-  };
+    document.getElementById('signin-btn').onclick = async () => {
+      try {
+        // Step 1: Login via popup
+        const loginResponse = await msalInstance.loginPopup({ scopes });
+        // Step 2: Acquire token
+        const account = msalInstance.getAllAccounts()[0];
+        const tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account })
+          .catch(() => msalInstance.acquireTokenPopup({ scopes }));
+        accessToken = tokenResponse.accessToken;
+        document.getElementById('token').textContent = accessToken;
+        document.getElementById('endpoint').textContent = theURL;
+        document.getElementById('token-section').style.display = "block";
+        document.getElementById('response').textContent = '';
+      } catch (err) {
+        alert('Login error: ' + (err.message || err.toString()));
+      }
+    };
 
-  // Декодувати JWT (ID токен)
-  function decodeJWT(token) {
-    if (!token) return {};
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
-  }
-
-  document.getElementById('show-claims-btn').onclick = () => {
-    if (!idToken) return;
-    const claims = decodeJWT(idToken);
-    document.getElementById('claims').innerText = JSON.stringify(claims, null, 2);
-  };
-</script>
+    document.getElementById('call-endpoint-btn').onclick = async () => {
+      if (!accessToken) return;
+      document.getElementById('response').innerText = 'Loading...';
+      try {
+        const res = await fetch(theURL, {
+          headers: { "Authorization": "Bearer " + accessToken }
+        });
+        const text = await res.text();
+        try {
+          document.getElementById('response').innerText = JSON.stringify(JSON.parse(text), null, 2);
+        } catch {
+          document.getElementById('response').innerText = text;
+        }
+      } catch (err) {
+        document.getElementById('response').innerText = 'Error: ' + (err.message || err.toString());
+      }
+    };
+  </script>
 </body>
 </html>
