@@ -16,36 +16,36 @@
     <button id="loginButton">🔑 Login with Microsoft SSO</button>
     <div id="status"></div>
     <div id="profile" class="hidden">
-        <h3>Claims з accessToken / idToken:</h3>
+        <h3>Claims from accessToken / idToken:</h3>
         <ul>
             <li><b>User ID:</b> <span id="userid"></span></li>
             <li><b>Name:</b> <span id="username"></span></li>
             <li><b>Email:</b> <span id="useremail"></span></li>
         </ul>
         <details>
-            <summary>Повний JWT claims</summary>
+            <summary>Full JWT claims</summary>
             <pre id="claims"></pre>
         </details>
         <details>
-            <summary>Токен (для запиту в API)</summary>
+            <summary>Token (for API request)</summary>
             <pre id="token"></pre>
         </details>
     </div>
 
-    <h3>Виклик Copilot Studio SSO endpoint (env):</h3>
-    <button id="callCopilotSSOButton" class="hidden">Викликати Copilot Studio SSO endpoint</button>
+    <h3>Copilot Studio SSO endpoint call (env):</h3>
+    <button id="callCopilotSSOButton" class="hidden">Call Copilot Studio SSO endpoint</button>
     <pre id="copilotSSOresponse" class="hidden"></pre>
 
-    <h3>Виклик кастомного backend endpoint (/profile):</h3>
-    <button id="callBackendButton" class="hidden">Викликати кастомний backend</button>
+    <h3>Custom backend endpoint call (/profile):</h3>
+    <button id="callBackendButton" class="hidden">Call custom backend</button>
     <pre id="backendresponse" class="hidden"></pre>
 
     <script>
-        // === Налаштування для MSAL ===
+        // === MSAL settings ===
         const msalConfig = {
             auth: {
-                clientId: "20432056-2b97-43ca-9cfc-ec900428bbd4", // твій Client ID
-                authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182", // твій Tenant
+                clientId: "20432056-2b97-43ca-9cfc-ec900428bbd4", // your Client ID
+                authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182", // your Tenant
                 redirectUri: "https://fortestsite8.onrender.com/.auth/web/redirect"
             }
         };
@@ -53,17 +53,17 @@
         const loginRequest = {
             scopes: [
                 "openid", "profile", "email"
-                // додай тут scope до Graph API чи до свого backend, якщо треба
+                // add Graph API or custom backend scope here if needed
             ]
         };
 
-        // === =>!!!<= Підстав це: Copilot Studio token endpoint
+        // === Copilot Studio token endpoint ===
         const copilotSSOEndpoint = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview";
 
-        // === =>!!!<= Підстав це: кастомний backend endpoint
-        const backendEndpoint = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview"; // змінити на свій endpoint за потреби
+        // === Custom backend endpoint ===
+        const backendEndpoint = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview"; // change to your backend if needed
 
-        // ==== Декодер JWT (ручний) ====
+        // ==== JWT decoder (manual) ====
         function decodeJWT(token) {
             if (!token) return {};
             const base64Url = token.split('.')[1];
@@ -74,7 +74,7 @@
             return JSON.parse(jsonPayload);
         }
 
-        // ==== Елементи DOM ====
+        // ==== DOM elements ====
         const loginButton = document.getElementById('loginButton');
         const statusDiv = document.getElementById('status');
         const profileDiv = document.getElementById('profile');
@@ -88,16 +88,16 @@
         const callBackendButton = document.getElementById('callBackendButton');
         const backendresponsePre = document.getElementById('backendresponse');
 
-        // ==== Стан ====
+        // ==== State ====
         let accessToken = null, idToken = null;
 
         loginButton.onclick = async function() {
-            statusDiv.innerText = "Логін через Microsoft...";
+            statusDiv.innerText = "Logging in with Microsoft...";
             try {
                 const msalInstance = new msal.PublicClientApplication(msalConfig);
 
                 const loginResponse = await msalInstance.loginPopup(loginRequest);
-                statusDiv.innerText = "Логін успішний. Отримуємо токен...";
+                statusDiv.innerText = "Login successful. Getting token...";
 
                 const account = msalInstance.getAllAccounts()[0];
                 const tokenResponse = await msalInstance.acquireTokenSilent({
@@ -110,7 +110,7 @@
                 accessToken = tokenResponse.accessToken;
                 idToken = tokenResponse.idToken || loginResponse.idToken;
 
-                // Декодуємо claims з accessToken (або idToken)
+                // Decode claims from accessToken (or idToken)
                 let claims = {};
                 if (accessToken) claims = decodeJWT(accessToken);
                 if ((!claims || !claims.oid) && idToken) claims = decodeJWT(idToken);
@@ -127,18 +127,18 @@
                 callBackendButton.classList.remove("hidden");
                 copilotSSOresponsePre.classList.add("hidden");
                 backendresponsePre.classList.add("hidden");
-                statusDiv.innerText = "Готово. Можна викликати Copilot Studio endpoint чи backend.";
+                statusDiv.innerText = "Ready. You can call the Copilot Studio endpoint or backend.";
 
             } catch (err) {
-                statusDiv.innerText = "Помилка авторизації: " + (err.errorMessage || err.message || err.toString());
+                statusDiv.innerText = "Authorization error: " + (err.errorMessage || err.message || err.toString());
                 console.error(err);
             }
         };
 
-        // ==== Виклик Copilot Studio SSO endpoint ====
+        // ==== Call Copilot Studio SSO endpoint ====
         callCopilotSSOButton.onclick = async function() {
-            if (!accessToken) return alert("Немає токена для запиту");
-            statusDiv.innerText = "Виклик Copilot Studio SSO endpoint...";
+            if (!accessToken) return alert("No token for request");
+            statusDiv.innerText = "Calling Copilot Studio SSO endpoint...";
             try {
                 const response = await fetch(copilotSSOEndpoint, {
                     method: "GET",
@@ -147,18 +147,18 @@
                 const data = await response.json();
                 copilotSSOresponsePre.textContent = JSON.stringify(data, null, 4);
                 copilotSSOresponsePre.classList.remove("hidden");
-                statusDiv.innerText = "Відповідь Copilot Studio endpoint отримано.";
+                statusDiv.innerText = "Copilot Studio endpoint response received.";
             } catch (e) {
-                copilotSSOresponsePre.textContent = "Помилка: " + (e.message || e.toString());
+                copilotSSOresponsePre.textContent = "Error: " + (e.message || e.toString());
                 copilotSSOresponsePre.classList.remove("hidden");
-                statusDiv.innerText = "Помилка Copilot Studio SSO endpoint!";
+                statusDiv.innerText = "Copilot Studio SSO endpoint error!";
             }
         };
 
-        // ==== Виклик кастомного backend endpoint ====
+        // ==== Call custom backend endpoint ====
         callBackendButton.onclick = async function() {
-            if (!accessToken) return alert("Немає токена для запиту");
-            statusDiv.innerText = "Виклик кастомного backend endpoint...";
+            if (!accessToken) return alert("No token for request");
+            statusDiv.innerText = "Calling custom backend endpoint...";
             try {
                 const response = await fetch(backendEndpoint, {
                     method: "GET",
@@ -167,11 +167,11 @@
                 const data = await response.json();
                 backendresponsePre.textContent = JSON.stringify(data, null, 4);
                 backendresponsePre.classList.remove("hidden");
-                statusDiv.innerText = "Відповідь backend отримано.";
+                statusDiv.innerText = "Backend response received.";
             } catch (e) {
-                backendresponsePre.textContent = "Помилка: " + (e.message || e.toString());
+                backendresponsePre.textContent = "Error: " + (e.message || e.toString());
                 backendresponsePre.classList.remove("hidden");
-                statusDiv.innerText = "Помилка backend!";
+                statusDiv.innerText = "Backend error!";
             }
         };
     </script>
