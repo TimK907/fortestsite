@@ -3,7 +3,6 @@
 <head>
     <title>Travel Assistant SSO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
     <script src="https://alcdn.msauth.net/browser/2.32.0/js/msal-browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
@@ -63,7 +62,7 @@
         #login-btn {
             padding: 12px 32px;
             font-size: 1em;
-            margin: 24px auto 0;
+            margin: 24px auto 32px auto;
             color: white;
             background: #0078d4;
             border: none;
@@ -76,20 +75,10 @@
         #login-btn:hover {
             background: #005fa3;
         }
-        #webchat-container {
-            max-width: 750px;
-            width: 94vw;
-            height: 50vh;
-            background: rgba(255,255,255,0.07);
-            border-radius: 15px;
-            box-shadow: 0 0 24px #2229;
-            transition: background 0.2s;
-            margin-bottom: 8px;
-        }
         #bot-iframe {
             width: 94vw;
             max-width: 750px;
-            height: 32vh;
+            height: 70vh;
             border: none;
             border-radius: 16px;
             box-shadow: 0 0 16px #0005;
@@ -114,10 +103,7 @@
     <div id="welcome-title">Welcome to Travel Assistant</div>
     <button id="login-btn">Login with Microsoft</button>
 
-    <!-- Справжній SSO WebChat -->
-    <div id="webchat-container"></div>
-
-    <!-- IFRAME: лише для вигляду -->
+    <!-- IFRAME: тільки для вигляду -->
     <iframe
         id="bot-iframe"
         src="https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat?__version__=2"
@@ -129,8 +115,6 @@
     // === App1 ===
     const clientId = "05bdb70e-0233-4120-8a95-5e64e9801c84";
     const tenantId = "d06629ae-56db-44af-880b-80afafa24182";
-    // === DirectLine Token Endpoint ==
-    const tokenEndpoint = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview";
 
     const msalConfig = {
         auth: { clientId, authority: `https://login.microsoftonline.com/${tenantId}` }
@@ -145,14 +129,12 @@
     const logoutBtn = document.getElementById('logout-btn');
     const userText = document.getElementById('user-text');
     const userIcon = document.getElementById('user-icon');
-    const webchatContainer = document.getElementById('webchat-container');
 
     // Login handler
     async function handleLogin() {
         try {
             await msalInstance.loginPopup(loginRequest);
             setUI();
-            renderChatWidget();
         } catch(e) {
             alert("Login failed:\n" + e);
         }
@@ -183,134 +165,7 @@
     loginBtn.onclick = handleLogin;
     logoutBtn.onclick = handleLogout;
 
-    function getOAuthCardResourceUri(activity) {
-        if (
-            activity && activity.attachments && activity.attachments[0] &&
-            activity.attachments[0].contentType === 'application/vnd.microsoft.card.oauth' &&
-            activity.attachments[0].content.tokenExchangeResource
-        ) {
-            return activity.attachments[0].content.tokenExchangeResource.uri;
-        }
-    }
-
-    async function exchangeTokenAsync(resourceUri) {
-        let user = msalInstance.getAllAccounts();
-        if (user.length <= 0) return null;
-
-        const tokenRequest = { scopes: [resourceUri] };
-
-        try {
-            const tokenResponse = await msalInstance.acquireTokenSilent(tokenRequest)
-            return tokenResponse.accessToken;
-        } catch (err) {
-            console.log(err);
-            return null;
-        }
-    }
-
-    async function fetchJSON(url, options = {}) {
-        const res = await fetch(url, {
-            ...options,
-            headers: { ...(options.headers || {}), accept: 'application/json' }
-        });
-        if (!res.ok) throw new Error(res.status);
-        return await res.json();
-    }
-
-    async function renderChatWidget() {
-        if (!account) {
-            webchatContainer.innerHTML = "";
-            return;
-        }
-        var userID = account.localAccountId ?
-            account.localAccountId.substring(0, 36) :
-            (Math.random().toString() + Date.now().toString()).substring(0, 64);
-
-        let dlToken;
-        try {
-            const r = await fetchJSON(tokenEndpoint);
-            dlToken = r.token;
-        } catch(err) {
-            webchatContainer.innerHTML = "<div style='color:white;padding:28px;text-align:center;'>Unable to fetch DirectLine token.<br>"+err+"</div>";
-            return;
-        }
-
-        webchatContainer.innerHTML = "";
-
-        const directLine = window.WebChat.createDirectLine({ token: dlToken });
-
-        const store = WebChat.createStore(
-            {},
-            ({ dispatch }) => next => action => {
-                if (action.type === "DIRECT_LINE/CONNECT_FULFILLED") {
-                    dispatch({
-                        meta: { method: "keyboard" },
-                        payload: {
-                            activity: {
-                                channelData: { postBack: true },
-                                name: 'startConversation',
-                                type: "event"
-                            }
-                        },
-                        type: "DIRECT_LINE/POST_ACTIVITY",
-                    });
-                }
-                if (action.type === 'DIRECT_LINE/INCOMING_ACTIVITY') {
-                    const activity = action.payload.activity;
-                    let resourceUri;
-                    if (activity.from && activity.from.role === 'bot' && (resourceUri = getOAuthCardResourceUri(activity))) {
-                        exchangeTokenAsync(resourceUri).then((token) => {
-                            if (token) {
-                                directLine.postActivity({
-                                    type: 'invoke',
-                                    name: 'signin/tokenExchange',
-                                    value: {
-                                        id: activity.attachments[0].content.tokenExchangeResource.id,
-                                        connectionName: activity.attachments[0].content.connectionName,
-                                        token
-                                    },
-                                    "from": {
-                                        id: userID,
-                                        name: account.name,
-                                        role: "user"
-                                    }
-                                }).subscribe();
-                                return;
-                            }
-                            else {
-                                return next(action);
-                            }
-                        });
-                    } else {
-                        return next(action);
-                    }
-                } else {
-                    return next(action);
-                }
-            }
-        );
-
-        window.WebChat.renderWebChat(
-            {
-                directLine: directLine,
-                store,
-                userID,
-                locale: 'en-US',
-                styleOptions: {
-                    botAvatarInitials: "Bot",
-                    userAvatarInitials: "U",
-                    backgroundColor: 'transparent',
-                    hideUploadButton: true
-                }
-            },
-            webchatContainer
-        );
-    }
-
     setUI();
-    if (msalInstance.getAllAccounts().length > 0) {
-        renderChatWidget();
-    }
 </script>
 </body>
 </html>
