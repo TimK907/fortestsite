@@ -4,6 +4,28 @@ import { msalConfig, loginRequest } from "./msalConfig";
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
+function loadLiveChatWidget(token) {
+  // видаляємо, якщо вже є
+  const oldScript = document.getElementById("Microsoft_Omnichannel_LCWidget");
+  if (oldScript) oldScript.parentNode.removeChild(oldScript);
+
+  window.LiveChatWidget = window.LiveChatWidget || {};
+  window.LiveChatWidget.init = window.LiveChatWidget.init || function (cfg) { window.LiveChatWidget.cfg = cfg; };
+  window.LiveChatWidget.init({
+    authentication: {
+      type: "Oauth2",
+      token: token,
+    }
+  });
+
+  const script = document.createElement("script");
+  script.id = "Microsoft_Omnichannel_LCWidget";
+  script.src =
+    "https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js";
+  script.async = true;
+  document.body.appendChild(script);
+}
+
 function App() {
   const [account, setAccount] = useState(null);
 
@@ -11,6 +33,12 @@ function App() {
     const current = msalInstance.getAllAccounts();
     if (current && current.length > 0) {
       setAccount(current[0]);
+      // отримай токен і ініціалізуй чат
+      msalInstance
+        .acquireTokenSilent(loginRequest)
+        .then(({ accessToken }) => {
+          loadLiveChatWidget(accessToken);
+        });
     }
   }, []);
 
@@ -18,6 +46,9 @@ function App() {
     try {
       const loginResponse = await msalInstance.loginPopup(loginRequest);
       setAccount(loginResponse.account);
+      // отримай токен і ініціалізуй чат
+      const token = (await msalInstance.acquireTokenSilent(loginRequest)).accessToken;
+      loadLiveChatWidget(token);
     } catch (e) {
       alert(e.message);
     }
@@ -26,6 +57,9 @@ function App() {
   const signOut = () => {
     msalInstance.logoutPopup();
     setAccount(null);
+    // можливо видалити віджет тут
+    const oldScript = document.getElementById("Microsoft_Omnichannel_LCWidget");
+    if (oldScript) oldScript.parentNode.removeChild(oldScript);
   };
 
   const userName = account?.name || account?.username;
