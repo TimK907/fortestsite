@@ -1,5 +1,4 @@
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./msalConfig";
 
@@ -19,11 +18,6 @@ function App() {
     try {
       const loginResponse = await msalInstance.loginPopup(loginRequest);
       setAccount(loginResponse.account);
-
-      // ---! Ось так отримай токен для передачі в BOT ---
-      // const token = await msalInstance.acquireTokenSilent(loginRequest);
-      // // Допоміжна функція: відправ токен в бот по необхідній інструкції
-
     } catch (e) {
       alert(e.message);
     }
@@ -60,7 +54,7 @@ function App() {
               title="Logout"
             >
               <svg width="32" height="32" fill="white" viewBox="0 0 24 24">
-              <path d="M16 13v-2H7V8l-5 4 5 4v-3zM20.41 7.41L19 6l-5 5 5 5 1.41-1.41L17.83 12z"/>
+                <path d="M16 13v-2H7V8l-5 4 5 4v-3zM20.41 7.41L19 6l-5 5 5 5 1.41-1.41L17.83 12z"/>
               </svg>
             </button>
           </>
