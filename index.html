@@ -1,25 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Travel Assistant SSO</title>
+    <meta charset="UTF-8">
+    <title>Travel Assistant: Copilot Studio Agents SSO Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://alcdn.msauth.net/browser/2.32.0/js/msal-browser.min.js"></script>
+    <!-- Microsoft Copilot Studio Agents SDK -->
+    <script src="https://cdn.copilot.microsoft.com/widget/sdk/v1/bootstrap.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         html, body {
             margin: 0;
             padding: 0;
+            min-height: 100vh;
+            width: 100vw;
             height: 100%;
         }
         body {
-            min-height: 100vh;
             background: url('background.jpg') no-repeat center center fixed;
             background-size: cover;
+            min-height: 100vh;
+            width: 100vw;
         }
         #main-container {
             width: 100vw;
             min-height: 100vh;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.62);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -35,137 +40,51 @@
             font-family: "Segoe UI", sans-serif;
             color: #fff;
         }
-        .icon-btn {
-            color: white;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            margin-left: 8px;
-            font-size: 1.25em;
-            vertical-align: middle;
-            transition: color 0.2s;
-        }
-        .icon-btn:hover {
-            color: #ffae00;
-        }
         #welcome-title {
             color: white;
             font-size: 2.5em;
             font-family: "Segoe UI", sans-serif;
             font-weight: bold;
             text-shadow: 2px 2px 10px #444;
-            margin-bottom: 18px;
+            margin-bottom: 22px;
             margin-top: 10px;
             text-align: center;
             letter-spacing: 2px;
         }
-        #login-btn {
-            padding: 12px 32px;
-            font-size: 1em;
-            margin: 24px auto 32px auto;
-            color: white;
-            background: #0078d4;
-            border: none;
-            border-radius: 5px;
-            display: block;
-            box-shadow: 0 2px 8px #3337;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        #login-btn:hover {
-            background: #005fa3;
-        }
-        #bot-iframe {
-            width: 94vw;
-            max-width: 750px;
-            height: 70vh;
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 0 16px #0005;
-            margin-bottom: 28px;
-            margin-top: 0;
-            display: block;
+        #info-text {
+            color: #fff;
+            margin: 12px auto 26px auto;
+            font-size: 1.15em;
+            background: rgba(22,40,90,0.14);
+            border-radius: 7px;
+            max-width: 700px;
+            padding: 11px 28px;
         }
     </style>
 </head>
 <body>
-<div id="main-container">
-    <div id="header-row">
-        <span id="user-info">
-            <i class="fa-regular fa-user" id="user-icon"></i>
-            <span id="user-text">Hello, Anonymous User</span>
-        </span>
-        <button class="icon-btn" id="logout-btn" style="display:none;" title="Logout">
-            <i class="fa-solid fa-right-from-bracket"></i>
-        </button>
+    <div id="main-container">
+        <div id="header-row">
+            <span>
+                <i class="fa-solid fa-user"></i>
+                &nbsp;Travel Assistant
+            </span>
+        </div>
+        <div id="welcome-title">Welcome to Travel Assistant</div>
+        <div id="info-text">
+            Щоб почати спілкування, натисни на іконку помічника у правому нижньому куті.<br>
+            <b>Copilot Studio Agents SDK вбудовано.<br>
+            Усі сесії з M365 юзерів та SSO вже підтримуються автоматично!</b>
+        </div>
+        <!-- Тут ти можеш додати власний інший контент, якщо треба -->
     </div>
 
-    <div id="welcome-title">Welcome to Travel Assistant</div>
-    <button id="login-btn">Login with Microsoft</button>
-
-    <!-- IFRAME: тільки для вигляду -->
-    <iframe
-        id="bot-iframe"
-        src="https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat?__version__=2"
-        allow="clipboard-write; clipboard-read"
-    ></iframe>
-</div>
-
-<script>
-    // === App1 ===
-    const clientId = "05bdb70e-0233-4120-8a95-5e64e9801c84";
-    const tenantId = "d06629ae-56db-44af-880b-80afafa24182";
-
-    const msalConfig = {
-        auth: { clientId, authority: `https://login.microsoftonline.com/${tenantId}` }
-    };
-    const loginRequest = { scopes: ["User.Read", "openid", "profile"] };
-    const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-    let account = null;
-
-    // UI Elements
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const userText = document.getElementById('user-text');
-    const userIcon = document.getElementById('user-icon');
-
-    // Login handler
-    async function handleLogin() {
-        try {
-            await msalInstance.loginPopup(loginRequest);
-            setUI();
-        } catch(e) {
-            alert("Login failed:\n" + e);
-        }
-    }
-
-    async function handleLogout() {
-        await msalInstance.logoutPopup({ account });
-        location.reload();
-    }
-
-    function setUI() {
-        const accts = msalInstance.getAllAccounts();
-        if (accts.length > 0) {
-            account = accts[0];
-            userIcon.className = "fa-solid fa-user";
-            userText.textContent = `Hello, ${account.name}`;
-            logoutBtn.style.display = "inline-block";
-            loginBtn.style.display = "none";
-        } else {
-            account = null;
-            userIcon.className = "fa-regular fa-user";
-            userText.textContent = `Hello, Anonymous User`;
-            logoutBtn.style.display = "none";
-            loginBtn.style.display = "block";
-        }
-    }
-
-    loginBtn.onclick = handleLogin;
-    logoutBtn.onclick = handleLogout;
-
-    setUI();
-</script>
+    <script>
+      window.copilotWidget.bootstrap({
+        chatBotId: "cr7d7_undefinedNameOfTouristInformationAgen",
+        envId: "aa9a827b-aedf-ee7d-b575-bfb7ebdcf717"
+        // Див. офіційну доку Microsoft Copilot Studio для додаткових опцій кастомізації
+      });
+    </script>
 </body>
 </html>
