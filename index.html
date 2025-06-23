@@ -2,29 +2,71 @@
 <html lang="en-US">
 <head>
   <meta charset="utf-8"/>
-  <title>Copilot Studio SSO with EntraID sample</title>
+  <title>Copilot Studio SSO Test (with WebChat)</title>
   <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2em; }
-    #token, #endpoint, #userId, #response { white-space: pre; background: #f4f4f4; padding: 1em; border-radius: 8px; }
+    html, body { margin: 0; height: 100%; width: 100%; font-family: Arial, sans-serif; }
+    #container { display: flex; height: 100vh; }
+    #left-panel {
+      width: 430px;
+      min-width: 330px;
+      max-width: 100vw;
+      box-sizing: border-box;
+      border-right: 1px solid #ccc;
+      padding: 20px 12px 20px 20px;  
+      background: #fafbff;
+      height: 100%;
+      overflow-y: auto;
+    }
+    #main-panel {
+      flex: 1;
+      height: 100vh;
+      min-width: 300px;
+      background: #f4f4f8;
+    }
+    #token, #endpoint, #userId, #response {
+      white-space: pre; background: #f4f4f4;
+      padding: 1em; border-radius: 8px; font-size: 13px;
+      word-break: break-all;
+    }
+    h2 { font-size: 20px; font-weight: bold; }
+    iframe { width: 100%; height: 100vh; border: none; }
+    #token-section { display: none; }
+    button { padding: 7px 20px; background: #0078d4; color: #fff; border: none; border-radius: 4px; font-size: 16px; margin-bottom: 14px; cursor: pointer;}
+    button:disabled { background: #aaa;}
+    .label { font-size: 15px; font-weight: 600; margin-top:18px; }
   </style>
 </head>
 <body>
-  <h2>SSO with EntraID — Copilot Studio Sample</h2>
-  <button id="signin-btn">Sign in with Microsoft</button>
-  <div id="token-section" style="display:none;">
-    <h3>Access Token:</h3>
-    <div id="token"></div>
-    <h3>Token Endpoint:</h3>
-    <div id="endpoint"></div>
-    <h3>Custom userId (з префіксом):</h3>
-    <div id="userId"></div>
-    <button id="call-endpoint-btn">Call Copilot Studio SSO endpoint</button>
-    <h3>Endpoint Response:</h3>
-    <div id="response"></div>
+  <div id="container">
+    <div id="left-panel">
+      <h2>Copilot Studio SSO &amp; WebChat тест</h2>
+      <button id="signin-btn">Sign in with Microsoft</button>
+
+      <div id="token-section">
+        <div class="label">Access Token:</div>
+        <div id="token"></div>
+        <div class="label">Token Endpoint:</div>
+        <div id="endpoint"></div>
+        <div class="label">Custom userId (з префіксом):</div>
+        <div id="userId"></div>
+        <button id="call-endpoint-btn" style="background:#3b4465;">Call Copilot Studio SSO endpoint</button>
+        <div class="label">Endpoint Response:</div>
+        <div id="response"></div>
+      </div>
+      <hr style="margin: 30px 0 12px 0;">
+      <div class="label" style="font-size:17px; color:#0050c7;">Copilot Studio WebChat:</div>
+      <div style="color:#888; font-size:13px;">Можеш спілкуватися з ботом, SSO працює для chat!</div>
+    </div>
+    <div id="main-panel">
+      <iframe
+        src="https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat?__version__=2"
+        title="Copilot Studio Bot WebChat"></iframe>
+    </div>
   </div>
+
   <script>
-    // === MSAL config (strictly per your instructions) ===
+    // --- MSAL (clientId, authority, як у твоїй інст.) ---
     var clientApplication;
     (function (){
       var msalConfig = {
@@ -36,27 +78,25 @@
       clientApplication = new msal.PublicClientApplication(msalConfig);
     })();
 
-    // === The token endpoint ===
+    // --- Твій endpoint ---
     var theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_TouristInformationAgen/conversations?api-version=2022-03-01-preview";
     document.getElementById('endpoint').textContent = theURL;
 
-    var scopes = [ "openid", "profile", "email" ];
+    var scopes = ["openid", "profile", "email"];
     var userId = "";
     var accessToken = null;
 
     document.getElementById('signin-btn').onclick = async function() {
       try {
-        // Interactive login
         const loginResponse = await clientApplication.loginPopup({ scopes });
         const account = clientApplication.getAllAccounts()[0];
 
-        // === Custom prefix for userId, strictly per manual ===
-        userId = account?.accountIdentifier != null ?
-            ("My-custom-prefix" + account.accountIdentifier).substr(0, 64) :
-            (Math.random().toString() + Date.now().toString()).substr(0,64);
+        // userId з custom prefix (як у MS instructions)
+        userId = account?.accountIdentifier != null
+          ? ("My-custom-prefix" + account.accountIdentifier).substr(0, 64)
+          : (Math.random().toString() + Date.now().toString()).substr(0,64);
         document.getElementById('userId').textContent = userId;
 
-        // Silent token
         const tokenResponse = await clientApplication.acquireTokenSilent({ scopes, account })
           .catch(() => clientApplication.acquireTokenPopup({ scopes }));
         accessToken = tokenResponse.accessToken;
