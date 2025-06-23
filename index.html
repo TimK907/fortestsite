@@ -1,300 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Welcome to Travel Assistant</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    html, body {
-      height: 100%; margin:0; padding:0;
-      font-family: 'Roboto', Arial, sans-serif;
-      color: #fff;
-      min-height: 100vh;
-      background: url('https://images.pexels.com/photos/163856/sunset-train-road-163856.jpeg') no-repeat center center fixed;
-      background-size: cover;
-    }
-    .overlay {
-      background: rgba(0,0,0,0.5); min-height:100vh; width:100vw;
-      position: absolute; top:0; left:0; z-index:0;
-    }
-    .container {
-      position: relative; z-index:1; min-height:100vh; width:100vw;
-      display: flex; flex-direction:column; align-items: center;
-    }
-    .top-bar {
-      margin-top: 32px;
-      width: 100%; display: flex; align-items: center; justify-content: center;
-      gap: 16px;
-      font-size: 1.2rem;
-    }
-    .user-icon, .logout-icon {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 48px; height: 48px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-      font-size: 2rem;
-      cursor: pointer;
-      border: 2px solid #fff;
-    }
-    .user-icon { margin-right: 12px; }
-    .logout-icon { margin-right: 12px; }
-    .lang-switcher {
-      position: absolute; right: 2.5vw; top: 32px;
-      z-index: 2;
-      display: flex; gap: 4px;
-    }
-    .lang-btn {
-      background: none; border: 1px solid #fff; color: #fff;
-      padding: 4px 12px; margin: 0; border-radius:8px;
-      font-size: 1rem; cursor: pointer; opacity: 0.85;
-      transition: background 0.15s, color 0.15s;
-    }
-    .lang-btn.active, .lang-btn:hover { background: #fff; color:#222;}
-    h1 {
-      font-size: 2.8em; font-weight: 700; letter-spacing: 1px;
-      text-align: center; margin: 75px 0 20px 0;
-      text-shadow: 0 2px 8px #333;
-    }
-    .subtitle, .login-btn {
-      font-size: 1.2em;
-      text-align: center;
-      margin-bottom: 28px;
-    }
-    .login-btn {
-      margin: 40px 0 0 0;
-      border: none; border-radius: 24px;
-      padding: 14px 38px;
-      background: rgba(10,120,255,0.93);
-      color: #fff;
-      font-size: 1.2em; font-weight: 600;
-      letter-spacing: 1px;
-      cursor: pointer;
-      transition: background 0.18s;
-      box-shadow: 0 6px 28px -10px #2228;
-    }
-    .login-btn:hover {
-      background: #0089fa;
-    }
-    .iframe-wrapper {
-      width: 96vw; max-width:960px;
-      height: 550px;
-      margin: 40px auto 0 auto;
-      border-radius: 20px;
-      box-shadow: 0 6px 30px -4px #111a;
-      overflow: hidden;
-    }
-    iframe {
-      width: 100%; height: 100%; border: none;
-      background: #fff1;
-    }
-    @media (max-width:700px){
-      .iframe-wrapper { height: 68vw; min-height:350px;}
-      h1 { margin-top:32px; font-size:1.9em; }
-      .top-bar { margin-top:18px; }
-    }
-  </style>
+    <meta charset="utf-8" />
+    <title>SSO with Entra ID</title>
+    <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
-  <div class="overlay"></div>
-  <div class="container">
-    <div class="lang-switcher">
-      <button class="lang-btn active" data-lang="en">EN</button>
-      <button class="lang-btn" data-lang="fr">FR</button>
-    </div>
-    <div class="top-bar" id="topBar" style="margin-top: 36px;">
-      <span class="user-icon" id="userIcon" title="User">
-        <!-- User SVG -->
-        <svg viewBox="0 0 24 24" fill="none" width="32" height="32"><circle cx="12" cy="8" r="4" fill="white" opacity="0.9"/><ellipse cx="12" cy="17" rx="7" ry="4" fill="white" opacity="0.7"/></svg>
-      </span>
-      <span id="userText">Hello, Anonymous User</span>
-    </div>
-    <h1>Welcome to Travel Assistant.</h1>
-    <div class="subtitle" id="extraText">
-      Discover your next adventure with AI-powered tips!
-    </div>
-    <button class="login-btn" id="loginBtn">Sign in with Microsoft</button>
-    <div class="iframe-wrapper">
-      <iframe id="botIframe"
-        src="https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_tripAdvisorLanSpecificEnglish/webchat?__version__=2"
-        allow="clipboard-write; clipboard-read"
-      ></iframe>
-    </div>
-  </div>
+    <h1>SSO with Entra ID</h1>
+    <button id="loginButton">Login with Microsoft</button>
+    <div id="status"></div>
+    <pre id="token" class="hidden"></pre>
+    <script>
+        // TODO: Replace the below values with your client and tenant IDs and token endpoint
+        const msalConfig = {
+            auth: {
+                clientId: "20432056-2b97-43ca-9cfc-ec900428bbd4", // <-- Your Client ID
+                authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182", // <-- Your Tenant ID
+                redirectUri: window.location.href
+            }
+        };
 
-  <script>
-    // ================= 基础多语言 ===================
-    // Simple bilingual text dictionary
-    const dict = {
-      en: {
-        helloAnon: "Hello, Anonymous User",
-        helloUser: username => `Hello, ${username}`,
-        subtitle: "Discover your next adventure with AI-powered tips!",
-        signin: "Sign in with Microsoft",
-        signout: "Logout",
-        title: "Welcome to Travel Assistant."
-      },
-      fr: {
-        helloAnon: "Bonjour, Utilisateur Anonyme",
-        helloUser: username => `Bonjour, ${username}`,
-        subtitle: "Découvrez votre prochaine aventure avec les conseils de l'IA !",
-        signin: "Se connecter avec Microsoft",
-        signout: "Se déconnecter",
-        title: "Bienvenue chez Travel Assistant."
-      }
-    };
+        // Microsoft Graph scopes or your API scopes
+        const loginRequest = {
+            scopes: [ "openid", "profile", "email", "offline_access" ]
+        };
 
-    // ================= MSAL.js INIT ===================
-    const msalConfig = {
-      auth: {
-        clientId: "05bdb70e-0233-4120-8a95-5e64e9801c84",
-        authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182",
-        redirectUri: window.location.origin
-      }
-    };
-    const msalInstance = new msal.PublicClientApplication(msalConfig);
-    let msalAccount = null; // store signed in user
-    let msalUserId = null;  // user OID
-    let msalUsername = null;
+        // Your Token Endpoint (where you will use the token)
+        const tokenEndpoint = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview";
 
-    // ========== Ініціалізація мови ===========
-    let appLanguage = navigator.language.startsWith("fr") ? "fr" : "en";
-    function updateLangUI() {
-      // Перемикач
-      Array.from(document.querySelectorAll(".lang-btn")).forEach(btn => {
-        btn.classList.toggle("active", btn.getAttribute("data-lang") === appLanguage);
-      });
-      // Заголовок всі інші написи
-      document.querySelector('h1').textContent = dict[appLanguage].title;
-      document.getElementById('extraText').textContent = dict[appLanguage].subtitle;
-      document.getElementById('loginBtn').textContent = dict[appLanguage].signin;
-      // User text
-      if (msalAccount && msalUsername) {
-        document.getElementById('userText').textContent = dict[appLanguage].helloUser(msalUsername);
-      } else {
-        document.getElementById('userText').textContent = dict[appLanguage].helloAnon;
-      }
-    }
-    Array.from(document.querySelectorAll(".lang-btn")).forEach(btn => {
-      btn.addEventListener("click", e => {
-        appLanguage = btn.getAttribute("data-lang");
-        updateLangUI();
-        sendVarsToBot();
-      });
-    });
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-    // ========== Timezone ===========
-    function getTimezone() {
-      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-    }
+        const loginButton = document.getElementById('loginButton');
+        const statusDiv = document.getElementById('status');
+        const tokenPre = document.getElementById('token');
 
-    // ========== Авторизація ===========
-    async function trySilentLogin() {
-      try {
-        const current = msalInstance.getAllAccounts()[0];
-        if (current) {
-          // try acquire token silently to verify session
-          await msalInstance.acquireTokenSilent({
-              account: current,
-              scopes: ["User.Read"]
-          });
-          return current;
-        }
-      } catch {}
-      return null;
-    }
+        loginButton.onclick = async function() {
+            statusDiv.innerText = "Logging in...";
+            try {
+                const loginResponse = await msalInstance.loginPopup(loginRequest);
+                statusDiv.innerText = "Login successful!\nGetting access token...";
+                
+                // Now get token silently, fallback to popup if needed
+                const account = msalInstance.getAllAccounts()[0];
+                const tokenResponse = await msalInstance.acquireTokenSilent({
+                    ...loginRequest,
+                    account
+                }).catch(async (error) => {
+                    // Fallback to popup
+                    return msalInstance.acquireTokenPopup(loginRequest);
+                });
 
-    function showUserUI(isAuth) {
-      const userIcon = document.getElementById("userIcon");
-      const loginBtn = document.getElementById("loginBtn");
-      if (isAuth) {
-        // show logout icon (with arrow)
-        userIcon.innerHTML = `
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="12" fill="white" opacity="0.12"/><g><path d="M16 12H8M12 8l-4 4 4 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
-        `;
-        userIcon.setAttribute("title", dict[appLanguage].signout);
-        loginBtn.style.display = "none";
-      } else {
-        // Show user (anon) icon
-        userIcon.innerHTML = `
-          <svg viewBox="0 0 24 24" fill="none" width="32" height="32"><circle cx="12" cy="8" r="4" fill="white" opacity="0.9"/><ellipse cx="12" cy="17" rx="7" ry="4" fill="white" opacity="0.7"/></svg>
-        `;
-        userIcon.setAttribute("title", "User");
-        loginBtn.style.display = "";
-      }
-      updateLangUI();
-    }
+                statusDiv.innerText = "Access token acquired!\nCalling token endpoint...";
 
-    async function signIn() {
-      try {
-        const resp = await msalInstance.loginPopup({ scopes: ["User.Read"] });
-        msalAccount = resp.account;
-        msalUsername = msalAccount.name || msalAccount.username || msalAccount.localAccountId;
-        msalUserId = resp.idTokenClaims.oid || resp.idTokenClaims.sub || resp.account.homeAccountId;
-        showUserUI(true);
-        sendVarsToBot();
-      } catch (e) {
-        alert("Sign in failed.");
-      }
-    }
+                tokenPre.classList.remove("hidden");
+                tokenPre.innerText = JSON.stringify(tokenResponse, null, 4);
 
-    function signOut() {
-      msalInstance.logoutPopup();
-      msalAccount = null;
-      msalUsername = null;
-      msalUserId = null;
-      showUserUI(false);
-      sendVarsToBot();
-    }
-    document.getElementById("loginBtn").onclick = signIn;
-    document.getElementById("userIcon").onclick = () => {
-      if (msalAccount) signOut();
-    };
+                // Example: call your token endpoint with the token
+                // (You can customize the fetch request as needed)
+                const response = await fetch(tokenEndpoint, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${tokenResponse.accessToken}`,
+                        "Accept": "application/json"
+                    }
+                });
+                const data = await response.json();
+                statusDiv.innerText = "Token endpoint call result (see console for details):";
+                console.log("Token endpoint response:", data);
 
-    // ========== Надсилати глобальні змінні в iFrame =============
-    function sendVarsToBot() {
-      const frame = document.getElementById('botIframe');
-      const data = {
-        type: 'setVariables',
-        variables: [
-          { name: 'timezone', value: getTimezone() },
-          { name: 'language', value: appLanguage },
-          { name: 'userId', value: msalUserId || "" }
-        ]
-      };
-      frame.contentWindow.postMessage(data, "*"); // OR restrict to https://copilotstudio.microsoft.com if CORS
-    }
-
-    // ========== Ініціалізація ===========
-    window.addEventListener('DOMContentLoaded', async () => {
-      // Виставити мову
-      updateLangUI();
-
-      // відновити сесію, якщо вже логінені
-      const account = await trySilentLogin();
-      if (account) {
-        msalAccount = account;
-        msalUsername = msalAccount.name || msalAccount.username || msalAccount.localAccountId;
-        // get OID
-        try {
-          const resp = await msalInstance.acquireTokenSilent({account: msalAccount, scopes: ["User.Read"]});
-          msalUserId = resp.idTokenClaims.oid || resp.idTokenClaims.sub || msalAccount.homeAccountId;
-        } catch {}
-        showUserUI(true);
-      } else {
-        showUserUI(false);
-      }
-    });
-
-    // Wait for iframe to load and send variables
-    document.getElementById('botIframe').addEventListener("load", e => {
-      setTimeout(sendVarsToBot, 400); // wait a bit for bot client init
-    });
-
-    // Also repeat sending on language/user state change
-  </script>
+            } catch (err) {
+                statusDiv.innerText = "Error: " + (err.errorMessage || err.message || err.toString());
+                console.error(err);
+            }
+        };
+    </script>
 </body>
 </html>
