@@ -22,11 +22,18 @@
     <div id="response"></div>
   </div>
   <script>
-    // === ПІДСТАВТЕ ВИНЯТКОВО ПРАВИЛЬНІ ДАНІ ===
+    // === ВАЖЛИВО: підстав із Copilot Studio! ===
     const clientId = "20432056-2b97-43ca-9cfc-ec900428bbd4";
     const tenantId = "d06629ae-56db-44af-880b-80afafa24182";
     const authority = "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182";
-    const scopes = [ "openid", "profile", "email" ];
+
+    // ДОДАНО .default scope для Power Platform env!
+    const scopes = [
+        "openid", "profile", "email",
+        "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/.default"
+    ];
+
+    // БЕЗ ЗАЙВИХ ШМАТКІВ — endpoint тільки як у Copilot Studio:
     const theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_TouristInformationAgen/conversations?api-version=2022-03-01-preview";
 
     // MSAL config
@@ -66,9 +73,11 @@
         const res = await fetch(theURL, {
           headers: { "Authorization": "Bearer " + accessToken }
         });
-        const text = await res.text();
+        let text = await res.text();
+        // Відобразити HTTP status code і т.д.
+        text = "Status: " + res.status + " " + res.statusText + "\n\n" + text;
         try {
-          document.getElementById('response').innerText = JSON.stringify(JSON.parse(text), null, 2);
+          document.getElementById('response').innerText = "Status: " + res.status + " " + res.statusText + "\n\n" + JSON.stringify(JSON.parse(text), null, 2);
         } catch {
           document.getElementById('response').innerText = text;
         }
