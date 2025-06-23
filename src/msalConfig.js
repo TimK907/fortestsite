@@ -10,7 +10,6 @@ export const msalConfig = {
     },
 };
 
-// Додаємо scope саме до ресурсу API бота (App#2)
 export const loginRequest = {
     scopes: [
         "openid",
