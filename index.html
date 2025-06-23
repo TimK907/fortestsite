@@ -1,130 +1,91 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <title>Copilot Studio SSO Test (with WebChat)</title>
-  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
-  <style>
-    html, body { margin: 0; height: 100%; width: 100%; font-family: Arial, sans-serif; }
-    #container { display: flex; height: 100vh; }
-    #left-panel {
-      width: 430px;
-      min-width: 330px;
-      max-width: 100vw;
-      box-sizing: border-box;
-      border-right: 1px solid #ccc;
-      padding: 20px 12px 20px 20px;  
-      background: #fafbff;
-      height: 100%;
-      overflow-y: auto;
-    }
-    #main-panel {
-      flex: 1;
-      height: 100vh;
-      min-width: 300px;
-      background: #f4f4f8;
-    }
-    #token, #endpoint, #userId, #response {
-      white-space: pre; background: #f4f4f4;
-      padding: 1em; border-radius: 8px; font-size: 13px;
-      word-break: break-all;
-    }
-    h2 { font-size: 20px; font-weight: bold; }
-    iframe { width: 100%; height: 100vh; border: none; }
-    #token-section { display: none; }
-    button { padding: 7px 20px; background: #0078d4; color: #fff; border: none; border-radius: 4px; font-size: 16px; margin-bottom: 14px; cursor: pointer;}
-    button:disabled { background: #aaa;}
-    .label { font-size: 15px; font-weight: 600; margin-top:18px; }
-  </style>
+    <title>Copilot Studio SSO Test (WebChat SSO flow)</title>
+    <meta charset="utf-8"/>
+    <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
+    <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+    <style>
+        html, body { height: 100%; margin: 0; font-family: Arial, sans-serif;}
+        #container { display: flex; height: 100vh;}
+        #side { width: 400px; padding: 20px; box-sizing: border-box; background: #f4f4f4;}
+        #side h2 { font-size:20px; }
+        #claims, #token { background:#fff; border-radius:8px; padding:10px; margin-bottom:12px; }
+        #chat { flex:1; min-width: 240px; height:100vh;}
+        button { padding: 7px 18px; font-size: 15px; margin-bottom:12px; }
+    </style>
 </head>
 <body>
-  <div id="container">
-    <div id="left-panel">
-      <h2>Copilot Studio SSO &amp; WebChat тест</h2>
-      <button id="signin-btn">Sign in with Microsoft</button>
-
-      <div id="token-section">
-        <div class="label">Access Token:</div>
-        <div id="token"></div>
-        <div class="label">Token Endpoint:</div>
-        <div id="endpoint"></div>
-        <div class="label">Custom userId (з префіксом):</div>
-        <div id="userId"></div>
-        <button id="call-endpoint-btn" style="background:#3b4465;">Call Copilot Studio SSO endpoint</button>
-        <div class="label">Endpoint Response:</div>
-        <div id="response"></div>
-      </div>
-      <hr style="margin: 30px 0 12px 0;">
-      <div class="label" style="font-size:17px; color:#0050c7;">Copilot Studio WebChat:</div>
-      <div style="color:#888; font-size:13px;">Можеш спілкуватися з ботом, SSO працює для chat!</div>
-    </div>
-    <div id="main-panel">
-      <iframe
-        src="https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat?__version__=2"
-        title="Copilot Studio Bot WebChat"></iframe>
-    </div>
+<div id="container">
+  <div id="side">
+    <h2>MSAL Login &amp; Claims</h2>
+    <button id="msalSignIn">Sign in with Microsoft</button>
+    <div id="msalUser" style="margin:12px 0; color:#2862af;"></div>
+    <div><b>AccessToken:</b></div>
+    <div id="token"></div>
+    <div><b>JWT claims:</b> <small>(from access token)</small></div>
+    <div id="claims"></div>
   </div>
+  <div id="chat">
+      <div id="webchat" style="height: 100%;"></div>
+  </div>
+</div>
+<script>
+const clientId = "20432056-2b97-43ca-9cfc-ec900428bbd4";
+const tenantId = "d06629ae-56db-44af-880b-80afafa24182";
+const tokenEndpoint = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_TouristInformationAgen/conversations?api-version=2022-03-01-preview";
+const msalConfig = {
+    auth: { clientId, authority: "https://login.microsoftonline.com/" + tenantId }
+};
+const loginRequest = { scopes: ["User.Read", "openid", "profile"] };
+const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-  <script>
-    // --- MSAL (clientId, authority, як у твоїй інст.) ---
-    var clientApplication;
-    (function (){
-      var msalConfig = {
-        auth: {
-          clientId: "20432056-2b97-43ca-9cfc-ec900428bbd4",
-          authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182"
-        }
-      };
-      clientApplication = new msal.PublicClientApplication(msalConfig);
-    })();
+let accessToken = null;
+let user = null;
+let msalAccount = null;
 
-    // --- Твій endpoint ---
-    var theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_TouristInformationAgen/conversations?api-version=2022-03-01-preview";
-    document.getElementById('endpoint').textContent = theURL;
-
-    var scopes = ["openid", "profile", "email"];
-    var userId = "";
-    var accessToken = null;
-
-    document.getElementById('signin-btn').onclick = async function() {
-      try {
-        const loginResponse = await clientApplication.loginPopup({ scopes });
-        const account = clientApplication.getAllAccounts()[0];
-
-        // userId з custom prefix (як у MS instructions)
-        userId = account?.accountIdentifier != null
-          ? ("My-custom-prefix" + account.accountIdentifier).substr(0, 64)
-          : (Math.random().toString() + Date.now().toString()).substr(0,64);
-        document.getElementById('userId').textContent = userId;
-
-        const tokenResponse = await clientApplication.acquireTokenSilent({ scopes, account })
-          .catch(() => clientApplication.acquireTokenPopup({ scopes }));
-        accessToken = tokenResponse.accessToken;
+document.getElementById('msalSignIn').onclick = async () => {
+    try {
+        const resp = await msalInstance.loginPopup(loginRequest);
+        msalAccount = msalInstance.getAllAccounts()[0];
+        document.getElementById('msalUser').textContent = 'Signed in as: ' + msalAccount.username;
+        // Take Graph token for claims demo:
+        const atResp = await msalInstance.acquireTokenSilent({ ...loginRequest, account: msalAccount })
+            .catch(() => msalInstance.acquireTokenPopup({ ...loginRequest, account: msalAccount }));
+        accessToken = atResp.accessToken;
         document.getElementById('token').textContent = accessToken;
-        document.getElementById('token-section').style.display = "block";
-        document.getElementById('response').textContent = '';
-      } catch (err) {
-        alert('Login error: ' + (err.message || err.toString()));
-      }
-    };
+        document.getElementById('claims').textContent = JSON.stringify(parseJwt(accessToken), null, 2);
+    } catch (e) {
+        alert("Login failed: " + (e.message || e));
+    }
+};
+// Helper to decode claims
+function parseJwt(token) {
+    if (!token) return {};
+    let base64Url = token.split('.')[1];
+    let base64 = base64Url.replace(/-/g,'+').replace(/_/g,'/');
+    let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
 
-    document.getElementById('call-endpoint-btn').onclick = async function() {
-      if (!accessToken) return;
-      document.getElementById('response').innerText = 'Loading...';
-      try {
-        const res = await fetch(theURL, {
-          headers: { "Authorization": "Bearer " + accessToken }
-        });
-        const text = await res.text();
-        try {
-          document.getElementById('response').innerText = JSON.stringify(JSON.parse(text), null, 2);
-        } catch {
-          document.getElementById('response').innerText = text;
-        }
-      } catch (err) {
-        document.getElementById('response').innerText = 'Error: ' + (err.message || err.toString());
-      }
-    };
-  </script>
+// --- BOT WebChat PART
+async function fetchDirectLineToken() {
+    // Тут треба отримати DirectLine токен; реальні Copilot Studio/channels-- це свій backend або свій сервер!
+    // Якщо є API для отримання токена -- вкажи тут fetch до свого backend
+    // Або постав DirectLine секрет сюди (тільки для демо)
+    throw new Error("DirectLine token отримується ЗІ СВОГО BACKEND. Постав свій fetch here.");
+}
+
+// Для Copilot Studio Embed можна використати просто iframe (як у твоєму коді), АБО якщо тобі треба inject токен користувача -- доведеться робити OAuthCard-інтеграцію як у офіційному прикладі MS.
+
+window.WebChat.renderWebChat({
+    directLine: window.WebChat.createDirectLine({ token: 'DIRECT_LINE_TOKEN_OR_FROM_API' }),
+    userID: msalAccount?.localAccountId || undefined,
+    username: msalAccount?.username || undefined,
+    styleOptions: { botAvatarInitials: 'Bot', userAvatarInitials: 'You' }
+}, document.getElementById('webchat'));
+</script>
 </body>
 </html>
