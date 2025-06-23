@@ -12,132 +12,140 @@
       color: #fff;
       font-family: 'Roboto', Arial, sans-serif;
       background: url('https://images.pexels.com/photos/163856/sunset-train-road-163856.jpeg') center center/cover no-repeat;
-      overflow-x: hidden;
     }
-    #topbar {
-      width: 100vw;
+    #header-container {
       display: flex;
-      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      padding: 32px 0 24px 0;
+      background: rgba(0,0,0,0.68);
+    }
+    #user-icon, #logout-icon {
+      width: 44px;
+      height: 44px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.6);
-      padding: 26px 0 8px 0;
-    }
-    .user-block {
-      display: flex; align-items: center; gap: 12px;
-    }
-    .user-icon, .logout-icon {
-      width: 32px; height: 32px;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.15);
       border-radius: 50%;
-      color: #fff;
       cursor: pointer;
+      margin-right: 28px;
     }
-    .user-icon svg, .logout-icon svg {
-      width: 22px; height: 22px;
+    #logout-icon:hover { background: rgba(255,0,0,0.11); }
+    #user-icon svg, #logout-icon svg {
+      width: 28px; height: 28px; fill: #fff; display: block;
+    }
+    #hello-text {
+      font-size: 2em;
+      font-weight: 700;
+      color: #fff;
+      margin:0 26px 0 0;
+      letter-spacing: 0.8px;
+      text-shadow: 0 2px 30px #000a, 0 1px 0px #0047;
+      white-space: nowrap;
     }
     #ms-login-btn {
       color: #fff;
       background: #0078D4;
-      font-size: 17px;
-      padding: 10px 42px;
-      margin-left: 28px;
+      font-size: 1.15em;
+      padding: 12px 46px;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
-      margin-top: 3px;
-      transition: opacity .2s;
-    }
-    #ms-login-btn[disabled] {
-      opacity: .6;
-      cursor: default;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-left: 22px;
+      box-shadow: 0 2px 8px #0047, 0 1px 0px #0078D477;
     }
     h1 {
       text-align: center;
-      margin-top: 38px;
-      font-size: 2.7em;
+      margin-top: 18px;
+      margin-bottom: 32px;
+      font-size: 2.3em;
       letter-spacing: 2px;
       text-shadow: 0 2px 30px #000a, 0 1px 0px #0047;
       font-weight: bold;
+      color: #fff;
     }
     #webchat {
-      margin: 40px auto 0 auto;
+      margin: 28px auto 0 auto;
       border-radius: 13px;
       overflow: hidden;
       max-width: 450px;
       max-height: 610px;
-      min-height: 480px;
-      box-shadow: 0 0 38px 3px #0038;
-      background: rgba(0,0,0,0.55);
+      min-height: 490px;
+      box-shadow: 0 0 33px 3px #0038;
+      background: rgba(0,0,0,0.56);
+      display: block;
     }
   </style>
 </head>
 <body>
-  <div id="topbar">
-    <div class="user-block" id="user-block">
-      <span class="user-icon" id="userIcon">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4.5"/><path d="M21 21c0-4.418-3.582-8-8-8s-8 3.582-8 8"/></svg>
-      </span>
-      <span id="hello-text">Hello, Anonymous User</span>
-      <button id="ms-login-btn" disabled>Login with Microsoft</button>
-    </div>
+  <div id="header-container">
+    <span id="user-icon" title="User" style="display: flex;">
+      <!-- User icon SVG (white) -->
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="5"/><path d="M21 21c0-5-4-9-9-9s-9 4-9 9"/></svg>
+    </span>
+    <span id="logout-icon" title="Logout" style="display: none;">
+      <!-- Logout icon SVG (white, стрілка праворуч) -->
+      <svg viewBox="0 0 24 24"><path d="M14 7v-4l6 5-6 5v-4h-5v-2h5zM5 17v2h10v-2h-10z"/></svg>
+    </span>
+    <span id="hello-text">Hello, Anonymous User</span>
+    <button id="ms-login-btn">Login with Microsoft</button>
   </div>
   <h1>Welcome to Travel Assistant.</h1>
   <div id="webchat"></div>
 
-  <!-- MSAL.js v2.x (CDN) [DEFER] -->
+  <!-- MSAL.js v2.x -->
   <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js" defer></script>
-  <!-- BotFramework Web Chat CDN (ES5) [DEFER] -->
+  <!-- BotFramework Web Chat (ES5) -->
   <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat-es5.js" defer></script>
-
   <script defer>
     window.addEventListener('DOMContentLoaded', function () {
-      // SSO config
       const msalConfig = {
         auth: {
           clientId: "05bdb70e-0233-4120-8a95-5e64e9801c84",
           authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182",
-          redirectUri: window.location.origin + '/', // Додай це в Azure!
+          redirectUri: window.location.origin + '/',
         },
         cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
       };
       let msalInstance;
-
       const loginRequest = { scopes: ["user.read"] };
+      // Для SSO Direct Line
       const DIRECT_LINE_SSO_URL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview";
+      // Для анонімного чату
+      const DIRECT_LINE_ANON_URL = "https://directline.botframework.com/v3/directline/tokens/generate";
+      const DIRECT_LINE_ANON_SECRET = ""; // Заміни на твій "Direct Line Secret" (налаштування Azure Bot, НЕ SSO!)
 
+      // Elements
       const helloText = document.getElementById('hello-text');
       const loginBtn = document.getElementById('ms-login-btn');
-      const userIconContainer = document.getElementById('userIcon');
+      const userIcon = document.getElementById('user-icon');
+      const logoutIcon = document.getElementById('logout-icon');
+      const webchatDiv = document.getElementById('webchat');
       let msalAccount = null;
-      let msalReady = false;
-      let interactionInProgress = false;
+      let msalReady = false, interactionInProgress = false;
 
-      function setLoggedUser(name) {
-        helloText.textContent = "Hello, " + name;
-        loginBtn.style.display = 'none';
-        userIconContainer.innerHTML = `<svg viewBox="0 0 24 24"><path d="M10,17V21H4V3H10V7H8V19H10M17.65,11.65L19.5,13.5L17,16V13.5H12V10.5H17V8L19.5,10.5L17.65,11.65Z" /></svg>`;
-        userIconContainer.className = "logout-icon";
-        userIconContainer.title = "Logout";
-      }
-      function setAnonymous() {
+      function setLoggedOutUI() {
         helloText.textContent = "Hello, Anonymous User";
-        loginBtn.style.display = 'inline-block';
-        loginBtn.disabled = !msalReady || interactionInProgress;
-        userIconContainer.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4.5"/><path d="M21 21c0-4.418-3.582-8-8-8s-8 3.582-8 8"/></svg>`;
-        userIconContainer.className = "user-icon";
-        userIconContainer.title = "";
+        loginBtn.style.display = '';
+        userIcon.style.display = 'flex';
+        logoutIcon.style.display = 'none';
+      }
+      function setLoggedInUI(username) {
+        helloText.textContent = "Hello, " + username;
+        loginBtn.style.display = 'none';
+        userIcon.style.display = 'none';
+        logoutIcon.style.display = 'flex';
       }
 
-      // MSAL init guarded by msal presence
-      function safeInitMsal() {
+      // ---- MSAL ----
+      function safeMsalInit() {
         if (!window.msal || !window.msal.PublicClientApplication) {
-          setTimeout(safeInitMsal, 75);
-          return;
+          setTimeout(safeMsalInit, 60); return;
         }
         msalReady = true;
-        loginBtn.disabled = false;
         msalInstance = new msal.PublicClientApplication(msalConfig);
         msalInstance.handleRedirectPromise()
           .then(res => {
@@ -145,52 +153,46 @@
             let account = res && res.account ? res.account : msalInstance.getAllAccounts()[0];
             if(account) {
               msalAccount = account;
-              showLoggedIn();
+              onLoggedIn();
             } else {
-              setAnonymous();
+              setLoggedOutUI();
+              if (!webchatRendered) renderWebchatAnonymous();
             }
           })
           .catch(e => {
             interactionInProgress = false;
-            setAnonymous();
+            setLoggedOutUI();
+            if (!webchatRendered) renderWebchatAnonymous();
           });
       }
-
-      function showLoggedIn() {
+      // UI
+      loginBtn.onclick = function() {
+        if (!msalInstance || interactionInProgress) return;
+        interactionInProgress = true;
+        msalInstance.loginRedirect(loginRequest);
+      };
+      userIcon.onclick = () => {};
+      logoutIcon.onclick = function() {
+        if (msalInstance && msalAccount) msalInstance.logoutRedirect();
+      };
+      function onLoggedIn() {
         msalInstance.acquireTokenSilent(loginRequest).then(response=>{
           if(response && response.account) {
             msalAccount = response.account;
-            setLoggedUser(msalAccount.username);
-            renderWebChatWithSSO(response.accessToken);
+            setLoggedInUI(msalAccount.username);
+            renderWebchatSSO(response.accessToken);
           }
         }).catch(err=>{
           if (err instanceof msal.InteractionRequiredAuthError) {
-            setAnonymous();
+            setLoggedOutUI();
+            if (!webchatRendered) renderWebchatAnonymous();
           }
         });
       }
 
-      loginBtn.onclick = function() {
-        if (!msalInstance || interactionInProgress) return;
-        interactionInProgress = true;
-        loginBtn.disabled = true;
-        try {
-          msalInstance.loginRedirect(loginRequest);
-        } catch(e) {
-          interactionInProgress = false;
-          loginBtn.disabled = false;
-          // При бажанні, можна тут показувати помилку в UI
-        }
-      };
-
-      userIconContainer.onclick = function() {
-        if (msalAccount && msalInstance) {
-          msalInstance.logoutRedirect();
-        }
-      };
-
+      // ---- WEBCHAT (SSO і анонімний) ----
       let webchatRendered = false;
-      function renderWebChatWithSSO(msAccessToken) {
+      function renderWebchatSSO(msAccessToken){
         if (webchatRendered || !window.WebChat) return;
         fetch(DIRECT_LINE_SSO_URL, {
           method: 'POST',
@@ -203,6 +205,7 @@
         .then(data => {
           const { token } = data;
           if(!token) throw new Error("Failed to obtain DirectLine SSO token");
+          webchatRendered = true;
           window.WebChat.renderWebChat({
             directLine: window.WebChat.createDirectLine({ token }),
             userID: msalAccount.homeAccountId || msalAccount.localAccountId || msalAccount.username,
@@ -218,15 +221,50 @@
               bubbleFromUserTextColor: '#fff',
               bubbleFromUserBackground: '#0078D4',
             }
-          }, document.getElementById('webchat'));
-          webchatRendered = true;
+          }, webchatDiv);
         }).catch(err => {
-          document.getElementById('webchat').innerHTML = '<div style="color:#fff; background:#F33; padding:14px; border-radius:10px;">Failed to load bot chat.<br>' + err + '</div>';
+          webchatDiv.innerHTML = '<div style="color:#fff; background:#F33; padding:16px; border-radius:10px;">Failed to load bot chat.<br>' + err + '</div>';
+        });
+      }
+      function renderWebchatAnonymous(){
+        if (webchatRendered || !window.WebChat) return;
+        if (!DIRECT_LINE_ANON_SECRET) {
+          webchatDiv.innerHTML = '<div style="color:#fff; background:#F33; padding:16px; border-radius:10px;">DirectLine Secret is required for anonymous chat.<br>Configure DIRECT_LINE_ANON_SECRET in the code.</div>';
+          return;
+        }
+        fetch(DIRECT_LINE_ANON_URL, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + DIRECT_LINE_ANON_SECRET }
+        })
+        .then(res => res.json())
+        .then(data => {
+          const token = data.token;
+          if(!token) throw new Error("Failed to obtain DirectLine anon token");
+          webchatRendered = true;
+          window.WebChat.renderWebChat({
+            directLine: window.WebChat.createDirectLine({ token }),
+            locale: 'en-US',
+            styleOptions: {
+              backgroundColor: 'rgba(0,0,0,0.18)',
+              botAvatarInitials: 'TA',
+              userAvatarInitials: 'ME',
+              bubbleBackground: 'rgba(11,60,170,0.19)',
+              bubbleTextColor: '#fff',
+              bubbleBorder: '1px solid #0078D4',
+              bubbleBorderRadius: 15,
+              bubbleFromUserTextColor: '#fff',
+              bubbleFromUserBackground: '#0078D4',
+            }
+          }, webchatDiv);
+        }).catch(err => {
+          webchatDiv.innerHTML = '<div style="color:#fff; background:#F33; padding:16px; border-radius:10px;">Failed to load anonymous bot chat.<br>' + err + '</div>';
         });
       }
 
-      setAnonymous();
-      safeInitMsal();
+      // INIT
+      setLoggedOutUI();
+      safeMsalInit();
+      // Якщо MSAL не залогований/фейл, покажемо анонімний чат автоматично у safeMsalInit
     });
   </script>
 </body>
