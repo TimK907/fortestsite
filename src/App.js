@@ -9,27 +9,22 @@ function loadLiveChatWidget(token) {
   const oldScript = document.getElementById("Microsoft_Omnichannel_LCWidget");
   if (oldScript) oldScript.parentNode.removeChild(oldScript);
 
-  // set up widget authentication before loading script
-  window.LiveChatWidget = window.LiveChatWidget || {};
-  window.LiveChatWidget.on = window.LiveChatWidget.on || function(){};
-  window.LiveChatWidget.setAuthToken = () => token;
-  window.LiveChatWidget.init = window.LiveChatWidget.init || function (cfg) { window.LiveChatWidget.cfg = cfg; };
-  window.LiveChatWidget.init({
+  // Додаємо глобальну функцію кастомізації та передачі токену
+  window.liveChatCustomization = {
     authentication: {
-      type: "Oauth2",
-      token: token,
+      getAuthToken: () => Promise.resolve(token)
     }
-  });
+  };
 
   const script = document.createElement("script");
   script.id = "Microsoft_Omnichannel_LCWidget";
-  script.src =
-    "https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js";
+  script.src = "https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js";
   script.async = true;
   script.setAttribute('data-app-id', '94a00fa7-b51f-4222-825f-bdaec1435217');
   script.setAttribute('data-lcw-version', 'prod');
   script.setAttribute('data-org-id', '44e3fe33-032f-f011-9a43-002248282d3c');
   script.setAttribute('data-org-url', 'https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com');
+  script.setAttribute("data-customization-callback", "liveChatCustomization"); // Ось ключовий рядок!
   document.body.appendChild(script);
 }
 
