@@ -47,6 +47,11 @@
       border-radius: 8px;
       cursor: pointer;
       margin-top: 3px;
+      transition: opacity .2s;
+    }
+    #ms-login-btn[disabled] {
+      opacity: .6;
+      cursor: default;
     }
     h1 {
       text-align: center;
@@ -75,7 +80,7 @@
         <svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4.5"/><path d="M21 21c0-4.418-3.582-8-8-8s-8 3.582-8 8"/></svg>
       </span>
       <span id="hello-text">Hello, Anonymous User</span>
-      <button id="ms-login-btn">Login with Microsoft</button>
+      <button id="ms-login-btn" disabled>Login with Microsoft</button>
     </div>
   </div>
   <h1>Welcome to Travel Assistant.</h1>
@@ -85,30 +90,29 @@
   <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js" defer></script>
   <!-- BotFramework Web Chat CDN (ES5) [DEFER] -->
   <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat-es5.js" defer></script>
-  <!-- Весь твій JS тут, після бібліотек [DEFER] -->
+
   <script defer>
     window.addEventListener('DOMContentLoaded', function () {
-      // ======== SSO конфіг ==========
+      // SSO config
       const msalConfig = {
         auth: {
           clientId: "05bdb70e-0233-4120-8a95-5e64e9801c84",
           authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182",
-          redirectUri: window.location.origin + '/', // ДОДАЙТЕ цей redirect також в App Registration!
+          redirectUri: window.location.origin + '/', // Додай це в Azure!
         },
         cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
       };
-      let msalInstance; // ініціалізуємо тільки коли msal підвантажиться
+      let msalInstance;
 
       const loginRequest = { scopes: ["user.read"] };
-
-      // Direct Line endpoint для SSO
       const DIRECT_LINE_SSO_URL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_undefinedNameOfTouristInformationAgen/conversations?api-version=2022-03-01-preview";
 
-      // ======== ELEMENTS ==========
       const helloText = document.getElementById('hello-text');
       const loginBtn = document.getElementById('ms-login-btn');
       const userIconContainer = document.getElementById('userIcon');
       let msalAccount = null;
+      let msalReady = false;
+      let interactionInProgress = false;
 
       function setLoggedUser(name) {
         helloText.textContent = "Hello, " + name;
@@ -120,25 +124,38 @@
       function setAnonymous() {
         helloText.textContent = "Hello, Anonymous User";
         loginBtn.style.display = 'inline-block';
+        loginBtn.disabled = !msalReady || interactionInProgress;
         userIconContainer.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4.5"/><path d="M21 21c0-4.418-3.582-8-8-8s-8 3.582-8 8"/></svg>`;
         userIconContainer.className = "user-icon";
         userIconContainer.title = "";
       }
 
-      // ======== MSAL login/logout =========
-      function trySilentLogin() {
-        if (!window.msal) { setTimeout(trySilentLogin, 200); return; } // msal ще не підвантажився
+      // MSAL init guarded by msal presence
+      function safeInitMsal() {
+        if (!window.msal || !window.msal.PublicClientApplication) {
+          setTimeout(safeInitMsal, 75);
+          return;
+        }
+        msalReady = true;
+        loginBtn.disabled = false;
         msalInstance = new msal.PublicClientApplication(msalConfig);
-        msalInstance.handleRedirectPromise().then(res => {
-          let account = res && res.account ? res.account : msalInstance.getAllAccounts()[0];
-          if(account) {
-            msalAccount = account;
-            showLoggedIn();
-          } else {
+        msalInstance.handleRedirectPromise()
+          .then(res => {
+            interactionInProgress = false;
+            let account = res && res.account ? res.account : msalInstance.getAllAccounts()[0];
+            if(account) {
+              msalAccount = account;
+              showLoggedIn();
+            } else {
+              setAnonymous();
+            }
+          })
+          .catch(e => {
+            interactionInProgress = false;
             setAnonymous();
-          }
-        }).catch(e=>{ setAnonymous(); });
+          });
       }
+
       function showLoggedIn() {
         msalInstance.acquireTokenSilent(loginRequest).then(response=>{
           if(response && response.account) {
@@ -152,17 +169,26 @@
           }
         });
       }
+
       loginBtn.onclick = function() {
-        if (!msalInstance) {return;}
-        msalInstance.loginRedirect(loginRequest);
+        if (!msalInstance || interactionInProgress) return;
+        interactionInProgress = true;
+        loginBtn.disabled = true;
+        try {
+          msalInstance.loginRedirect(loginRequest);
+        } catch(e) {
+          interactionInProgress = false;
+          loginBtn.disabled = false;
+          // При бажанні, можна тут показувати помилку в UI
+        }
       };
+
       userIconContainer.onclick = function() {
         if (msalAccount && msalInstance) {
           msalInstance.logoutRedirect();
         }
       };
 
-      // ======== Web Chat SSO ========
       let webchatRendered = false;
       function renderWebChatWithSSO(msAccessToken) {
         if (webchatRendered || !window.WebChat) return;
@@ -199,9 +225,8 @@
         });
       }
 
-      // ======== Запуск ==========
       setAnonymous();
-      trySilentLogin();
+      safeInitMsal();
     });
   </script>
 </body>
