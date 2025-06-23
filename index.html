@@ -79,18 +79,12 @@
         #webchat-container {
             max-width: 750px;
             width: 94vw;
-            height: 55vh;
+            height: 50vh;
             background: rgba(255,255,255,0.07);
             border-radius: 15px;
             box-shadow: 0 0 24px #2229;
             transition: background 0.2s;
-            margin-bottom: 25px;
-        }
-        #iframe-title {
-            color: white;
-            font-size: 1.25em;
-            margin-bottom: 9px;
-            text-align: center;
+            margin-bottom: 8px;
         }
         #bot-iframe {
             width: 94vw;
@@ -99,7 +93,9 @@
             border: none;
             border-radius: 16px;
             box-shadow: 0 0 16px #0005;
-            margin-bottom: 50px;
+            margin-bottom: 28px;
+            margin-top: 0;
+            display: block;
         }
     </style>
 </head>
@@ -118,11 +114,10 @@
     <div id="welcome-title">Welcome to Travel Assistant</div>
     <button id="login-btn">Login with Microsoft</button>
 
-    <!-- Справжній SSO WebChat (який інтегрує токен MSAL у DirectLine)-->
+    <!-- Справжній SSO WebChat -->
     <div id="webchat-container"></div>
 
-    <!-- Просто "картинка": iframe Copilot Studio Webchat, SSO не працює, тільки для вигляду -->
-    <div id="iframe-title">Demo Webchat (iframe from Copilot Studio, for appearance only)</div>
+    <!-- IFRAME: лише для вигляду -->
     <iframe
         id="bot-iframe"
         src="https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat?__version__=2"
@@ -188,7 +183,6 @@
     loginBtn.onclick = handleLogin;
     logoutBtn.onclick = handleLogout;
 
-    // SSO stuff for directline
     function getOAuthCardResourceUri(activity) {
         if (
             activity && activity.attachments && activity.attachments[0] &&
@@ -224,12 +218,10 @@
     }
 
     async function renderChatWidget() {
-        // only for logged in
         if (!account) {
             webchatContainer.innerHTML = "";
             return;
         }
-        // generate userID
         var userID = account.localAccountId ?
             account.localAccountId.substring(0, 36) :
             (Math.random().toString() + Date.now().toString()).substring(0, 64);
@@ -243,7 +235,6 @@
             return;
         }
 
-        // clear container
         webchatContainer.innerHTML = "";
 
         const directLine = window.WebChat.createDirectLine({ token: dlToken });
@@ -316,9 +307,7 @@
         );
     }
 
-    // Initial logic
     setUI();
-    // If logged in, render chat
     if (msalInstance.getAllAccounts().length > 0) {
         renderChatWidget();
     }
