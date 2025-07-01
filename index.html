@@ -256,23 +256,20 @@
       if (auth === 'yes') {
         user = document.getElementById('userIdInp').value.trim();
       }
-      const langVal = currentLang;
-
-      // Формування параметрів згідно документації: UserName, Lang, Brand через &
+      // Саме так формуємо параметри згідно інструкції
       let params = '';
       if (brand) {
-        params += '&Brand=' + encodeURIComponent(brand);
+        params += `Brand=${encodeURIComponent(brand)}`;
       }
-      if (langVal) {
-        params += '&Lang=' + encodeURIComponent(langVal);
+      if (currentLang) {
+        params += (params ? '&' : '') + `Lng=${encodeURIComponent(currentLang)}`;  // саме Lng !
       }
       if (auth === 'yes' && user.length > 0) {
-        params += '&UserName=' + encodeURIComponent(user);
+        params += (params ? '&' : '') + `User=${encodeURIComponent(user)}`;
       }
 
-      // srcBase вже містить query ?__version__=2, тому параметри дописуємо через &
-      const srcBase = 'https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat?__version__=2';
-      const fullSrc = srcBase + params;
+      const srcBase = 'https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat';
+      const fullSrc = srcBase + '?' + params;
 
       // Для дебагу відобразити згенерований url під iframe:
       document.getElementById('iframeChat').innerHTML = `
