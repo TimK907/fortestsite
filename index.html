@@ -257,13 +257,24 @@
         user = document.getElementById('userIdInp').value.trim();
       }
       const langVal = currentLang;
-      let params = `Brand=${encodeURIComponent(brand)}&Lang=${encodeURIComponent(langVal)}`;
-      if (auth === 'yes') {
-        params += `&User=${encodeURIComponent(user)}`;
-      }
-      const srcBase = 'https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat?__version__=2';
-      const fullSrc = srcBase + "&" + params;
 
+      // Формування параметрів згідно документації: UserName, Lang, Brand через &
+      let params = '';
+      if (brand) {
+        params += '&Brand=' + encodeURIComponent(brand);
+      }
+      if (langVal) {
+        params += '&Lang=' + encodeURIComponent(langVal);
+      }
+      if (auth === 'yes' && user.length > 0) {
+        params += '&UserName=' + encodeURIComponent(user);
+      }
+
+      // srcBase вже містить query ?__version__=2, тому параметри дописуємо через &
+      const srcBase = 'https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat?__version__=2';
+      const fullSrc = srcBase + params;
+
+      // Для дебагу відобразити згенерований url під iframe:
       document.getElementById('iframeChat').innerHTML = `
         <div class="iframe-box">
           <div class="iframe-header">
@@ -271,6 +282,7 @@
             <button title="Close" onclick="document.getElementById('iframeChat').style.display='none'">&times;</button>
           </div>
           <iframe src="${fullSrc}" class="iframe-inner" allow="clipboard-write; clipboard-read;"></iframe>
+          <div style="font-size:10px;color:#888;background:#eee;padding:4px;margin:0;">${fullSrc}</div>
         </div>
       `;
       document.getElementById('iframeChat').style.display = '';
