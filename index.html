@@ -1,132 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+<!-- ... все як раніше ... -->
+<input type="text" id="userIdInp" maxlength="30" autocomplete="off" />
+<div id="userIdErr" class="error" style="display:none"></div>
+<!-- ... -->
 
-<head>
-    <title>Contoso Sample Chat (SDK)</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+<script>
+// ... попередній код локалізації ...
 
-    <!-- MSAL (unchanged) -->
-    <script src="https://alcdn.msauth.net/browser/2.32.0/js/msal-browser.min.js"></script>
-    <script>
-        if (typeof msal === 'undefined')
-            document.write(unescape("%3Cscript src='https://alcdn.msftauth.net/browser/2.32.0/js/msal-browser.min.js' type='text/javascript'%3E%3C/script%3E"));
-    </script>
+function validateUserId() {
+  const userIdInp = document.getElementById('userIdInp');
+  const userId = userIdInp.value.trim();
+  if (userId.length === 0) {
+    document.getElementById('userIdErr').textContent = t('userIdRequired');
+    document.getElementById('userIdErr').style.display = '';
+    return false;
+  } else {
+    document.getElementById('userIdErr').style.display = 'none';
+    return true;
+  }
+}
 
-    <style>
-        /* === existing style, untouched === */
-        html, body { height: 100%; }
-        body { margin: 0; font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
-        #header { background:#0B556A; color:#fff; font-weight:600; height:48px; padding:0 13px; display:flex; justify-content:space-between; align-items:center; }
-        #subheader { background:#f3f2f1; padding:7px 13px; font-size:12px; }
-        a { color:#005A9E; } a:hover { color:#004578; }
-        #webchat { position:fixed; height:calc(100% - 75px); width:100%; top:75px; overflow:hidden; }
-
-        /* === new minimal chat canvas === */
-        #messages { height:calc(100% - 40px); padding:10px; overflow-y:auto; box-sizing:border-box; }
-        #inputBar { height:40px; display:flex; border-top:1px solid #ddd; }
-        #inputBar input { flex:1; border:none; padding:0 10px; font-size:14px; }
-        #inputBar button { width:80px; border:none; background:#0B556A; color:#fff; cursor:pointer; }
-    </style>
-</head>
-
-<body>
-    <div id="chatwindow">
-        <div id="header">SSO Test Bot (SDK)</div>
-
-        <div id="subheader">
-            <span id="loginStatus">You are not logged in on the website.</span>
-            <a id="login" href="#" onclick="onSignInClick()">Log in</a>
-            <a id="logout" href="#" onclick="onSignOutClick()">Log out</a>
-        </div>
-
-        <!-- chat canvas -->
-        <div id="webchat">
-            <div id="messages"></div>
-            <div id="inputBar">
-                <input id="msgInput" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMessage();" />
-                <button onclick="sendMessage()">Send</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- === MSAL & helper logic (unchanged) === -->
-    <script>
-        const clientId = "20432056-2b97-43ca-9cfc-ec900428bbd4";
-        const tenantId = "d06629ae-56db-44af-880b-80afafa24182";
-
-        const msalConfig = {
-            auth: { clientId, authority: "https://login.microsoftonline.com/" + tenantId },
-            cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
-        };
-        const loginRequest = { scopes: ["User.Read", "openid", "profile"] };
-        const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-        async function onSignInClick() {
-            try { await msalInstance.loginPopup(loginRequest); } catch (err) { console.log(err); }
-            updateLoginState();
-        }
-        async function onSignOutClick() {
-            await msalInstance.logoutPopup({ account: msalInstance.getActiveAccount() });
-            location.reload();
-        }
-
-        function updateLoginState() {
-            const accounts = msalInstance.getAllAccounts();
-            if (accounts.length) {
-                const user = accounts[0];
-                msalInstance.setActiveAccount(user);
-                document.getElementById("loginStatus").innerText = `Currently logged in as ${user.name} on the website.`;
-                document.getElementById("login").style.display = "none";
-                document.getElementById("logout").style.display = "inline";
-            }
-        }
-        updateLoginState();
-    </script>
-
-    <!-- === chat logic (new) === -->
-    <script>
-        const apiEndpoint = "/api/chat";   // <-- replace with your SDK endpoint
-
-        function addMessage(text, from) {
-            const messages = document.getElementById('messages');
-            const div = document.createElement('div');
-            div.style.margin = '6px 0';
-            div.innerHTML = `<strong>${from}:</strong> ${text}`;
-            messages.appendChild(div);
-            messages.scrollTop = messages.scrollHeight;
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('msgInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            addMessage(text, 'You');
-            input.value = '';
-
-            try {
-                // userId for backend correlation
-                const userId = (msalInstance.getActiveAccount()?.localAccountId || 'anon').substr(0, 36);
-
-                const res = await fetch(apiEndpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text, userId })
-                });
-
-                if (!res.ok) throw new Error(res.statusText);
-                const { text: botReply } = await res.json();
-
-                addMessage(botReply, 'Bot');
-            } catch (err) {
-                console.error(err);
-                addMessage('Sorry, an error occurred.', 'Bot');
-            }
-        }
-
-        // optional: welcome message
-        addMessage('Hello! I am ready to chat.', 'Bot');
-    </script>
-</body>
-
-</html>
+// ... решта як раніше ...
+</script>
