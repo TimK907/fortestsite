@@ -207,9 +207,9 @@ function hardResetChatWidget() {
             window.Microsoft.Omnichannel &&
             window.Microsoft.Omnichannel.LiveChatWidget &&
             window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
-            typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.endChat === "function"
+            typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat === "function"
         ) {
-            window.Microsoft.Omnichannel.LiveChatWidget.SDK.endChat();
+            window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
         }
     } catch(e) {}
 
