@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Assistance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
     <style>
         html, body {
@@ -12,31 +12,21 @@
         }
         body {
             min-height: 100vh;
-            width: 100vw;
+            min-width: 100vw;
             margin: 0;
+            padding: 0;
             font-family: "Montserrat", Arial, sans-serif;
             background: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw') no-repeat center center fixed;
             background-size: cover;
-            position: relative;
-        }
-        .overlay {
-            background: rgba(255,255,255,0.85);
-            min-height: 100vh;
-            width: 100vw;
-            padding: 0;
-            margin: 0;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
         }
         .main-content {
             max-width: 420px;
-            margin: 60px 20px 0 40px;
-            padding: 36px 32px 24px 32px;
-            background: rgba(255,255,255,0.93);
+            margin: 60px 0 0 40px;
+            padding: 36px 32px 32px 32px;
+            background: rgba(255,255,255,.97);
             border-radius: 12px;
+            box-shadow: 0 0 22px 3px rgba(50,50,50,0.12);
             align-self: flex-start;
-            box-shadow: 0 0 30px 3px rgba(30,30,30,0.03);
         }
         h1 {
             margin-top: 0;
@@ -49,8 +39,8 @@
         .subtitle {
             margin-bottom: 18px;
             color: #333;
-            font-size: 1.1rem;
-            line-height: 1.5;
+            font-size: 1.02rem;
+            line-height: 1.6;
             text-align: left;
         }
         .row {
@@ -69,10 +59,6 @@
             padding: 7px 10px;
             border: 1px solid #aaa;
             border-radius: 4px;
-            width: 120px;
-        }
-        .auth-section, .login-section, .register-section {
-            margin-top: 10px;
         }
         .auth-user {
             font-size: 1rem;
@@ -96,36 +82,43 @@
         }
         .lang-toggle {
             position: fixed;
-            top: 18px;
-            right: 36px;
+            top: 24px;
+            right: 32px;
             z-index: 2000;
-            background: #fff;
-            box-shadow: 0 2px 12px #bbb3;
+            background: #005196;
+            color: #fff;
             border-radius: 30px;
+            box-shadow: 0 2px 12px #bbb3;
+            padding: 11px 26px 11px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
         }
-        @media (max-width: 650px) {
+        @media (max-width: 700px) {
             .main-content {
-                max-width: 100vw;
+                max-width: 98vw;
                 margin: 0;
                 border-radius: 0;
                 box-shadow: none;
-                padding: 20px 7vw 16px 7vw;
+                padding: 18px 5vw 10px 5vw;
             }
             .lang-toggle {
-                top: 9px;
-                right: 12px;
+                top: 10px;
+                right: 10px;
+                padding: 9px 18px 9px 17px;
+                font-size: 15px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="overlay">
-        <button class="btn lang-toggle" id="langBtn"></button>
+    <!-- Language Switch -->
+    <button class="lang-toggle" id="langBtn"></button>
+    <div style="display:flex;flex-direction:column;min-height:100vh;">
         <div class="main-content">
             <h1 id="main-heading"></h1>
             <div class="subtitle" id="main-sub"></div>
-
-            <!-- Brand Dropdown -->
             <div class="row">
                 <label for="brandSelect" id="brandLbl"></label>
                 <select id="brandSelect">
@@ -133,319 +126,273 @@
                     <option value="GO">GO</option>
                 </select>
             </div>
-
-            <!-- Auth Section -->
             <div id="authBox"></div>
         </div>
     </div>
 
-    <!-- Chat widget scripts (inserted as required, do not modify per requirements) -->
-    <script>
-        // Translations
-        const translations = {
-            en: {
-                langBtn: "Français",
-                heading: "We help you on every journey",
-                sub: "No matter how or where you travel – you can always count on us. From the first step to the last stop, our support is with you at every stage.",
-                brand: "Brand",
-                login: "Log In",
-                password: "Password",
-                userId: "User ID",
-                userName: "User Name",
-                logout: "Log Out",
-                or: "or",
-                createProfile: "Create Profile",
-                haveAccount: "Already have an account?",
-                regBtn: "Create Profile",
-                loginBtn: "Log In",
-                userGreeting: "Hello, {name}!",
-                invalid: "Invalid User ID or Password.",
-                alreadyUser: "User ID already exists.",
-                regSuccess: "Profile created, you can log in now."
-            },
-            fr: {
-                langBtn: "English",
-                heading: "Nous vous accompagnons dans chaque voyage",
-                sub: "Peu importe comment ou où vous voyagez – vous pouvez toujours compter sur nous. De votre point de départ à l'arrivée, notre soutien vous accompagne à chaque étape.",
-                brand: "Marque",
-                login: "Connexion",
-                password: "Mot de passe",
-                userId: "Identifiant",
-                userName: "Nom d'utilisateur",
-                logout: "Déconnexion",
-                or: "ou",
-                createProfile: "Créer un profil",
-                haveAccount: "Vous avez déjà un compte ?",
-                regBtn: "Créer un profil",
-                loginBtn: "Connexion",
-                userGreeting: "Bonjour, {name} !",
-                invalid: "Identifiant ou mot de passe incorrect.",
-                alreadyUser: "Cet identifiant existe déjà.",
-                regSuccess: "Profil créé, vous pouvez vous connecter."
+<!-- =========================== CHAT SCRIPTS (DO NOT TOUCH) ======================= -->
+<script>
+    //Styling function
+    function lcw()
+    {
+        return{
+            styleProps:{
+                generalStyles: {
+                    padding: "0px",
+                    border: "none",
+                },
+                titleStyles: {
+                    color: "#000000",
+                    fontFamily: "MXSans",
+                    fontSize: "22px",
+                    fontWeight: "700",
+                    lineHeight: "32px",
+                },
+                subtitleStyles: {
+                    color: "#000000",
+                    fontFamily: "MXSans",
+                    fontSize: "16px",
+                    fontWeight: "400",
+                    lineHeight: "22px",
+                }
             }
+        }
+    }
+</script>
+
+<script v2 id="Microsoft_Omnichannel_LCWidget"
+src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
+data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750"
+data-lcw-version="prod"
+data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
+data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
+data-font-family-override="Monotype Corsiva"
+data-custom-close-button-text="End Chat"
+data-color-override="#0000FF"
+data-customization-callback="lcw">
+</script>
+<!-- customContext injection will be right below -->
+<script>
+    // Language and text
+    const translations = {
+        en: {
+            langBtn: "Français",
+            heading: "We help you on every journey",
+            sub: "No matter how or where you travel – you can always count on us. From the first step to the last stop, our support is with you at every stage.",
+            brand: "Brand",
+            login: "Log In",
+            password: "Password",
+            userId: "User ID",
+            userName: "User Name",
+            logout: "Log Out",
+            or: "or",
+            createProfile: "Create Profile",
+            haveAccount: "Already have an account?",
+            regBtn: "Create Profile",
+            loginBtn: "Log In",
+            userGreeting: "Hello, {name}!",
+            invalid: "Invalid User ID or Password.",
+            alreadyUser: "User ID already exists.",
+            regSuccess: "Profile created, you can log in now."
+        },
+        fr: {
+            langBtn: "English",
+            heading: "Nous vous accompagnons dans chaque voyage",
+            sub: "Peu importe comment ou où vous voyagez – vous pouvez toujours compter sur nous. De votre point de départ à l'arrivée, notre soutien vous accompagne à chaque étape.",
+            brand: "Marque",
+            login: "Connexion",
+            password: "Mot de passe",
+            userId: "Identifiant",
+            userName: "Nom d'utilisateur",
+            logout: "Déconnexion",
+            or: "ou",
+            createProfile: "Créer un profil",
+            haveAccount: "Vous avez déjà un compte ?",
+            regBtn: "Créer un profil",
+            loginBtn: "Connexion",
+            userGreeting: "Bonjour, {name} !",
+            invalid: "Identifiant ou mot de passe incorrect.",
+            alreadyUser: "Cet identifiant existe déjà.",
+            regSuccess: "Profil créé, vous pouvez vous connecter."
+        }
+    };
+
+    // get/set helpers
+    function getLang() { return localStorage.getItem("lang") || "en"; }
+    function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
+    function getBrand() { return localStorage.getItem("brand") || "UP"; }
+    function setBrand(value) { localStorage.setItem("brand", value); }
+    function setProfile(profile) { localStorage.setItem("profile", JSON.stringify(profile)); }
+    function getProfile() { try { return JSON.parse(localStorage.getItem("profile")); } catch { return null; } }
+    function clearProfile() { localStorage.removeItem("profile"); }
+    function setAuthed(userId) { localStorage.setItem("authUser", userId); }
+    function getAuthed() { return localStorage.getItem("authUser"); }
+    function clearAuthed() { localStorage.removeItem("authUser"); }
+    function getCurrentUserData() {
+        const a = getAuthed();
+        const p = getProfile();
+        if (p && p.userId === a) return p;
+        return null;
+    }
+
+    // Main render
+    function renderApp() {
+        const lang = getLang();
+        const tr = translations[lang];
+        document.documentElement.lang = lang === "en" ? "en" : "fr";
+        document.getElementById("langBtn").textContent = tr.langBtn;
+        document.getElementById("main-heading").textContent = tr.heading;
+        document.getElementById("main-sub").textContent = tr.sub;
+        document.getElementById("brandLbl").textContent = tr.brand + ":";
+        document.getElementById("brandSelect").value = getBrand();
+
+        // Auth UI
+        const authBox = document.getElementById("authBox");
+        const currentProfile = getCurrentUserData();
+        let html = "";
+
+        if (currentProfile) {
+            html += `<div>
+                <div class="auth-user">${tr.userGreeting.replace("{name}", currentProfile.userName)}</div>
+                <button class="btn" id="logoutBtn">${tr.logout}</button>
+            </div>`;
+        } else {
+            html += `<div class="login-section" id="loginSection">
+                <form id="loginForm" autocomplete="off">
+                    <div class="row">
+                        <label for="loginUserId" style="min-width:90px">${tr.userId}: </label>
+                        <input type="text" id="loginUserId" required />
+                    </div>
+                    <div class="row">
+                        <label for="loginPw" style="min-width:90px">${tr.password}: </label>
+                        <input type="password" id="loginPw" required />
+                    </div>
+                    <button class="btn" id="loginBtn" type="submit" style="width:100%">${tr.loginBtn}</button>
+                </form>
+                <div style="margin: 8px 0; text-align:left"><span>${tr.or}</span></div>
+                <button class="btn" id="showReg">${tr.createProfile}</button>
+                <div id="authMsg" style="color:#cc0000;padding:2px 0 0 4px;font-size:0.93rem"></div>
+            </div>
+            <div class="register-section" id="registerSection" style="display:none">
+                <form id="registerForm" autocomplete="off">
+                    <div class="row">
+                        <label for="regName" style="min-width:90px">${tr.userName}: </label>
+                        <input type="text" id="regName" maxlength="30" required/>
+                    </div>
+                    <div class="row">
+                        <label for="regUserId" style="min-width:90px">${tr.userId}: </label>
+                        <input type="text" id="regUserId" maxlength="30" required/>
+                    </div>
+                    <div class="row">
+                        <label for="regPw" style="min-width:90px">${tr.password}: </label>
+                        <input type="password" id="regPw" minlength="3" maxlength="24" required/>
+                    </div>
+                    <button class="btn" id="regBtn" type="submit" style="width:100%">${tr.regBtn}</button>
+                </form>
+                <div style="margin: 8px 0 2px 0; text-align:left">
+                    <span>${tr.haveAccount}</span>
+                </div>
+                <button class="btn" id="hideReg">${tr.loginBtn}</button>
+                <div id="regMsg" style="color:#306404;padding:2px 0 0 4px;font-size:0.93rem"></div>
+            </div>`;
+        }
+        authBox.innerHTML = html;
+
+        // UI events
+        document.getElementById("brandSelect").addEventListener("change", (e) => {
+            setBrand(e.target.value);
+            location.reload();
+        });
+        document.getElementById("langBtn").onclick = () => {
+            setLang(lang === "en" ? "fr" : "en");
         };
 
-        // Language & Brand State
-        function getLang() {
-            return localStorage.getItem("lang") || "en";
-        }
-        function setLang(lang) {
-            localStorage.setItem("lang", lang);
-            location.reload();
-        }
-        function getBrand() {
-            return localStorage.getItem("brand") || "UP";
-        }
-        function setBrand(val) {
-            localStorage.setItem("brand", val);
-        }
-
-        // User Profile State
-        function setProfile(profile) {
-            localStorage.setItem("profile", JSON.stringify(profile));
-        }
-        function getProfile() {
-            try {
-                return JSON.parse(localStorage.getItem("profile"));
-            } catch { return null; }
-        }
-        function clearProfile() {
-            localStorage.removeItem("profile");
-        }
-        function setAuthed(userId) {
-            localStorage.setItem("authUser", userId);
-        }
-        function getAuthed() {
-            return localStorage.getItem("authUser");
-        }
-        function clearAuthed() {
-            localStorage.removeItem("authUser");
-        }
-
-        function getCurrentUserData() {
-            const authId = getAuthed();
-            const prof = getProfile();
-            if (prof && prof.userId === authId) return prof;
-            return null;
-        }
-
-        // Dynamic App Render
-        function renderApp() {
-            const lang = getLang();
-            const tr = translations[lang];
-            document.documentElement.lang = lang === "en" ? "en" : "fr";
-            document.getElementById("langBtn").textContent = tr.langBtn;
-            document.getElementById("main-heading").textContent = tr.heading;
-            document.getElementById("main-sub").textContent = tr.sub;
-            document.getElementById("brandLbl").textContent = tr.brand + ":";
-            document.getElementById("brandSelect").value = getBrand();
-
-            // Auth UI
-            const authBox = document.getElementById("authBox");
-            const currentProfile = getCurrentUserData();
-            let html = "";
-
-            if (currentProfile) {
-                html += `<div class="auth-section">`;
-                html += `<div class="auth-user">${tr.userGreeting.replace("{name}", currentProfile.userName)}</div>`;
-                html += `<button class="btn" id="logoutBtn">${tr.logout}</button>`;
-                html += `</div>`;
-            } else {
-                html += `<div class="login-section">`;
-                html += `<form id="loginForm" autocomplete="off">
-                            <div class="row">
-                                <label for="loginUserId" style="min-width:90px">${tr.userId}: </label>
-                                <input type="text" id="loginUserId" required />
-                            </div>
-                            <div class="row">
-                                <label for="loginPw" style="min-width:90px">${tr.password}: </label>
-                                <input type="password" id="loginPw" required />
-                            </div>
-                            <button class="btn" id="loginBtn" type="submit" style="width:100%">${tr.loginBtn}</button>
-                        </form>
-                        <div style="margin: 8px 0; text-align:left">
-                            <span>${tr.or}</span>
-                        </div>
-                        <button class="btn" id="showReg">${tr.createProfile}</button>
-                        <div id="authMsg" style="color:#cc0000;padding:2px 0 0 4px;font-size:0.93rem"></div>
-                    </div>
-                    <div class="register-section" id="registerSection" style="display:none">
-                        <form id="registerForm" autocomplete="off">
-                            <div class="row">
-                                <label for="regName" style="min-width:90px">${tr.userName}: </label>
-                                <input type="text" id="regName" maxlength="30" required/>
-                            </div>
-                            <div class="row">
-                                <label for="regUserId" style="min-width:90px">${tr.userId}: </label>
-                                <input type="text" id="regUserId" maxlength="30" required/>
-                            </div>
-                            <div class="row">
-                                <label for="regPw" style="min-width:90px">${tr.password}: </label>
-                                <input type="password" id="regPw" minlength="3" maxlength="24" required/>
-                            </div>
-                            <button class="btn" id="regBtn" type="submit" style="width:100%">${tr.regBtn}</button>
-                        </form>
-                        <div style="margin: 8px 0 2px 0; text-align:left">
-                            <span>${tr.haveAccount}</span>
-                        </div>
-                        <button class="btn" id="hideReg">${tr.loginBtn}</button>
-                        <div id="regMsg" style="color:#306404;padding:2px 0 0 4px;font-size:0.93rem"></div>
-                    </div>`;
-            }
-            authBox.innerHTML = html;
-
-            // Attach Events
-            document.getElementById("brandSelect").addEventListener("change", (e) => {
-                setBrand(e.target.value);
+        if (currentProfile) {
+            document.getElementById("logoutBtn").onclick = () => {
+                clearAuthed();
                 location.reload();
-            });
-            document.getElementById("langBtn").onclick = () => {
-                setLang(lang === "en" ? "fr" : "en");
             };
-
-            if (currentProfile) {
-                document.getElementById("logoutBtn").onclick = () => {
-                    clearAuthed();
+        } else {
+            document.getElementById("showReg").onclick = () => {
+                document.getElementById("registerSection").style.display = "block";
+                document.getElementById("loginSection").style.display = "none";
+            };
+            document.getElementById("hideReg").onclick = () => {
+                document.getElementById("registerSection").style.display = "none";
+                document.getElementById("loginSection").style.display = "block";
+            };
+            document.getElementById("loginForm").onsubmit = (e) => {
+                e.preventDefault();
+                const userId = document.getElementById("loginUserId").value.trim();
+                const pw = document.getElementById("loginPw").value;
+                const prof = getProfile();
+                const msg = document.getElementById("authMsg");
+                if (prof && prof.userId === userId && prof.pw === pw) {
+                    setAuthed(userId);
                     location.reload();
-                };
-            } else {
-                // Show/Hide registration
-                document.getElementById("showReg").onclick = () => {
-                    document.getElementById("registerSection").style.display = "block";
-                    document.querySelector(".login-section").style.display = "none";
-                };
-                document.getElementById("hideReg").onclick = () => {
-                    document.getElementById("registerSection").style.display = "none";
-                    document.querySelector(".login-section").style.display = "block";
-                };
-                // Log In
-                document.getElementById("loginForm").onsubmit = (e) => {
-                    e.preventDefault();
-                    const userId = document.getElementById("loginUserId").value.trim();
-                    const pw = document.getElementById("loginPw").value;
-                    const prof = getProfile();
-                    const msg = document.getElementById("authMsg");
-                    if (prof && prof.userId === userId && prof.pw === pw) {
-                        setAuthed(userId);
-                        location.reload();
-                    } else {
-                        msg.textContent = translations[lang].invalid;
-                    }
-                };
-                // Register
-                document.getElementById("registerForm").onsubmit = (e) => {
-                    e.preventDefault();
-                    const name = document.getElementById("regName").value.trim();
-                    const userId = document.getElementById("regUserId").value.trim();
-                    const pw = document.getElementById("regPw").value;
-                    const msg = document.getElementById("regMsg");
-                    // For single user only: check for duplicate
-                    const existing = getProfile();
-                    if (existing && existing.userId === userId) {
-                        msg.textContent = translations[lang].alreadyUser;
-                        return;
-                    }
-                    setProfile({userName: name, userId: userId, pw: pw});
-                    msg.textContent = translations[lang].regSuccess;
-                    setTimeout(() => {
-                        document.getElementById("registerSection").style.display = "none";
-                        document.querySelector(".login-section").style.display = "block";
-                    }, 1100);
-                };
-            }
-        }
-
-        // On load: render app and initialize chat after rendering
-        window.addEventListener('DOMContentLoaded', () => {
-            renderApp();
-            setTimeout(startChatWidget, 120); // after dom+state rendered
-        });
-
-        // ---- Live Chat Widget Integration (per requirements) ----
-
-        // This function will HOLD chat config and re-initialize as needed
-        function startChatWidget() {
-            removeExistingChatScript();
-            window.lcw = function () {
-                return {
-                    styleProps: {
-                        generalStyles: {
-                            padding: "0px",
-                            border: "none",
-                        },
-                        titleStyles: {
-                            color: "#000000",
-                            fontFamily: "MXSans",
-                            fontSize: "22px",
-                            fontWeight: "700",
-                            lineHeight: "32px",
-                        },
-                        subtitleStyles: {
-                            color: "#000000",
-                            fontFamily: "MXSans",
-                            fontSize: "16px",
-                            fontWeight: "400",
-                            lineHeight: "22px",
-                        }
-                    }
+                } else {
+                    msg.textContent = translations[lang].invalid;
                 }
             };
-
-            // Insert widget script with all attributes as required
-            const script = document.createElement('script');
-            script.id = "Microsoft_Omnichannel_LCWidget";
-            script.src = "https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js";
-            script.setAttribute("data-app-id", "d9f84d07-eecf-4bac-8385-084026ce5750");
-            script.setAttribute("data-lcw-version", "prod");
-            script.setAttribute("data-org-id", "44e3fe33-032f-f011-9a43-002248282d3c");
-            script.setAttribute("data-org-url", "https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com");
-            script.setAttribute("data-font-family-override", "Monotype Corsiva");
-            script.setAttribute("data-custom-close-button-text", "End Chat");
-            script.setAttribute("data-color-override", "#0000FF");
-            script.setAttribute("data-customization-callback", "lcw");
-            document.body.appendChild(script);
-
-            // After widget ready, start chat with proper customContext
-            window.addEventListener("lcw:ready", function handler() {
-                window.removeEventListener("lcw:ready", handler);
-                // Prepare variables to pass
-                const lang = getLang();
-                let userLang = lang === "en" ? "English" : "French";
-                let brand = getBrand();
-                let userName = "";
-                let token = "";
-                const prof = getCurrentUserData();
-                if (prof) {
-                    userName = prof.userName;
-                    token = prof.userId;
+            document.getElementById("registerForm").onsubmit = (e) => {
+                e.preventDefault();
+                const name = document.getElementById("regName").value.trim();
+                const userId = document.getElementById("regUserId").value.trim();
+                const pw = document.getElementById("regPw").value;
+                const msg = document.getElementById("regMsg");
+                const existing = getProfile();
+                if (existing && existing.userId === userId) {
+                    msg.textContent = translations[lang].alreadyUser;
+                    return;
                 }
-                if (window.Microsoft && window.Microsoft.Omnichannel && window.Microsoft.Omnichannel.LiveChatWidget) {
-                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-                        inNewWindow: false,
-                        customContext: {
-                            'UserLanguage': {'value': userLang, 'isDisplayable': true},
-                            'Brand': {'value': brand, 'isDisplayable': true},
-                            'UserName': {'value': userName, 'isDisplayable': true},
-                            'Token': {'value': token, 'isDisplayable': true}
-                        }
-                    });
-                }
-            });
+                setProfile({userName: name, userId: userId, pw: pw});
+                msg.textContent = translations[lang].regSuccess;
+                setTimeout(() => {
+                    document.getElementById("registerSection").style.display = "none";
+                    document.getElementById("loginSection").style.display = "block";
+                }, 1000);
+            };
         }
+    }
 
-        function removeExistingChatScript() {
-            // Remove previous widget scripts & SDK
-            const prev = document.getElementById("Microsoft_Omnichannel_LCWidget");
-            if (prev) prev.remove();
-            if (window.Microsoft && window.Microsoft.Omnichannel) {
-                try {
-                    delete window.Microsoft.Omnichannel.LiveChatWidget;
-                } catch {}
+    // On load: render
+    window.addEventListener('DOMContentLoaded', () => {
+        renderApp();
+    });
+
+    // CHAT context passing
+    function getChatData() {
+        const lang = getLang();
+        let userLang = lang === "en" ? "English" : "French";
+        let brand = getBrand();
+        let userName = "";
+        let token = "";
+        const prof = getCurrentUserData();
+        if (prof) {
+            userName = prof.userName;
+            token = prof.userId;
+        }
+        return {
+            UserLanguage: userLang,
+            Brand: brand,
+            UserName: userName,
+            Token: token
+        }
+    }
+
+    // Pass needed values to LCW customContext STRICTLY according to chat script
+    window.addEventListener("lcw:ready", function() {
+        var data = getChatData();
+        Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+            inNewWindow: false,
+            customContext: {
+                'UserLanguage': {'value': data.UserLanguage, 'isDisplayable': true},
+                'Brand': {'value': data.Brand, 'isDisplayable': true},
+                'UserName': {'value': data.UserName, 'isDisplayable': true},
+                'Token': {'value': data.Token, 'isDisplayable': true}
             }
-            // Remove previous event listeners if any
-            let cloneBody = document.body.cloneNode(true);
-            document.body.parentNode.replaceChild(cloneBody, document.body);
-        }
-    </script>
+        });
+    });
+</script>
 </body>
 </html>
