@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,57 +6,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Support</title>
     <style>
+        /* Ensure the background image does not repeat */
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
             font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: flex-start;
             background-image: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw');
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
             color: #000;
         }
+
         .container {
             background-color: rgba(255, 255, 255, 0.8);
-            margin: 20px;
+            margin-top: 20px;
             padding: 20px;
             border-radius: 5px;
+            width: 70%;
         }
+
         h1, p {
-            margin: 10px 0;
-            text-align: left;
+            text-align: left; /* Align text to the left */
         }
+
         .controls {
             display: flex;
             gap: 10px;
+            margin-bottom: 10px; /* Position controls above text */
+        }
+
+        .select-brand {
             margin-top: 10px;
         }
-        .hidden {
-            display: none;
-        }
-        .select-brand, .auth-form {
-            margin-top: 10px;
-        }
+
         .auth-form input {
             display: block;
             margin: 5px 0;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 id="header-text">We will help you on any journey</h1>
-        <p id="description-text">No matter how you travel, you can count on our support to ensure a seamless and reliable experience.</p>
-        
-        <div class="controls">
-            <button id="lang-en">English</button>
-            <button id="lang-fr">Français</button>
-        </div>
-        
+    <!-- Language and brand selection buttons outside the text container -->
+    <div class="controls">
+        <button id="lang-en">English</button>
+        <button id="lang-fr">Français</button>
         <div class="select-brand">
             <label for="brand-select">Brand:</label>
             <select id="brand-select">
@@ -63,7 +67,13 @@
                 <option value="GO">GO</option>
             </select>
         </div>
-        
+    </div>
+
+    <!-- Content and authentication block -->
+    <div class="container">
+        <h1 id="header-text">We will help you on any journey</h1>
+        <p id="description-text">No matter how you travel, you can count on our support to ensure a seamless and reliable experience.</p>
+
         <div id="auth-area">
             <button id="login-btn">Log In</button>
             <button class="hidden" id="logout-btn">Log Out</button>
@@ -77,13 +87,12 @@
         </div>
     </div>
 
-    <!-- Chat script -->
     <script>
-        // Initial variables for tracking state
+        // Fix chat logic
         let currentLanguage = 'English';
-        let userStatus = 'Guest'; // 'Guest' or 'LoggedIn'
-        let userData = {}; // To store user details (UserName, UserID)
-        
+        let userStatus = 'Guest';
+        let userData = {};
+
         const langButtons = document.querySelectorAll('.controls button');
         const loginBtn = document.getElementById('login-btn');
         const logoutBtn = document.getElementById('logout-btn');
@@ -91,7 +100,6 @@
         const createProfileBtn = document.getElementById('create-profile');
         const brandSelect = document.getElementById('brand-select');
 
-        // Helper function to update UI on login/logout
         function updateAuthUI() {
             if (userStatus === 'LoggedIn') {
                 loginBtn.classList.add('hidden');
@@ -104,12 +112,10 @@
             }
         }
 
-        // Reload the page and reinitialize chat
         function reloadPage() {
             location.reload();
         }
 
-        // Language buttons event listeners
         langButtons.forEach(button => {
             button.addEventListener('click', () => {
                 currentLanguage = button.textContent;
@@ -117,19 +123,16 @@
             });
         });
 
-        // Login button event listener
         loginBtn.addEventListener('click', () => {
             authForm.classList.remove('hidden');
         });
 
-        // Logout button event listener
         logoutBtn.addEventListener('click', () => {
             userStatus = 'Guest';
             userData = {};
             reloadPage();
         });
 
-        // Create profile and log in
         createProfileBtn.addEventListener('click', () => {
             const userName = document.getElementById('user-name').value;
             const userId = document.getElementById('user-id').value;
@@ -144,7 +147,6 @@
             }
         });
 
-        // Inject chat widget
         window.addEventListener("lcw:ready", function() {
             Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
                 inNewWindow: false,
@@ -157,13 +159,13 @@
             });
         });
 
-        // Restore data and update UI on page load
+        // Restore user session on reload
         if (userStatus === 'LoggedIn') {
             updateAuthUI();
         }
     </script>
 
-    <!-- Chat snippet -->
+    <!-- Chat styling fix -->
     <script>
         function lcw() {
             return {
@@ -197,9 +199,9 @@
             data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
             data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
             data-font-family-override="Monotype Corsiva"
-            data-custom-close-button-text="End Chat"
-            data-color-override="#0000FF"
+            data-color-override="#42f542"
             data-customization-callback="lcw">
     </script>
 </body>
 </html>
+```
