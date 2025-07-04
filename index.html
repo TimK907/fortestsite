@@ -168,7 +168,7 @@ data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
 data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
 data-font-family-override="Monotype Corsiva"
 data-custom-close-button-text="End Chat"
-data-color-override="#42f542"
+data-color-override="#dd42f5"
 data-customization-callback="lcw">
 </script>
 <script>
@@ -198,9 +198,9 @@ window.addEventListener("lcw:ready", function() {
 <!-- ====== END OF CHAT SCRIPTS (DO NOT TOUCH ABOVE) ======= -->
 
 <script>
-// Hard reset chat widget: end session and clear related data
+// Hard reset chat widget: close session and clear related data
 function hardResetChatWidget() {
-    // End session if available
+    // Close session if available (as per Microsoft documentation)
     try {
         if (
             window.Microsoft &&
@@ -209,7 +209,7 @@ function hardResetChatWidget() {
             window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
             typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat === "function"
         ) {
-            window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
+            Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
         }
     } catch(e) {}
 
