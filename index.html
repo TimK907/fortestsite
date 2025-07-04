@@ -173,6 +173,20 @@ data-customization-callback="lcw">
 </script>
 <!-- customContext injection will be right below -->
 <script>
+    // End chat session function
+    function endChatSessionIfPossible() {
+        try {
+            if (window.Microsoft && window.Microsoft.Omnichannel &&
+                window.Microsoft.Omnichannel.LiveChatWidget &&
+                window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
+                typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.endChat === "function") {
+                window.Microsoft.Omnichannel.LiveChatWidget.SDK.endChat();
+            }
+        } catch(e) {
+            // ignore
+        }
+    }
+
     // Language and text
     const translations = {
         en: {
@@ -217,7 +231,6 @@ data-customization-callback="lcw">
         }
     };
 
-    // get/set helpers
     function getLang() { return localStorage.getItem("lang") || "en"; }
     function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
     function getBrand() { return localStorage.getItem("brand") || "UP"; }
@@ -298,19 +311,21 @@ data-customization-callback="lcw">
         }
         authBox.innerHTML = html;
 
-        // UI events
         document.getElementById("brandSelect").addEventListener("change", (e) => {
             setBrand(e.target.value);
-            location.reload();
+            endChatSessionIfPossible();
+            setTimeout(() => location.reload(), 300);
         });
         document.getElementById("langBtn").onclick = () => {
-            setLang(lang === "en" ? "fr" : "en");
+            endChatSessionIfPossible();
+            setTimeout(() => setLang(lang === "en" ? "fr" : "en"), 300);
         };
 
         if (currentProfile) {
             document.getElementById("logoutBtn").onclick = () => {
                 clearAuthed();
-                location.reload();
+                endChatSessionIfPossible();
+                setTimeout(() => location.reload(), 300);
             };
         } else {
             document.getElementById("showReg").onclick = () => {
@@ -329,7 +344,8 @@ data-customization-callback="lcw">
                 const msg = document.getElementById("authMsg");
                 if (prof && prof.userId === userId && prof.pw === pw) {
                     setAuthed(userId);
-                    location.reload();
+                    endChatSessionIfPossible();
+                    setTimeout(() => location.reload(), 300);
                 } else {
                     msg.textContent = translations[lang].invalid;
                 }
@@ -355,12 +371,11 @@ data-customization-callback="lcw">
         }
     }
 
-    // On load: render
     window.addEventListener('DOMContentLoaded', () => {
         renderApp();
     });
 
-    // CHAT context passing
+    // Pass needed values to LCW customContext STRICTLY according to chat script
     function getChatData() {
         const lang = getLang();
         let userLang = lang === "en" ? "English" : "French";
@@ -380,7 +395,6 @@ data-customization-callback="lcw">
         }
     }
 
-    // Pass needed values to LCW customContext STRICTLY according to chat script
     window.addEventListener("lcw:ready", function() {
         var data = getChatData();
         Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
