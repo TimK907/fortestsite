@@ -1,289 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Travel Support Page</title>
-  <meta name="viewport" content="width=1024">
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, Helvetica, sans-serif;
-      background: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw') center center/cover no-repeat fixed;
-    }
-    .overlay {
-      position:fixed;
-      top:0; left:0; right:0; bottom:0;
-      background: rgba(0,0,0,0.5);
-      pointer-events: none;
-      z-index: 0;
-    }
-    .wrapper {
-      position: relative;
-      max-width: 420px;
-      margin: 60px 0 0 60px;
-      background: rgba(255,255,255,0.85);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.14);
-      padding: 40px 32px 32px 32px;
-      z-index: 1;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 26px;
-    }
-    select, input[type="text"] {
-      width: 100%;
-      padding: 8px 12px;
-      margin-top: 6px;
-      border-radius: 5px;
-      border: 1px solid #999;
-      font-size: 1em;
-      box-sizing: border-box;
-    }
-    button, .lang-btn {
-      margin-top: 28px;
-      padding: 11px 28px;
-      font-size: 1.05em;
-      border-radius: 7px;
-      background: #1976D2;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      margin-right: 16px;
-      transition: background 0.15s;
-    }
-    .lang-btn {
-      background: #2a2e35;
-      margin-top: 0;
-      margin-bottom: 22px;
-      font-size: 0.98em;
-    }
-    button:disabled {
-      background: #aaa;
-      cursor: not-allowed;
-    }
-    .error { color:#c23; font-size: 0.98em; margin: 4px 0 0 0;}
-    .iframe-box {
-      position: fixed;
-      right: 32px; bottom: 32px;
-      width: 410px; height: 500px;
-      background: #fff;
-      border-radius: 9px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.16);
-      z-index: 4;
-      overflow: hidden;
-      display: flex;
-      flex-direction:column;
-    }
-    .iframe-header {
-      background: #1976D2;
-      color:#fff;
-      padding: 8px 16px;
-      font-size:1.11em;
-      font-weight: bold;
-      flex: none;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .iframe-header button {
-      background: none;
-      color: #fff;
-      border: none;
-      font-size: 1.18em;
-      padding: 0 9px;
-      margin: 0;
-      cursor: pointer;
-    }
-    .iframe-inner {
-      width:100%; height:100%; border:none; flex: 1 1 100%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Support</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            background-image: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw');
+            background-size: cover;
+            background-position: center;
+            color: #000;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 20px;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        h1, p {
+            margin: 10px 0;
+            text-align: left;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .select-brand, .auth-form {
+            margin-top: 10px;
+        }
+        .auth-form input {
+            display: block;
+            margin: 5px 0;
+        }
+    </style>
 </head>
 <body>
-  <div class="overlay"></div>
-  <div class="wrapper">
-    <button class="lang-btn" id="langBtn">Français</button>
-    <h1 id="mainTitle"></h1>
-    <p id="mainDesc"></p>
-    
-    <form id="mainForm" autocomplete="off">
-      <label for="brandSel" id="brandLabel"></label>
-      <select id="brandSel" required>
-        <option value="" disabled selected></option>
-        <option value="UP"></option>
-        <option value="GO"></option>
-      </select>
-
-      <label for="authSel" id="authLabel"></label>
-      <select id="authSel" required>
-        <option value="" disabled selected></option>
-        <option value="yes"></option>
-        <option value="no"></option>
-      </select>
-      
-      <div id="userIdBox" style="display:none">
-        <label for="userIdInp" id="userIdLabel"></label>
-        <input type="text" id="userIdInp" maxlength="30" autocomplete="off" />
-        <div id="userIdErr" class="error" style="display:none"></div>
-      </div>
-
-      <div style="margin-top:18px;">
-        <button type="button" id="showChatBtn" disabled></button>
-      </div>
-    </form>
-  </div>
-  <div id="iframeChat" style="display:none;"></div>
-  <script>
-    // Локалізації (EN & FR)
-    const translations = {
-      en: {
-        langBtn: "Français",
-        mainTitle: "We will support you on any journey",
-        mainDesc: "No matter how you travel, you can always count on our support. Our team is always ready to help you wherever you are and however you move – by car, plane, train or on foot.",
-        brandLabel: "Brand",
-        brands: { UP: "UP", GO: "GO" },
-        authLabel: "Are you authorized?",
-        authOptions: { yes: "Yes", no: "No" },
-        userIdLabel: "User ID",
-        userIdPlaceholder: "Enter your User ID",
-        showChatBtn: "Show chat",
-        userIdRequired: "Please enter your User ID"
-      },
-      fr: {
-        langBtn: "English",
-        mainTitle: "Nous vous accompagnons dans tous vos voyages",
-        mainDesc: "Quel que soit votre mode de voyage, vous pouvez toujours compter sur notre soutien. Notre équipe est prête à vous aider partout et quel que soit votre moyen de déplacement – en voiture, en avion, en train ou à pied.",
-        brandLabel: "Marque",
-        brands: { UP: "UP", GO: "GO" },
-        authLabel: "Êtes-vous autorisé ?",
-        authOptions: { yes: "Oui", no: "Non" },
-        userIdLabel: "Identifiant utilisateur",
-        userIdPlaceholder: "Entrez votre identifiant",
-        showChatBtn: "Afficher le chat",
-        userIdRequired: "Veuillez saisir votre identifiant"
-      }
-    };
-
-    let currentLang = 'en';
-
-    function t(key) {
-      return translations[currentLang][key];
-    }
-
-    function refreshTexts() {
-      document.getElementById('langBtn').textContent = t('langBtn');
-      document.getElementById('mainTitle').textContent = t('mainTitle');
-      document.getElementById('mainDesc').textContent = t('mainDesc');
-      document.getElementById('brandLabel').textContent = t('brandLabel');
-      const brandSel = document.getElementById('brandSel');
-      brandSel.children[0].textContent = ""; // blank
-      brandSel.children[1].textContent = translations[currentLang].brands['UP'];
-      brandSel.children[2].textContent = translations[currentLang].brands['GO'];
-
-      document.getElementById('authLabel').textContent = t('authLabel');
-      const authSel = document.getElementById('authSel');
-      authSel.children[0].textContent = ""; // blank
-      authSel.children[1].textContent = translations[currentLang].authOptions['yes'];
-      authSel.children[2].textContent = translations[currentLang].authOptions['no'];
-
-      document.getElementById('userIdLabel').textContent = t('userIdLabel');
-      document.getElementById('userIdInp').setAttribute('placeholder', t('userIdPlaceholder'));
-      document.getElementById('showChatBtn').textContent = t('showChatBtn');
-    }
-
-    document.getElementById('langBtn').onclick = function() {
-      currentLang = (currentLang === 'en') ? 'fr' : 'en';
-      refreshTexts();
-      validateForm();
-      if (document.getElementById('iframeChat').style.display !== "none") {
-        openChat();
-      }
-    };
-
-    document.getElementById('authSel').addEventListener('change', function(){
-      const auth = this.value;
-      if (auth === 'yes') {
-        document.getElementById('userIdBox').style.display = '';
-      } else {
-        document.getElementById('userIdBox').style.display = 'none';
-        document.getElementById('userIdInp').value = '';
-        document.getElementById('userIdErr').style.display = 'none';
-      }
-      validateForm();
-    });
-
-    function validateUserId() {
-      const userIdInp = document.getElementById('userIdInp');
-      const userId = userIdInp.value.trim();
-      if (userId.length === 0) {
-        document.getElementById('userIdErr').textContent = t('userIdRequired');
-        document.getElementById('userIdErr').style.display = '';
-        return false;
-      } else {
-        document.getElementById('userIdErr').style.display = 'none';
-        return true;
-      }
-    }
-    document.getElementById('userIdInp').addEventListener('input', function(){
-      validateForm();
-    });
-
-    function validateForm() {
-      const brand = document.getElementById('brandSel').value;
-      const auth = document.getElementById('authSel').value;
-      let formValid = !!brand && !!auth;
-      if (auth === 'yes') {
-        formValid = formValid && validateUserId();
-      }
-      document.getElementById('showChatBtn').disabled = !formValid;
-    }
-
-    document.getElementById('brandSel').addEventListener('change', validateForm);
-    document.getElementById('authSel').addEventListener('change', validateForm);
-
-    window.onload = () => {
-      refreshTexts();
-      validateForm();
-    };
-
-    document.getElementById('showChatBtn').onclick = openChat;
-
-    function openChat() {
-      const brand = document.getElementById('brandSel').value;
-      const auth = document.getElementById('authSel').value;
-      let user = '';
-      if (auth === 'yes') {
-        user = document.getElementById('userIdInp').value.trim();
-      }
-      // Саме так формуємо параметри згідно інструкції
-      let params = '';
-      if (brand) {
-        params += `Brand=${encodeURIComponent(brand)}`;
-      }
-      if (currentLang) {
-        params += (params ? '&' : '') + `Lng=${encodeURIComponent(currentLang)}`;  // саме Lng !
-      }
-      if (auth === 'yes' && user.length > 0) {
-        params += (params ? '&' : '') + `User=${encodeURIComponent(user)}`;
-      }
-
-      const srcBase = 'https://copilotstudio.microsoft.com/environments/aa9a827b-aedf-ee7d-b575-bfb7ebdcf717/bots/cr7d7_undefinedNameOfTouristInformationAgen/webchat';
-      const fullSrc = srcBase + '?' + params;
-
-      // Для дебагу відобразити згенерований url під iframe:
-      document.getElementById('iframeChat').innerHTML = `
-        <div class="iframe-box">
-          <div class="iframe-header">
-            <span>${t("showChatBtn")}</span>
-            <button title="Close" onclick="document.getElementById('iframeChat').style.display='none'">&times;</button>
-          </div>
-          <iframe src="${fullSrc}" class="iframe-inner" allow="clipboard-write; clipboard-read;"></iframe>
-          <div style="font-size:10px;color:#888;background:#eee;padding:4px;margin:0;">${fullSrc}</div>
+    <div class="container">
+        <h1 id="header-text">We will help you on any journey</h1>
+        <p id="description-text">No matter how you travel, you can count on our support to ensure a seamless and reliable experience.</p>
+        
+        <div class="controls">
+            <button id="lang-en">English</button>
+            <button id="lang-fr">Français</button>
         </div>
-      `;
-      document.getElementById('iframeChat').style.display = '';
-    }
-  </script>
+        
+        <div class="select-brand">
+            <label for="brand-select">Brand:</label>
+            <select id="brand-select">
+                <option value="UP">UP</option>
+                <option value="GO">GO</option>
+            </select>
+        </div>
+        
+        <div id="auth-area">
+            <button id="login-btn">Log In</button>
+            <button class="hidden" id="logout-btn">Log Out</button>
+        </div>
+
+        <div id="auth-form" class="auth-form hidden">
+            <input id="user-name" type="text" placeholder="User Name">
+            <input id="user-id" type="text" placeholder="User ID">
+            <input id="password" type="password" placeholder="Password">
+            <button id="create-profile">Create Profile</button>
+        </div>
+    </div>
+
+    <!-- Chat script -->
+    <script>
+        // Initial variables for tracking state
+        let currentLanguage = 'English';
+        let userStatus = 'Guest'; // 'Guest' or 'LoggedIn'
+        let userData = {}; // To store user details (UserName, UserID)
+        
+        const langButtons = document.querySelectorAll('.controls button');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const authForm = document.getElementById('auth-form');
+        const createProfileBtn = document.getElementById('create-profile');
+        const brandSelect = document.getElementById('brand-select');
+
+        // Helper function to update UI on login/logout
+        function updateAuthUI() {
+            if (userStatus === 'LoggedIn') {
+                loginBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                authForm.classList.add('hidden');
+            } else {
+                loginBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                authForm.classList.add('hidden');
+            }
+        }
+
+        // Reload the page and reinitialize chat
+        function reloadPage() {
+            location.reload();
+        }
+
+        // Language buttons event listeners
+        langButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                currentLanguage = button.textContent;
+                reloadPage();
+            });
+        });
+
+        // Login button event listener
+        loginBtn.addEventListener('click', () => {
+            authForm.classList.remove('hidden');
+        });
+
+        // Logout button event listener
+        logoutBtn.addEventListener('click', () => {
+            userStatus = 'Guest';
+            userData = {};
+            reloadPage();
+        });
+
+        // Create profile and log in
+        createProfileBtn.addEventListener('click', () => {
+            const userName = document.getElementById('user-name').value;
+            const userId = document.getElementById('user-id').value;
+
+            if (userName && userId) {
+                userData.UserName = userName;
+                userData.Token = userId;
+                userStatus = 'LoggedIn';
+                reloadPage();
+            } else {
+                alert('Please fill in all fields.');
+            }
+        });
+
+        // Inject chat widget
+        window.addEventListener("lcw:ready", function() {
+            Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+                inNewWindow: false,
+                customContext: {
+                    'UserLanguage': {'value': currentLanguage, 'isDisplayable': true},
+                    'Brand': {'value': brandSelect.value, 'isDisplayable': true},
+                    'UserName': {'value': userData.UserName || '', 'isDisplayable': true},
+                    'Token': {'value': userData.Token || '', 'isDisplayable': true}
+                }
+            });
+        });
+
+        // Restore data and update UI on page load
+        if (userStatus === 'LoggedIn') {
+            updateAuthUI();
+        }
+    </script>
+
+    <!-- Chat snippet -->
+    <script>
+        function lcw() {
+            return {
+                styleProps: {
+                    generalStyles: {
+                        padding: "0px",
+                        border: "none",
+                    },
+                    titleStyles: {
+                        color: "#000000",
+                        fontFamily: "MXSans",
+                        fontSize: "22px",
+                        fontWeight: "700",
+                        lineHeight: "32px",
+                    },
+                    subtitleStyles: {
+                        color: "#000000",
+                        fontFamily: "MXSans",
+                        fontSize: "16px",
+                        fontWeight: "400",
+                        lineHeight: "22px",
+                    }
+                }
+            }
+        }
+    </script>
+    <script id="Microsoft_Omnichannel_LCWidget" 
+            src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js" 
+            data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750"
+            data-lcw-version="prod" 
+            data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
+            data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
+            data-font-family-override="Monotype Corsiva"
+            data-custom-close-button-text="End Chat"
+            data-color-override="#0000FF"
+            data-customization-callback="lcw">
+    </script>
 </body>
 </html>
