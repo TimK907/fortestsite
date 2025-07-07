@@ -233,7 +233,7 @@
         }
     </script>
 
-    <!-- ===== Omnichannel LiveChatWidget for D365 (do not modify below) ===== -->
+    <!-- ===== Omnichannel LiveChatWidget for D365 ===== -->
     <script id="Microsoft_Omnichannel_LCWidget"
             src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
             data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750" data-lcw-version="prod"
@@ -246,7 +246,7 @@
 
     <!-- ===== SSO/MSAL and logic for live chat ===== -->
     <script>
-        // UI translation/branding for language & branding
+        // UI translations for language & branding
         const translations = {
             en: {
                 langBtn: "Français",
@@ -266,8 +266,8 @@
         function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
         function getBrand() { return localStorage.getItem("brand") || "UP"; }
         function setBrand(value) { localStorage.setItem("brand", value); }
-
-        // Render the UI (heading, subtitle, lang switch, brand selector)
+        
+        // Render main UI (headers, lang, brand)
         function renderApp() {
             const lang = getLang();
             const tr = translations[lang];
@@ -293,7 +293,7 @@
         // MSAL config for Azure SSO
         const msalConfig = {
             auth: {
-                clientId: "20432056-2b97-43ca-9cfc-ec900428bbd4",
+                clientId: "89344f03-2e01-449a-9cf2-306b4545c5d0",
                 authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182"
             },
             cache: {
@@ -305,21 +305,26 @@
         const msalInstance = new msal.PublicClientApplication(msalConfig);
         let accessToken = "";
         let userOid = "";
+        let userName = "";
 
+        // Microsoft SSO Login
         async function loginWithMicrosoft() {
             document.getElementById("ssoStatus").textContent = "";
             try {
+                // MS login + get account
                 await msalInstance.loginPopup(loginRequest);
                 const acc = msalInstance.getAllAccounts()[0];
                 msalInstance.setActiveAccount(acc);
 
+                // Get accessToken & user info
                 const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: acc });
                 accessToken = response.accessToken;
 
                 const idTokenClaims = response.idTokenClaims || {};
                 userOid = idTokenClaims.oid || acc.homeAccountId || "";
+                userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
 
-                // Register SSO-provider for Omnichannel chat before starting chat
+                // Register SSO provider
                 if(window.Microsoft && window.Microsoft.Omnichannel
                    && window.Microsoft.Omnichannel.LiveChatWidget
                    && window.Microsoft.Omnichannel.LiveChatWidget.SDK
@@ -331,30 +336,30 @@
                     }, {once:true});
                 }
 
-                // Auto-start chat, passing UserToken, Brand and Language values
+                // Auto-start chat with correct customContext (per MS Docs)
                 window.addEventListener("lcw:ready", function () {
                     var lang = getLang();
                     var brand = getBrand();
                     window.Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-                        inNewWindow: false,
                         customContext: {
-                            'UserToken': { 'value': userOid, 'isDisplayable': true },
+                            'UserLanguage': { 'value': lang === "en" ? "English" : "French", 'isDisplayable': true },
                             'Brand': { 'value': brand, 'isDisplayable': true },
-                            'UserLanguage': { 'value': lang === "en" ? "English" : "French", 'isDisplayable': true }
+                            'UserName': { 'value': userName, 'isDisplayable': true },
+                            'Token': { 'value': userOid, 'isDisplayable': true }
                         }
                     });
                 }, {once: true});
 
-                // UI: show status, hide login button
+                // Show user's name/status
                 document.getElementById("msLoginBtn").style.display = "none";
-                document.getElementById("ssoStatus").textContent = "Welcome! Starting chat...";
+                document.getElementById("ssoStatus").textContent = "Welcome, " + userName + "! Starting chat...";
 
             } catch (err) {
                 document.getElementById("ssoStatus").textContent = "SSO login failed: " + err.message;
             }
         }
 
-        // Optional auto-login in SPA session
+        // Optional: auto-login if already signed in (SPA session)
         window.addEventListener("DOMContentLoaded", async function() {
             const accounts = msalInstance.getAllAccounts();
             if(accounts && accounts.length > 0){
