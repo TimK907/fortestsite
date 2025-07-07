@@ -6,15 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-        }
+        html, body { height: 100%; margin:0; }
         body {
             min-height: 100vh;
             min-width: 100vw;
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: "Montserrat", Arial, sans-serif;
             background: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw') no-repeat center center fixed;
             background-size: cover;
@@ -236,18 +232,28 @@
         data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
         data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
         data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
-        </script>
+    </script>
     <script>
-
-        // Ready event listner to call live chtat sdk
+        // Ready event listner to call live chat sdk
         window.addEventListener("lcw:ready", function () {
+            var lang = localStorage.getItem("lang") || "en";
+            var userLang = lang === "en" ? "English" : "French";
+            var brand = localStorage.getItem("brand") || "UP";
+            var p = null, uname = "", uid = "";
+            try {
+                p = JSON.parse(localStorage.getItem("profile"));
+                if (p && p.userId === localStorage.getItem("authUser")) {
+                    uname = p.userName;
+                    uid = p.userId;
+                }
+            } catch (e) { }
             Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
                 inNewWindow: false,
                 customContext: {
-                    'UserLanguage': { 'value': '', 'isDisplayable': true },
-                    'Brand': { 'value': '', 'isDisplayable': true },
-		    'UserName': { 'value': '', 'isDisplayable': true },
-                    'Token': { 'value': '', 'isDisplayable': true }
+                    'UserLanguage': { 'value': userLang, 'isDisplayable': true },
+                    'Brand': { 'value': brand, 'isDisplayable': true },
+                    'UserName': { 'value': uname, 'isDisplayable': true },
+                    'Token': { 'value': uid, 'isDisplayable': true }
                 }
             });
         });
