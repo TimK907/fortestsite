@@ -76,6 +76,12 @@
         .btn:hover {
             background: #003862;
         }
+        .logout-btn {
+            background: #c03636;
+        }
+        .logout-btn:hover {
+            background: #670000;
+        }
         .lang-toggle {
             position: fixed;
             top: 24px;
@@ -129,10 +135,9 @@
                     <option value="GO">GO</option>
                 </select>
             </div>
-            <!-- ===== Microsoft SSO Login Section ===== -->
+            <!-- ===== Microsoft SSO Login/Logout Section ===== -->
             <div id="authBox">
-                <button class="btn" id="msLoginBtn" onclick="loginWithMicrosoft()">Sign in with Microsoft</button>
-                <div class="sso-status" id="ssoStatus"></div>
+                <!-- Buttons will be rendered by updateAuthUI() -->
             </div>
         </div>
     </div>
@@ -265,11 +270,35 @@
         function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
         function getBrand() { return localStorage.getItem("brand") || "UP"; }
         function setBrand(value) { localStorage.setItem("brand", value); }
-
-        // Keep latest user info here
+        
+        // GLOBALS
         let accessToken = "";
         let userOid = "";
         let userName = "";
+        let isLcwReady = false;
+
+        function updateAuthUI() {
+            // Draw correct button(s) for authBox (login/logout)
+            const authBox = document.getElementById("authBox");
+            const accounts = msalInstance.getAllAccounts();
+            let html = "";
+            if (accounts && accounts.length > 0) {
+                // Logged in: show Welcome + Logout
+                html += `<div class="sso-status" id="ssoStatus">Welcome, ${userName ? userName : "user"}! You are signed in.</div>`;
+                html += `<button class="btn logout-btn" id="logoutBtn">Log out</button>`;
+            } else {
+                // Not logged in: show login only
+                html += `<button class="btn" id="msLoginBtn" onclick="loginWithMicrosoft()">Sign in with Microsoft</button>
+                <div class="sso-status" id="ssoStatus"></div>`;
+            }
+            authBox.innerHTML = html;
+
+            // Attach event for logout button if present
+            const logoutBtn = document.getElementById("logoutBtn");
+            if(logoutBtn){
+                logoutBtn.onclick = logoutMSAL;
+            }
+        }
 
         // Render main UI (headers, lang, brand)
         function renderApp() {
@@ -281,7 +310,7 @@
             document.getElementById("main-sub").textContent = tr.sub;
             document.getElementById("brandLbl").textContent = tr.brand + ":";
             document.getElementById("brandSelect").value = getBrand();
-            document.getElementById("ssoStatus").textContent = "";
+            updateAuthUI();
         }
         window.addEventListener('DOMContentLoaded', () => {
             renderApp();
@@ -312,40 +341,64 @@
         async function loginWithMicrosoft() {
             document.getElementById("ssoStatus").textContent = "";
             try {
-                // MS login + get account
                 await msalInstance.loginPopup(loginRequest);
                 const acc = msalInstance.getAllAccounts()[0];
                 msalInstance.setActiveAccount(acc);
 
-                // Get accessToken & user info
+                // Get Microsoft user info (OID and name)
                 const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: acc });
                 accessToken = response.accessToken;
                 const idTokenClaims = response.idTokenClaims || {};
                 userOid = idTokenClaims.oid || acc.homeAccountId || "";
                 userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
 
-                // Register SSO provider (token) for SDK
-                if(window.Microsoft && window.Microsoft.Omnichannel
-                   && window.Microsoft.Omnichannel.LiveChatWidget
-                   && window.Microsoft.Omnichannel.LiveChatWidget.SDK
-                   && typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function") {
+                // Try setAuthTokenProvider now or defer to lcw:ready if widget is not ready
+                if(isLcwReady &&
+                   window.Microsoft &&
+                   window.Microsoft.Omnichannel &&
+                   window.Microsoft.Omnichannel.LiveChatWidget &&
+                   window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
+                   typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function"
+                ) {
                     window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
                 } else {
+                    // Catch the error & show status. On 'lcw:ready', will be set automatically below.
                     window.addEventListener('lcw:ready', function(){
                         window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
                     }, {once:true});
                 }
-                // Show user's name/status
-                document.getElementById("msLoginBtn").style.display = "none";
+
+                // Update auth UI with logout button and welcome
+                updateAuthUI();
                 document.getElementById("ssoStatus").textContent = "Welcome, " + userName + "! Starting chat...";
             } catch (err) {
-                document.getElementById("ssoStatus").textContent = "SSO login failed: " + err.message;
+                if (err && err.message && err.message.indexOf('setAuthTokenProvider() LCW SDK method can not be invoked before lcw:ready event is received') !== -1) {
+                    document.getElementById("ssoStatus").textContent = "Please wait, chat widget is still loading... You will be signed in automatically.";
+                } else {
+                    document.getElementById("ssoStatus").textContent = "SSO login failed: " + err.message;
+                }
             }
         }
 
-        // --- Start the chat automatically always on widget ready: ---
+        // Microsoft SSO Logout
+        async function logoutMSAL() {
+            try {
+                await msalInstance.logoutPopup();
+                // Clean global vars since session out
+                userOid = "";
+                userName = "";
+                accessToken = "";
+                // Reset auth UI
+                updateAuthUI();
+                renderApp();
+            } catch (err) {
+                document.getElementById("ssoStatus").textContent = "SSO logout failed: " + err.message;
+            }
+        }
+
+        // Always start chat on widget ready
         window.addEventListener("lcw:ready", function () {
-            // always pick up latest lang & brand; userName/userOid empty if not logged in
+            isLcwReady = true;
             var lang = getLang();
             var brand = getBrand();
             Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
@@ -362,9 +415,28 @@
         window.addEventListener("DOMContentLoaded", async function() {
             const accounts = msalInstance.getAllAccounts();
             if(accounts && accounts.length > 0){
-                setTimeout(() => {
-                    loginWithMicrosoft();
-                }, 200);
+                const acc = accounts[0];
+                msalInstance.setActiveAccount(acc);
+                const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: acc });
+                accessToken = response.accessToken;
+                const idTokenClaims = response.idTokenClaims || {};
+                userOid = idTokenClaims.oid || acc.homeAccountId || "";
+                userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
+                // set provider after reload
+                if(isLcwReady &&
+                   window.Microsoft &&
+                   window.Microsoft.Omnichannel &&
+                   window.Microsoft.Omnichannel.LiveChatWidget &&
+                   window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
+                   typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function"
+                ) {
+                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
+                } else {
+                    window.addEventListener('lcw:ready', function(){
+                        window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
+                    }, {once:true});
+                }
+                setTimeout(renderApp, 100);
             }
         });
     </script>
