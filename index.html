@@ -244,7 +244,6 @@
             data-customization-callback="lcw">
     </script>
 
-    <!-- ===== SSO/MSAL and logic for live chat ===== -->
     <script>
         // UI translations for language & branding
         const translations = {
@@ -266,7 +265,12 @@
         function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
         function getBrand() { return localStorage.getItem("brand") || "UP"; }
         function setBrand(value) { localStorage.setItem("brand", value); }
-        
+
+        // Keep latest user info here
+        let accessToken = "";
+        let userOid = "";
+        let userName = "";
+
         // Render main UI (headers, lang, brand)
         function renderApp() {
             const lang = getLang();
@@ -303,9 +307,6 @@
         };
         const loginRequest = { scopes: ["openid", "profile"] };
         const msalInstance = new msal.PublicClientApplication(msalConfig);
-        let accessToken = "";
-        let userOid = "";
-        let userName = "";
 
         // Microsoft SSO Login
         async function loginWithMicrosoft() {
@@ -319,12 +320,11 @@
                 // Get accessToken & user info
                 const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: acc });
                 accessToken = response.accessToken;
-
                 const idTokenClaims = response.idTokenClaims || {};
                 userOid = idTokenClaims.oid || acc.homeAccountId || "";
                 userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
 
-                // Register SSO provider
+                // Register SSO provider (token) for SDK
                 if(window.Microsoft && window.Microsoft.Omnichannel
                    && window.Microsoft.Omnichannel.LiveChatWidget
                    && window.Microsoft.Omnichannel.LiveChatWidget.SDK
@@ -335,29 +335,28 @@
                         window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
                     }, {once:true});
                 }
-
-                // Auto-start chat with correct customContext (per MS Docs)
-                window.addEventListener("lcw:ready", function () {
-                    var lang = getLang();
-                    var brand = getBrand();
-                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-                        customContext: {
-                            'UserLanguage': { 'value': lang === "en" ? "English" : "French", 'isDisplayable': true },
-                            'Brand': { 'value': brand, 'isDisplayable': true },
-                            'UserName': { 'value': userName, 'isDisplayable': true },
-                            'Token': { 'value': userOid, 'isDisplayable': true }
-                        }
-                    });
-                }, {once: true});
-
                 // Show user's name/status
                 document.getElementById("msLoginBtn").style.display = "none";
                 document.getElementById("ssoStatus").textContent = "Welcome, " + userName + "! Starting chat...";
-
             } catch (err) {
                 document.getElementById("ssoStatus").textContent = "SSO login failed: " + err.message;
             }
         }
+
+        // --- Start the chat automatically always on widget ready: ---
+        window.addEventListener("lcw:ready", function () {
+            // always pick up latest lang & brand; userName/userOid empty if not logged in
+            var lang = getLang();
+            var brand = getBrand();
+            Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+                customContext: {
+                    'UserLanguage': { 'value': lang === "en" ? "English" : "French", 'isDisplayable': true },
+                    'Brand': { 'value': brand, 'isDisplayable': true },
+                    'UserName': { 'value': userName || '', 'isDisplayable': true },
+                    'Token': { 'value': userOid || '', 'isDisplayable': true }
+                }
+            });
+        });
 
         // Optional: auto-login if already signed in (SPA session)
         window.addEventListener("DOMContentLoaded", async function() {
