@@ -131,71 +131,127 @@
     </div>
 
 <!-- ====== CHAT SCRIPTS - EXACTLY as required (with your color) ======= -->
-<script>
-    //Styling function
-    function lcw()
-    {
-        return{
-            styleProps:{
-                generalStyles: {
-                    padding: "0px",
-                    border: "none",
-                },
-                titleStyles: {
-                    color: "#000000",
-                    fontFamily: "MXSans",
-                    fontSize: "22px",
-                    fontWeight: "700",
-                    lineHeight: "32px",
-                },
-                subtitleStyles: {
-                    color: "#000000",
-                    fontFamily: "MXSans",
-                    fontSize: "16px",
-                    fontWeight: "400",
-                    lineHeight: "22px",
-                }
+    <script>
+        //Styling function
+        function lcw() {
+            // Default as Engligh
+            let localized_texts = {
+                webchatTitle: "Virtual Assistant",
+                webchatChatButton: "Chat",
+                webchatAlertTitle: "Are you sure you want to exit the chat?",
+                webchatAlertMessage: "Note: This will end your conversation, and you will lose your chat history.",
+                webchatNoButton: "No",
+                webchatYesButton: "Yes",
+                webchatLoadingPaneTitle: "Welcome to",
+                webchatLoadingPaneSubTitle: "Live Chat Support!",
+                webchatLoadingPaneSpinnerText: "Loading\u2026",
             }
-        }
-    }
-</script>
+            // check condition for language
+            if (true) {
+                //French Translations
+                localized_texts.webchatTitle = "Assistant virtuel";
+                localized_texts.webchatChatButton = "Clavarder";
+                localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
+                localized_texts.webchatAlertMessage = "Note\u202F: Cela mettra fin \u00E0 la conversation et vous perdrez votre historique de clavardage.";
+                localized_texts.webchatNoButton = "Non";
+                localized_texts.webchatYesButton = "Oui";
+                localized_texts.webchatLoadingPaneTitle = "Bienvenue au";
+                localized_texts.webchatLoadingPaneSubTitle = "Soutien par clavardage en direct!";
+                localized_texts.webchatLoadingPaneSpinnerText = "Chargement\u2026";
+            }
 
-<script
-    id="Microsoft_Omnichannel_LCWidget"
-    src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
-    data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750"
-    data-lcw-version="prod"
-    data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
-    data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
-    data-font-family-override="Monotype Corsiva"
-    data-custom-close-button-text="End Chat"
-    data-color-override="#dd42f5"
-    data-customization-callback="lcw">
-</script>
-<script>
-window.addEventListener("lcw:ready", function() {
-    var lang = localStorage.getItem("lang") || "en";
-    var userLang = lang === "en" ? "English" : "French";
-    var brand = localStorage.getItem("brand") || "UP";
-    var p = null, uname = "", uid = "";
-    try {
-        p = JSON.parse(localStorage.getItem("profile"));
-        if(p && p.userId === localStorage.getItem("authUser")) {
-            uname = p.userName;
-            uid = p.userId;
+            return {
+                styleProps: {
+                    generalStyles: {
+                        width: "360px",
+                        height: "560px",
+                        bottom: "20px",
+                        right: "20px"
+                    }
+                },
+                headerProps: {
+                    styleProps: {
+                        generalStyleProps: {
+                            background: "#399e46"
+                        },
+                        titleStyleProps: {
+                            color: "#FFFFFF"
+                        },
+                        minimizeButtonStyleProps: {
+                            color: "#FFFFFF"
+                        },
+                        closeButtonStyleProps: {
+                            color: "#FFFFFF"
+                        }
+                    },
+                    controlProps: {
+                        headerTitleProps: {
+                            text: localized_texts.webchatTitle
+                        },
+                        hideIcon: false,
+                        hideTitle: false,
+                        headerIconProps: {
+                            src: "https://www.svgrepo.com/show/474732/assistant.svg",
+                            alt: "Discutons"
+                        }
+                    }
+                },
+                loadingPaneProps: {
+                    styleProps: {
+                        generalStyleProps: {
+                            background: "#399e46"
+                        }
+                    },
+                    controlProps: {
+                        titleText: localized_texts.webchatLoadingPaneTitle,
+                        subtitleText: localized_texts.webchatLoadingPaneSubTitle,
+                        spinnerText: localized_texts.webchatLoadingPaneSpinnerText,
+                        hideSpinnerText: false,
+                        spinnerSize: 3,
+                    }
+                },
+                chatButtonProps: {
+                    controlProps: {
+                        hideChatTextContainer: false,
+                        hideChatSubtitle: true,
+                        titleText: localized_texts.webchatChatButton,
+                    }
+                },
+                confirmationPaneProps: {
+                    controlProps: {
+                        titleText: localized_texts.webchatAlertTitle,
+                        subtitleText: localized_texts.webchatAlertMessage,
+                        brightnessValueOnDim: "0.2",
+                        confirmButtonText: localized_texts.webchatYesButton,
+                        cancelButtonText: localized_texts.webchatNoButton,
+                    }
+                }
+            };
         }
-    } catch(e) {}
-    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-        inNewWindow: false,
-        customContext: {
-            'UserLanguage': {'value': userLang, 'isDisplayable': true},
-            'Brand': {'value': brand, 'isDisplayable': true},
-            'UserName': {'value': uname, 'isDisplayable': true},
-            'Token': {'value': uid, 'isDisplayable': true}
-        }
-    });
-});
-</script>
+    </script>
+
+    <script id="Microsoft_Omnichannel_LCWidget"
+        src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
+        data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750" data-lcw-version="prod"
+        data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
+        data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
+        data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
+        </script>
+    <script>
+
+        // Ready event listner to call live chtat sdk
+        window.addEventListener("lcw:ready", function () {
+            Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+                inNewWindow: false,
+                customContext: {
+                    'UserLanguage': { 'value': "", 'isDisplayable': true },
+                    'Brand': { 'value': '', 'isDisplayable': true },
+					'UserName': { 'value': "", 'isDisplayable': true },
+                    'Token': { 'value': '', 'isDisplayable': true }
+                }
+            });
+        });
+    </script>
 <!-- ====== END OF CHAT SCRIPTS ======= -->
 
 <script>
