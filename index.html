@@ -231,7 +231,7 @@
             document.getElementById('ms-logout').style.display = "";
             document.getElementById('user-name').value = userName;
             document.getElementById('user-id').value = userToken;
-            window.location.reload(true);
+            window.location.reload(true); // triggers new restoreAuthState
         } catch (err) {
             alert("Microsoft Login failed.");
         }
@@ -271,17 +271,25 @@
     restoreAuthState();
 </script>
 <script>
-    // Pass current values from DOM fields directly to chat
+    // Always get values from DOM, OR from localStorage if input is empty
+    function getCurrentInputOrLS(id, storageKey) {
+        var elem = document.getElementById(id);
+        if(elem && elem.value && elem.value.trim().length > 0) return elem.value.trim();
+        var v = localStorage.getItem(storageKey) || "";
+        return v;
+    }
+    function getCurrentBrand() {
+        var elem = document.getElementById('brand-select');
+        if(elem && elem.value) return elem.value;
+        return localStorage.getItem("brand") || "UP";
+    }
     function getCurrentChatContext() {
         var lang = localStorage.getItem("lang") || "English";
-        var brand = document.getElementById('brand-select') ? document.getElementById('brand-select').value : "UP";
-        var name = document.getElementById('user-name') ? document.getElementById('user-name').value : "";
-        var token = document.getElementById('user-id') ? document.getElementById('user-id').value : "";
         return {
             'UserLanguage': { 'value': lang === "French" ? "French" : "English", 'isDisplayable': true },
-            'Brand': { 'value': brand, 'isDisplayable': true },
-            'UserName': { 'value': name, 'isDisplayable': true },
-            'Token': { 'value': token, 'isDisplayable': true }
+            'Brand': { 'value': getCurrentBrand(), 'isDisplayable': true },
+            'UserName': { 'value': getCurrentInputOrLS('user-name', 'userName'), 'isDisplayable': true },
+            'Token': { 'value': getCurrentInputOrLS('user-id', 'userToken'), 'isDisplayable': true }
         };
     }
     function getCurrentAuthToken() {
@@ -393,7 +401,7 @@
     data-customization-callback="lcw">
 </script>
 <script>
-    // Handle chat variable pass (always take values from DOM exactly in the moment)
+    // Handle chat variable pass (always take values from DOM or LS)
     window.addEventListener("lcw:ready", function () {
         var authToken = getCurrentAuthToken();
         if(authToken) {
