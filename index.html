@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <title>Travel Assistance</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts for UI -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
     <style>
+        /* ===== Page and Layout Styles ===== */
         html, body { height: 100%; margin:0; }
         body {
             min-height: 100vh;
             min-width: 100vw;
-            margin: 0; padding: 0;
+            margin: 0;
+            padding: 0;
             font-family: "Montserrat", Arial, sans-serif;
             background: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw') no-repeat center center fixed;
             background-size: cover;
@@ -109,12 +112,13 @@
     </style>
 </head>
 <body>
-    <!-- Language Switch -->
+    <!-- ===== Language Switch Button ===== -->
     <button class="lang-toggle" id="langBtn"></button>
     <div style="display:flex;flex-direction:column;min-height:100vh;">
         <div class="main-content">
             <h1 id="main-heading"></h1>
             <div class="subtitle" id="main-sub"></div>
+            <!-- ===== Brand Dropdown ==================== -->
             <div class="row">
                 <label for="brandSelect" id="brandLbl"></label>
                 <select id="brandSelect">
@@ -122,15 +126,16 @@
                     <option value="GO">GO</option>
                 </select>
             </div>
+            <!-- ===== Authentication Section ============= -->
             <div id="authBox"></div>
         </div>
     </div>
 
-<!-- ====== CHAT SCRIPTS - EXACTLY as required (with your color) ======= -->
+    <!-- ====== LIVE CHAT WIDGET SCRIPTS AND CALLBACK ====== -->
+    <!-- lcw(): Customizes chat widget UI texts according to page language -->
     <script>
-        //Styling function
         function lcw() {
-            // Default as Engligh
+            // Default UI texts: English
             let localized_texts = {
                 webchatTitle: "Virtual Assistant",
                 webchatChatButton: "Chat",
@@ -142,9 +147,10 @@
                 webchatLoadingPaneSubTitle: "Live Chat Support!",
                 webchatLoadingPaneSpinnerText: "Loading\u2026",
             }
-            // check condition for language
-            if (true) {
-                //French Translations
+            // === Detect language from localStorage (used on whole site) ===
+            var lang = localStorage.getItem("lang") || "en";
+            if (lang === "fr") {
+                // French UI texts
                 localized_texts.webchatTitle = "Assistant virtuel";
                 localized_texts.webchatChatButton = "Clavarder";
                 localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
@@ -155,7 +161,7 @@
                 localized_texts.webchatLoadingPaneSubTitle = "Soutien par clavardage en direct!";
                 localized_texts.webchatLoadingPaneSpinnerText = "Chargement\u2026";
             }
-
+            // Return styleProps and controlProps for chat widget
             return {
                 styleProps: {
                     generalStyles: {
@@ -226,16 +232,19 @@
         }
     </script>
 
+    <!-- Live Chat Widget from Microsoft: do not modify below! -->
     <script id="Microsoft_Omnichannel_LCWidget"
         src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
         data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750" data-lcw-version="prod"
         data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
         data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
-        data-font-family-override="Monotype Corsiva" data-color-override="#dd42f5" data-customization-callback="lcw">
+        data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
     </script>
+
+    <!-- After widget loads, start chat and pass context taken from profile/language/brand -->
     <script>
-        // Ready event listner to call live chat sdk
         window.addEventListener("lcw:ready", function () {
+            // === Get variables from saved state ===
             var lang = localStorage.getItem("lang") || "en";
             var userLang = lang === "en" ? "English" : "French";
             var brand = localStorage.getItem("brand") || "UP";
@@ -258,12 +267,12 @@
             });
         });
     </script>
-<!-- ====== END OF CHAT SCRIPTS ======= -->
+    <!-- ===== End Chat Widget Block ===== -->
 
+<!-- ===== Site JavaScript for UI, translations, authentication, lang, brand ===== -->
 <script>
-// Hard reset chat widget: close session and clear related data
+// End the chat session and clear its state on log out, lang or brand switch
 function hardResetChatWidget() {
-    // Close session if available (as per Microsoft documentation)
     try {
         if (
             window.Microsoft &&
@@ -275,8 +284,7 @@ function hardResetChatWidget() {
             Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
         }
     } catch(e) {}
-
-    // Remove all Omnichannel & chat related local/session storage keys
+    // Remove chat/session keys as needed
     try {
         Object.keys(sessionStorage).forEach(function(key){
             if (key.toLowerCase().includes('chat') || key.toLowerCase().includes('omnichannel')) {
@@ -292,7 +300,7 @@ function hardResetChatWidget() {
     } catch(e){}
 }
 
-// Texts for UI
+// UI language translations
 const translations = {
     en: {
         langBtn: "Français",
@@ -336,6 +344,7 @@ const translations = {
     }
 };
 
+// Helpers for language, brand, authentication state
 function getLang() { return localStorage.getItem("lang") || "en"; }
 function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
 function getBrand() { return localStorage.getItem("brand") || "UP"; }
@@ -353,6 +362,7 @@ function getCurrentUserData() {
     return null;
 }
 
+// All main UI logic and event handlers for forms/branding/lang/profile
 function renderApp() {
     const lang = getLang();
     const tr = translations[lang];
@@ -363,17 +373,19 @@ function renderApp() {
     document.getElementById("brandLbl").textContent = tr.brand + ":";
     document.getElementById("brandSelect").value = getBrand();
 
-    // Auth UI
+    // ==== Authentication/Login/Register UI update ====
     const authBox = document.getElementById("authBox");
     const currentProfile = getCurrentUserData();
     let html = "";
 
     if (currentProfile) {
+        // Show if user is logged in
         html += `<div>
             <div class="auth-user">${tr.userGreeting.replace("{name}", currentProfile.userName)}</div>
             <button class="btn" id="logoutBtn">${tr.logout}</button>
         </div>`;
     } else {
+        // Login/register forms
         html += `<div class="login-section" id="loginSection">
             <form id="loginForm" autocomplete="off">
                 <div class="row">
@@ -415,17 +427,20 @@ function renderApp() {
     }
     authBox.innerHTML = html;
 
-    // UI events with chat reset (brand, lang, log in/out)
+    // Brand select handler
     document.getElementById("brandSelect").addEventListener("change", (e) => {
         setBrand(e.target.value);
         hardResetChatWidget();
         setTimeout(() => location.reload(), 350);
     });
+
+    // Language toggle handler
     document.getElementById("langBtn").onclick = () => {
         hardResetChatWidget();
         setTimeout(() => setLang(lang === "en" ? "fr" : "en"), 350);
     };
 
+    // Auth events
     if (currentProfile) {
         document.getElementById("logoutBtn").onclick = () => {
             clearAuthed();
@@ -476,6 +491,7 @@ function renderApp() {
     }
 }
 
+// Render site on ready
 window.addEventListener('DOMContentLoaded', () => {
     renderApp();
 });
