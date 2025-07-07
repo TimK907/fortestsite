@@ -18,24 +18,21 @@
             background-position: center;
             font-family: Arial, sans-serif;
         }
-        .overlay {
-            background: rgba(255,255,255,0.8);
-            min-height: 100vh;
-            padding: 0;
-            margin: 0;
+        .content-block {
+            background: rgba(255,255,255,0.87);
+            margin: 32px;
+            padding: 28px 32px 32px 32px;
+            border-radius: 18px;
+            box-shadow: 0 10px 28px 0 rgba(0,0,0,0.08),0 2px 4px 0 rgba(0,0,0,0.04);
+            max-width: 590px;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
             align-items: flex-start;
         }
         .lang-btns {
-            margin: 24px 0 0 32px;
+            margin: 0 0 16px 0;
             display: flex;
             gap: 10px;
-        }
-        main {
-            margin-left: 32px;
-            margin-top: 32px;
         }
         h1 {
             text-align: left;
@@ -81,21 +78,23 @@
         }
         #ms-logout {background: #b50606;}
         #ms-login:disabled, #ms-logout:disabled { opacity: 0.5; cursor: not-allowed;}
-        @media (max-width: 500px) {
-            main {margin-left: 8px; margin-top: 10vw;}
-            .lang-btns {margin-left: 8px;}
+        @media (max-width: 700px) {
+            .content-block {
+                max-width: 98vw;
+                margin: 16px 3vw;
+                padding: 18px 10px 20px 10px;
+            }
         }
     </style>
     <!-- MSAL.js for Microsoft login -->
     <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
 </head>
 <body>
-<div class="overlay">
-    <div class="lang-btns">
-        <button id="en-btn" type="button">English</button>
-        <button id="fr-btn" type="button">Français</button>
-    </div>
-    <main>
+    <div class="content-block">
+        <div class="lang-btns">
+            <button id="en-btn" type="button">English</button>
+            <button id="fr-btn" type="button">Français</button>
+        </div>
         <h1 id="site-title">
             We make every journey easier for you
         </h1>
@@ -124,25 +123,19 @@
             <button id="ms-logout" style="display:none;">Log Out</button>
             <span id="auth-username" style="margin-left:10px; font-weight:bold;"></span>
         </div>
-    </main>
-</div>
+    </div>
 <!-- Chat customization script -->
 <script>
-    // Holds current language ('English' or 'French')
+    // Store current values in variables/localStorage
     let userLanguage = localStorage.getItem("lang") || "English";
-    // Holds selected brand
     let brand = localStorage.getItem("brand") || "UP";
-    // Holds manual User Name/ID (if not logged in)
     let userName = localStorage.getItem('userName') || "";
     let userToken = localStorage.getItem('userToken') || "";
 
-    // Holds Microsoft Auth info
     let msalToken = null;
     let msalAccount = null;
-    // Is User logged in with Microsoft
     let isAuthenticated = false;
 
-    // Translations
     const translations = {
         'English': {
             title: 'We make every journey easier for you',
@@ -168,20 +161,18 @@
         }
     };
 
-    // Language switcher
+    // Language switcher logic
     function setLanguage(lang, reload = true) {
         userLanguage = lang;
         localStorage.setItem("lang", lang);
         if (reload) {
-            // On language change reload page
             window.location.reload(true);
         }
     }
-
     document.getElementById('en-btn').addEventListener('click', function() { setLanguage('English'); });
     document.getElementById('fr-btn').addEventListener('click', function() { setLanguage('French'); });
 
-    // Set language UI
+    // Set language UI text
     function updateLangUI() {
         let tr = translations[userLanguage];
         document.getElementById('site-title').innerText = tr.title;
@@ -189,12 +180,10 @@
         document.getElementById('brand-label').innerText = tr.brand;
         document.getElementById('user-label').innerText = tr.user;
         document.getElementById('token-label').innerText = tr.token;
-
         document.getElementById('ms-login').innerText = tr.ms_login;
         document.getElementById('ms-logout').innerText = tr.ms_logout;
         document.getElementById('user-name').placeholder = tr.login_placeholder;
         document.getElementById('user-id').placeholder = tr.token_placeholder;
-
         if(userLanguage === "English"){
             document.getElementById('en-btn').style.fontWeight='bold';
             document.getElementById('fr-btn').style.fontWeight='';
@@ -209,11 +198,10 @@
     document.getElementById('brand-select').addEventListener('change', function(){
         brand = this.value;
         localStorage.setItem("brand", brand);
-        // Brand change reloads
         window.location.reload(true);
     });
 
-    // Restore UserName and Token fields
+    // UserName and Token fields logic
     document.getElementById('user-name').value = userName;
     document.getElementById('user-name').addEventListener('input',function(){
         userName = this.value;
@@ -225,7 +213,7 @@
         localStorage.setItem('userToken',userToken);
     });
 
-    // MSAL configuration
+    // MSAL config
     const msalConfig = {
       auth: {
         clientId: "20432056-2b97-43ca-9cfc-ec900428bbd4",
@@ -235,43 +223,34 @@
     };
     const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-    // MSAL Log In
+    // Microsoft login logic
     async function msLogin() {
         try {
             const loginResponse = await msalInstance.loginPopup({ scopes: ["openid", "profile", "email"] });
             msalAccount = loginResponse.account;
-            // Get MS auth token
             const tokenResponse = await msalInstance.acquireTokenSilent({ scopes: ["openid", "profile", "email"], account: msalAccount });
             msalToken = tokenResponse.idToken;
             isAuthenticated = true;
-
-            // Cache values in localStorage for page reload
             localStorage.setItem("msalAccount", JSON.stringify(msalAccount));
             localStorage.setItem("msalToken", msalToken);
             userName = msalAccount.name || "";
             userToken = msalAccount.homeAccountId || "";
             localStorage.setItem("userName", userName);
             localStorage.setItem("userToken", userToken);
-
-            // Show logged-in username UI
             document.getElementById('auth-username').innerText = userName;
             document.getElementById('ms-login').style.display = "none";
             document.getElementById('ms-logout').style.display = "";
             document.getElementById('user-name').value = userName;
             document.getElementById('user-id').value = userToken;
-
-            // Reload to reinit chat
             window.location.reload(true);
-
         } catch (err) {
             alert("Microsoft Login failed.");
         }
     }
 
-    // MSAL Log Out
+    // Microsoft logout
     function msLogout() {
         msalInstance.logoutPopup();
-        // Clear MSAL data
         localStorage.removeItem("msalAccount");
         localStorage.removeItem("msalToken");
         localStorage.removeItem("userName");
@@ -279,7 +258,7 @@
         window.location.reload(true);
     }
 
-    // MSAL restore on load
+    // Restore MS auth on load
     function restoreAuthState(){
         let acc = localStorage.getItem("msalAccount");
         let tok = localStorage.getItem("msalToken");
@@ -308,7 +287,7 @@
     updateLangUI();
     restoreAuthState();
 
-    // Provide custom chat variables
+    // Create chat context
     window._getChatCustomContext = function() {
         return {
             'UserLanguage': {
@@ -330,13 +309,12 @@
         };
     };
 
-    // Provide MS auth token per chat session
+    // Return MSAL auth token if available
     window._getChatAuthToken = function() {
-        // Returns authentication token for chat (after MS login)
-        return msalToken || "";
+        return msalToken || localStorage.getItem('msalToken') || "";
     };
 
-    // Overwrite the lcw customization callback for language
+    // Language-based UI for chat widget
     function lcw() {
         let localized_texts = {
             webchatTitle: "Virtual Assistant",
@@ -350,7 +328,6 @@
             webchatLoadingPaneSpinnerText: "Loading\u2026",
         }
         if (userLanguage === "French") {
-            //French Translations
             localized_texts.webchatTitle = "Assistant virtuel";
             localized_texts.webchatChatButton = "Clavarder";
             localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
@@ -443,20 +420,25 @@
     data-customization-callback="lcw">
 </script>
 <script>
-    // Handle chat ready and context/auth injection
+    // Start chat and inject all variables correctly
     window.addEventListener("lcw:ready", function () {
-        // Attach authentication token to chat
-        let chatToken = window._getChatAuthToken() || "";
-        Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthToken(chatToken);
-
-        // Start chat with full context
-        Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-            inNewWindow: false,
-            customContext: window._getChatCustomContext()
-        });
+        // Provide SSO token for chat, if available
+        if(window._getChatAuthToken) {
+            var authToken = window._getChatAuthToken();
+            if(authToken) {
+                Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthToken(authToken);
+            }
+        }
+        // Always pass up-to-date context
+        if(window._getChatCustomContext) {
+            Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+                inNewWindow: false,
+                customContext: window._getChatCustomContext()
+            });
+        }
     });
 
-    // On chat end (closechat), clear chat session (method as per MS docs)
+    // When logout, lang or brand is changed: restart chat by closing it
     function restartChat() {
         if (window.Microsoft
             && Microsoft.Omnichannel
@@ -466,8 +448,6 @@
             Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
         }
     }
-
-    // On logout or lang/brand change: restart chat
     document.getElementById('ms-logout').addEventListener('click', restartChat);
     document.getElementById('en-btn').addEventListener('click', restartChat);
     document.getElementById('fr-btn').addEventListener('click', restartChat);
