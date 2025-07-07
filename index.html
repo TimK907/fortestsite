@@ -5,14 +5,9 @@
     <meta name="viewport" content="width=360, initial-scale=1.0">
     <title>Travel Support</title>
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
+        html, body { height: 100%; margin: 0; padding: 0; }
         body {
-            min-height: 100vh;
-            width: 100vw;
+            min-height: 100vh; width: 100vw;
             background-image: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw');
             background-size: cover;
             background-position: center;
@@ -29,61 +24,18 @@
             flex-direction: column;
             align-items: flex-start;
         }
-        .lang-btns {
-            margin: 0 0 16px 0;
-            display: flex;
-            gap: 10px;
-        }
-        h1 {
-            text-align: left;
-            color: #15341a;
-            margin-bottom: 16px;
-        }
-        p {
-            text-align: left;
-            max-width: 500px;
-            color: #1a282e;
-            font-size: 1.12em;
-            margin: 0 0 30px 0;
-        }
-        .selectors {
-            margin-bottom: 30px;
-            display: flex;
-            flex-direction: row;
-            gap: 20px;
-        }
-        label {
-            margin-right: 12px;
-            min-width: 64px;
-            display: inline-block;
-        }
-        input[type="text"], select {
-            padding: 5.5px 10px;
-            border-radius: 4px;
-            border: 1px solid #bbb;
-        }
-        .auth-btns {
-            margin-bottom: 40px;
-            display: flex;
-            gap: 15px;
-        }
-        #ms-login, #ms-logout {
-            background: #399e46;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1em;
-            padding: 9px 22px;
-            cursor: pointer;
-        }
+        .lang-btns { margin: 0 0 16px 0; display: flex; gap: 10px; }
+        h1 { text-align: left; color: #15341a; margin-bottom: 16px;}
+        p { text-align: left; max-width: 500px; color: #1a282e; font-size: 1.12em; margin: 0 0 30px 0;}
+        .selectors { margin-bottom: 30px; display: flex; flex-direction: row; gap: 20px;}
+        label { margin-right: 12px; min-width: 64px; display: inline-block;}
+        input[type="text"], select { padding: 5.5px 10px; border-radius: 4px; border: 1px solid #bbb; }
+        .auth-btns { margin-bottom: 40px; display: flex; gap: 15px;}
+        #ms-login, #ms-logout { background: #399e46; color: white; border: none; border-radius: 5px; font-size: 1em; padding: 9px 22px; cursor: pointer;}
         #ms-logout {background: #b50606;}
         #ms-login:disabled, #ms-logout:disabled { opacity: 0.5; cursor: not-allowed;}
         @media (max-width: 700px) {
-            .content-block {
-                max-width: 98vw;
-                margin: 16px 3vw;
-                padding: 18px 10px 20px 10px;
-            }
+            .content-block {max-width: 98vw; margin: 16px 3vw; padding: 18px 10px 20px 10px;}
         }
     </style>
     <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
@@ -108,14 +60,6 @@
                     <option value="GO">GO</option>
                 </select>
             </div>
-            <div>
-                <label for="user-name" id="user-label">User Name:</label>
-                <input type="text" id="user-name" maxlength="64" placeholder="User Name">
-            </div>
-            <div>
-                <label for="user-id" id="token-label">User ID:</label>
-                <input type="text" id="user-id" maxlength="64" placeholder="User ID">
-            </div>
         </div>
         <div class="auth-btns">
             <button id="ms-login">Log In with Microsoft</button>
@@ -124,30 +68,22 @@
         </div>
     </div>
 <script>
-    // Language and translation logic
+    // Language, MSAL, and translation logic
     let userLanguage = localStorage.getItem("lang") || "English";
     const translations = {
         'English': {
             title: 'We make every journey easier for you',
             desc: 'Whether you travel by air, road, rail, or sea, you can always rely on our trustworthy support. Your comfort, safety, and experience are our priority – anywhere, anytime.',
             brand: 'Brand:',
-            user: 'User Name:',
-            token: 'User ID:',
             ms_login: 'Log In with Microsoft',
-            ms_logout: 'Log Out',
-            login_placeholder: 'User Name',
-            token_placeholder: 'User ID'
+            ms_logout: 'Log Out'
         },
         'French': {
             title: 'Nous facilitons chacun de vos voyages',
             desc: 'Que vous voyagiez par avion, par route, par rail ou par mer, vous pouvez toujours compter sur notre soutien fiable. Votre confort, votre sécurité et votre expérience sont notre priorité – partout, à tout moment.',
             brand: 'Marque :',
-            user: "Nom d'utilisateur :",
-            token: "Identifiant d'utilisateur :",
             ms_login: 'Se connecter avec Microsoft',
-            ms_logout: 'Se déconnecter',
-            login_placeholder: "Nom d'utilisateur",
-            token_placeholder: "Identifiant d'utilisateur"
+            ms_logout: 'Se déconnecter'
         }
     };
 
@@ -163,12 +99,8 @@
         document.getElementById('site-title').innerText = tr.title;
         document.getElementById('site-desc').innerText = tr.desc;
         document.getElementById('brand-label').innerText = tr.brand;
-        document.getElementById('user-label').innerText = tr.user;
-        document.getElementById('token-label').innerText = tr.token;
         document.getElementById('ms-login').innerText = tr.ms_login;
         document.getElementById('ms-logout').innerText = tr.ms_logout;
-        document.getElementById('user-name').placeholder = tr.login_placeholder;
-        document.getElementById('user-id').placeholder = tr.token_placeholder;
         if(userLanguage === "English"){
             document.getElementById('en-btn').style.fontWeight='bold';
             document.getElementById('fr-btn').style.fontWeight='';
@@ -187,21 +119,7 @@
         window.location.reload(true);
     });
 
-    // UserName, Token persistence
-    let userName = localStorage.getItem('userName') || "";
-    let userToken = localStorage.getItem('userToken') || "";
-    document.getElementById('user-name').value = userName;
-    document.getElementById('user-name').addEventListener('input',function(){
-        userName = this.value;
-        localStorage.setItem('userName',userName);
-    });
-    document.getElementById('user-id').value = userToken;
-    document.getElementById('user-id').addEventListener('input',function(){
-        userToken = this.value;
-        localStorage.setItem('userToken',userToken);
-    });
-
-    // MSAL config and logic
+    // MSAL config
     let msalToken = null;
     let msalAccount = null;
     let isAuthenticated = false;
@@ -213,6 +131,7 @@
       }
     };
     const msalInstance = new msal.PublicClientApplication(msalConfig);
+
     async function msLogin() {
         try {
             const loginResponse = await msalInstance.loginPopup({ scopes: ["openid", "profile", "email"] });
@@ -222,16 +141,11 @@
             isAuthenticated = true;
             localStorage.setItem("msalAccount", JSON.stringify(msalAccount));
             localStorage.setItem("msalToken", msalToken);
-            userName = msalAccount.name || "";
-            userToken = msalAccount.homeAccountId || "";
-            localStorage.setItem("userName", userName);
-            localStorage.setItem("userToken", userToken);
-            document.getElementById('auth-username').innerText = userName;
+            localStorage.setItem("isAuthenticated", "true");
+            document.getElementById('auth-username').innerText = msalAccount.name || "";
             document.getElementById('ms-login').style.display = "none";
             document.getElementById('ms-logout').style.display = "";
-            document.getElementById('user-name').value = userName;
-            document.getElementById('user-id').value = userToken;
-            window.location.reload(true); // triggers new restoreAuthState
+            window.location.reload(true);
         } catch (err) {
             alert("Microsoft Login failed.");
         }
@@ -240,24 +154,20 @@
         msalInstance.logoutPopup();
         localStorage.removeItem("msalAccount");
         localStorage.removeItem("msalToken");
-        localStorage.removeItem("userName");
-        localStorage.removeItem("userToken");
+        localStorage.removeItem("isAuthenticated");
         window.location.reload(true);
     }
     function restoreAuthState(){
         let acc = localStorage.getItem("msalAccount");
         let tok = localStorage.getItem("msalToken");
-        if(acc && tok){
+        let isAuth = localStorage.getItem("isAuthenticated")==="true";
+        if(acc && tok && isAuth){
             msalAccount = JSON.parse(acc);
             msalToken = tok;
             isAuthenticated = true;
-            userName = msalAccount.name || "";
-            userToken = msalAccount.homeAccountId || "";
-            document.getElementById('auth-username').innerText = userName;
+            document.getElementById('auth-username').innerText = msalAccount.name || "";
             document.getElementById('ms-login').style.display = "none";
             document.getElementById('ms-logout').style.display = "";
-            document.getElementById('user-name').value = userName;
-            document.getElementById('user-id').value = userToken;
         }else{
             document.getElementById('ms-login').style.display = "";
             document.getElementById('ms-logout').style.display = "none";
@@ -271,26 +181,28 @@
     restoreAuthState();
 </script>
 <script>
-    // Always get values from DOM, OR from localStorage if input is empty
-    function getCurrentInputOrLS(id, storageKey) {
-        var elem = document.getElementById(id);
-        if(elem && elem.value && elem.value.trim().length > 0) return elem.value.trim();
-        var v = localStorage.getItem(storageKey) || "";
-        return v;
-    }
-    function getCurrentBrand() {
-        var elem = document.getElementById('brand-select');
-        if(elem && elem.value) return elem.value;
-        return localStorage.getItem("brand") || "UP";
-    }
+    // Build chat context only if user authenticated
     function getCurrentChatContext() {
-        var lang = localStorage.getItem("lang") || "English";
-        return {
-            'UserLanguage': { 'value': lang === "French" ? "French" : "English", 'isDisplayable': true },
-            'Brand': { 'value': getCurrentBrand(), 'isDisplayable': true },
-            'UserName': { 'value': getCurrentInputOrLS('user-name', 'userName'), 'isDisplayable': true },
-            'Token': { 'value': getCurrentInputOrLS('user-id', 'userToken'), 'isDisplayable': true }
-        };
+        let lang = localStorage.getItem("lang") || "English";
+        let brand = document.getElementById('brand-select') ? document.getElementById('brand-select').value : (localStorage.getItem("brand") || "UP");
+        let isAuth = localStorage.getItem("isAuthenticated")==="true";
+        let msalAccRaw = localStorage.getItem("msalAccount");
+        if(isAuth && msalAccRaw) {
+            let msalAcc = JSON.parse(msalAccRaw);
+            return {
+                'UserLanguage': { 'value': lang === "French" ? "French" : "English", 'isDisplayable': true },
+                'Brand': { 'value': brand, 'isDisplayable': true },
+                'UserName': { 'value': msalAcc.name || "", 'isDisplayable': true },
+                'Token': { 'value': msalAcc.homeAccountId || "", 'isDisplayable': true }
+            };
+        } else {
+            return {
+                'UserLanguage': { 'value': lang === "French" ? "French" : "English", 'isDisplayable': true },
+                'Brand': { 'value': brand, 'isDisplayable': true },
+                'UserName': { 'value': "", 'isDisplayable': true },
+                'Token': { 'value': "", 'isDisplayable': true }
+            };
+        }
     }
     function getCurrentAuthToken() {
         return localStorage.getItem('msalToken') || "";
@@ -331,25 +243,14 @@
             },
             headerProps: {
                 styleProps: {
-                    generalStyleProps: {
-                        background: "#399e46"
-                    },
-                    titleStyleProps: {
-                        color: "#FFFFFF"
-                    },
-                    minimizeButtonStyleProps: {
-                        color: "#FFFFFF"
-                    },
-                    closeButtonStyleProps: {
-                        color: "#FFFFFF"
-                    }
+                    generalStyleProps: { background: "#399e46" },
+                    titleStyleProps: { color: "#FFFFFF" },
+                    minimizeButtonStyleProps: { color: "#FFFFFF" },
+                    closeButtonStyleProps: { color: "#FFFFFF" }
                 },
                 controlProps: {
-                    headerTitleProps: {
-                        text: localized_texts.webchatTitle
-                    },
-                    hideIcon: false,
-                    hideTitle: false,
+                    headerTitleProps: { text: localized_texts.webchatTitle },
+                    hideIcon: false, hideTitle: false,
                     headerIconProps: {
                         src: "https://www.svgrepo.com/show/474732/assistant.svg",
                         alt: "Discutons"
@@ -357,17 +258,12 @@
                 }
             },
             loadingPaneProps: {
-                styleProps: {
-                    generalStyleProps: {
-                        background: "#399e46"
-                    }
-                },
+                styleProps: { generalStyleProps: { background: "#399e46" } },
                 controlProps: {
                     titleText: localized_texts.webchatLoadingPaneTitle,
                     subtitleText: localized_texts.webchatLoadingPaneSubTitle,
                     spinnerText: localized_texts.webchatLoadingPaneSpinnerText,
-                    hideSpinnerText: false,
-                    spinnerSize: 3,
+                    hideSpinnerText: false, spinnerSize: 3,
                 }
             },
             chatButtonProps: {
@@ -401,7 +297,7 @@
     data-customization-callback="lcw">
 </script>
 <script>
-    // Handle chat variable pass (always take values from DOM or LS)
+    // Start chat with correct variables
     window.addEventListener("lcw:ready", function () {
         var authToken = getCurrentAuthToken();
         if(authToken) {
@@ -413,13 +309,27 @@
         });
     });
 
+    // End chat completely and clear storage (chat is fully reset after closeChat)
     function restartChat() {
-        if (window.Microsoft
+        if (
+            window.Microsoft
             && Microsoft.Omnichannel
             && Microsoft.Omnichannel.LiveChatWidget
             && Microsoft.Omnichannel.LiveChatWidget.SDK
-            && Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat) {
+            && Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat
+        ) {
             Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
+        }
+        // (optionally clear previous storage keys for chat history if needed)
+        if (window.sessionStorage) {
+            for(let k in sessionStorage){
+                if(k && typeof k === "string" && k.indexOf("lcw") === 0) sessionStorage.removeItem(k);
+            }
+        }
+        if (window.localStorage) {
+            for(let k in localStorage){
+                if(k && typeof k === "string" && k.indexOf("lcw") === 0) localStorage.removeItem(k);
+            }
         }
     }
     document.getElementById('ms-logout').addEventListener('click', restartChat);
