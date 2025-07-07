@@ -139,8 +139,6 @@
             <div id="authBox"></div>
         </div>
     </div>
-
-    <!-- ===== Omnichannel LiveChat Widget callback (dynamic labels) ===== -->
     <script>
         function lcw() {
             let localized_texts = {
@@ -245,7 +243,6 @@
             data-customization-callback="lcw">
     </script>
     <script>
-        // Language translations for UI
         const translations = {
             en: {
                 langBtn: "Français",
@@ -262,18 +259,14 @@
                 welcome: name => `Bienvenue, ${name} ! Vous êtes connecté.`
             }
         };
-
         function getLang() { return localStorage.getItem("lang") || "en"; }
         function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
         function getBrand() { return localStorage.getItem("brand") || "UP"; }
         function setBrand(value) { localStorage.setItem("brand", value); }
-
-        // State for MSAL/SSO and Chat.
+        // SSO/Chat state
         let accessToken = "";
         let userOid = "";
         let userName = "";
-        let isLcwReady = false;
-        let ssoProviderWasSet = false;
 
         function updateAuthUI() {
             const lang = getLang();
@@ -320,41 +313,30 @@
         const loginRequest = { scopes: ["openid", "profile"] };
         const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-        // Fully close old chat and start fresh, preserving SSO provider and context
-        async function restartChatWithCurrentUser() {
-            try {
-                // Close active chat session (safe for both anon and SSO)
-                if (
-                    window.Microsoft &&
-                    window.Microsoft.Omnichannel &&
-                    window.Microsoft.Omnichannel.LiveChatWidget &&
-                    window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
-                    typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat === "function"
-                ) {
-                    await window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
-                }
-            } catch(e){}
-            // Wait for lcw:ready if not fired yet (SAFETY)
-            if(!isLcwReady){
-                await new Promise(resolve => {
-                    window.addEventListener("lcw:ready", function lcwReadyOnce(){
-                        window.removeEventListener("lcw:ready", lcwReadyOnce);
-                        isLcwReady = true; resolve();
-                    });
-                });
+        // Always start chat on widget ready, passing context
+        window.addEventListener("lcw:ready", function () {
+            // Try MSAL for SSO (optional: best-effort)
+            const accounts = msalInstance.getAllAccounts();
+            if(accounts && accounts.length > 0){
+                const acc = accounts[0];
+                msalInstance.setActiveAccount(acc);
+                msalInstance.acquireTokenSilent({ ...loginRequest, account: acc }).then(response => {
+                    accessToken = response.accessToken;
+                    const idTokenClaims = response.idTokenClaims || {};
+                    userOid = idTokenClaims.oid || acc.homeAccountId || "";
+                    userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
+                    if (accessToken &&
+                        window.Microsoft && window.Microsoft.Omnichannel &&
+                        window.Microsoft.Omnichannel.LiveChatWidget && window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
+                        typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function") {
+                        window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
+                    }
+                }).catch(() => {});
+            } else {
+                // anonymous
+                userOid = "";
+                userName = "";
             }
-            // Register SSO provider if needed
-            if (accessToken && !ssoProviderWasSet
-                && window.Microsoft
-                && window.Microsoft.Omnichannel
-                && window.Microsoft.Omnichannel.LiveChatWidget
-                && window.Microsoft.Omnichannel.LiveChatWidget.SDK
-                && typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function"
-            ){
-                window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
-                ssoProviderWasSet = true;
-            }
-            // Start new chat with (possibly updated) context
             var lang = getLang();
             var brand = getBrand();
             window.Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
@@ -365,9 +347,8 @@
                     'Token': { 'value': userOid || '', 'isDisplayable': true }
                 }
             });
-        }
+        });
 
-        // Microsoft SSO Log in
         async function loginWithMicrosoft() {
             document.getElementById("ssoStatus").textContent = "";
             try {
@@ -379,65 +360,58 @@
                 const idTokenClaims = response.idTokenClaims || {};
                 userOid = idTokenClaims.oid || acc.homeAccountId || "";
                 userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
-                ssoProviderWasSet = false;
+                if (accessToken &&
+                    window.Microsoft && window.Microsoft.Omnichannel &&
+                    window.Microsoft.Omnichannel.LiveChatWidget && window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
+                    typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function") {
+                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
+                }
                 updateAuthUI();
-                await restartChatWithCurrentUser();
+                // End Chat Session (close) → user manually starts again if needed
+                if (
+                    window.Microsoft && window.Microsoft.Omnichannel &&
+                    window.Microsoft.Omnichannel.LiveChatWidget && window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
+                    typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat === "function"
+                ) {
+                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
+                }
             } catch (err) {
                 document.getElementById("ssoStatus").textContent = "SSO login failed: " + err.message;
             }
         }
-        // Microsoft SSO Logout
         async function logoutMSAL() {
             try {
                 await msalInstance.logoutPopup();
                 accessToken = "";
                 userName = "";
                 userOid = "";
-                ssoProviderWasSet = false;
                 updateAuthUI();
-                await restartChatWithCurrentUser();
+                // End chat session (close)
+                if (
+                    window.Microsoft && window.Microsoft.Omnichannel &&
+                    window.Microsoft.Omnichannel.LiveChatWidget && window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
+                    typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat === "function"
+                ) {
+                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
+                }
             } catch (err) {
                 document.getElementById("ssoStatus").textContent = "SSO logout failed: " + err.message;
             }
         }
-
-        // On lcw:ready always (re)start chat with correct user context, registering SSO if SSO
-        window.addEventListener("lcw:ready", async function () {
-            isLcwReady = true;
+        window.addEventListener("DOMContentLoaded", function() {
             const accounts = msalInstance.getAllAccounts();
             if(accounts && accounts.length > 0){
                 const acc = accounts[0];
                 msalInstance.setActiveAccount(acc);
-                const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: acc });
-                accessToken = response.accessToken;
-                const idTokenClaims = response.idTokenClaims || {};
-                userOid = idTokenClaims.oid || acc.homeAccountId || "";
-                userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
-                if(accessToken && !ssoProviderWasSet
-                    && window.Microsoft
-                    && window.Microsoft.Omnichannel
-                    && window.Microsoft.Omnichannel.LiveChatWidget
-                    && window.Microsoft.Omnichannel.LiveChatWidget.SDK
-                    && typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function"
-                ) {
-                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
-                    ssoProviderWasSet = true;
-                }
-            }
-            await restartChatWithCurrentUser();
-        });
-
-        // SPA: try auto restore session for UI (not for chat)
-        window.addEventListener("DOMContentLoaded", async function() {
-            const accounts = msalInstance.getAllAccounts();
-            if(accounts && accounts.length > 0){
-                const acc = accounts[0];
-                msalInstance.setActiveAccount(acc);
-                const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: acc });
-                accessToken = response.accessToken;
-                const idTokenClaims = response.idTokenClaims || {};
-                userOid = idTokenClaims.oid || acc.homeAccountId || "";
-                userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
+                msalInstance.acquireTokenSilent({ ...loginRequest, account: acc }).then(response => {
+                    accessToken = response.accessToken;
+                    const idTokenClaims = response.idTokenClaims || {};
+                    userOid = idTokenClaims.oid || acc.homeAccountId || "";
+                    userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
+                    updateAuthUI();
+                });
+            } else {
+                updateAuthUI();
             }
             setTimeout(renderApp, 100);
         });
