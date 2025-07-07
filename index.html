@@ -121,11 +121,13 @@
     </style>
 </head>
 <body>
+    <!-- ===== Language Switch Button ===== -->
     <button class="lang-toggle" id="langBtn"></button>
     <div style="display:flex;flex-direction:column;min-height:100vh;">
         <div class="main-content">
             <h1 id="main-heading"></h1>
             <div class="subtitle" id="main-sub"></div>
+            <!-- ===== Brand Dropdown ===== -->
             <div class="row">
                 <label for="brandSelect" id="brandLbl"></label>
                 <select id="brandSelect">
@@ -133,24 +135,121 @@
                     <option value="GO">GO</option>
                 </select>
             </div>
+            <!-- ===== Microsoft SSO Login/Logout Section ===== -->
             <div id="authBox"></div>
         </div>
     </div>
+
+    <!-- ===== Omnichannel LiveChat Widget callback (dynamic labels) ===== -->
     <script>
         function lcw() {
-            // ... точно як раніше ...
+            let localized_texts = {
+                webchatTitle: "Virtual Assistant",
+                webchatChatButton: "Chat",
+                webchatAlertTitle: "Are you sure you want to exit the chat?",
+                webchatAlertMessage: "Note: This will end your conversation, and you will lose your chat history.",
+                webchatNoButton: "No",
+                webchatYesButton: "Yes",
+                webchatLoadingPaneTitle: "Welcome to",
+                webchatLoadingPaneSubTitle: "Live Chat Support!",
+                webchatLoadingPaneSpinnerText: "Loading\u2026",
+            }
+            var lang = localStorage.getItem("lang") || "en";
+            if (lang === "fr") {
+                localized_texts.webchatTitle = "Virtual Assistant (FR)";
+                localized_texts.webchatChatButton = "Clavarder";
+                localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
+                localized_texts.webchatAlertMessage = "Note\u202F: Cela mettra fin \u00E0 la conversation et vous perdrez votre historique de clavardage.";
+                localized_texts.webchatNoButton = "Non";
+                localized_texts.webchatYesButton = "Oui";
+                localized_texts.webchatLoadingPaneTitle = "Bienvenue au";
+                localized_texts.webchatLoadingPaneSubTitle = "Soutien par clavardage en direct!";
+                localized_texts.webchatLoadingPaneSpinnerText = "Chargement\u2026";
+            }
+            return {
+                styleProps: {
+                    generalStyles: {
+                        width: "360px",
+                        height: "560px",
+                        bottom: "20px",
+                        right: "20px"
+                    }
+                },
+                headerProps: {
+                    styleProps: {
+                        generalStyleProps: {
+                            background: "#c22bb8"
+                        },
+                        titleStyleProps: {
+                            color: "#FFFFFF"
+                        },
+                        minimizeButtonStyleProps: {
+                            color: "#FFFFFF"
+                        },
+                        closeButtonStyleProps: {
+                            color: "#FFFFFF"
+                        }
+                    },
+                    controlProps: {
+                        headerTitleProps: {
+                            text: localized_texts.webchatTitle
+                        },
+                        hideIcon: false,
+                        hideTitle: false,
+                        headerIconProps: {
+                            src: "https://www.svgrepo.com/show/474732/assistant.svg",
+                            alt: "Let's Talk"
+                        }
+                    }
+                },
+                loadingPaneProps: {
+                    styleProps: {
+                        generalStyleProps: {
+                            background: "#399e46"
+                        }
+                    },
+                    controlProps: {
+                        titleText: localized_texts.webchatLoadingPaneTitle,
+                        subtitleText: localized_texts.webchatLoadingPaneSubTitle,
+                        spinnerText: localized_texts.webchatLoadingPaneSpinnerText,
+                        hideSpinnerText: false,
+                        spinnerSize: 3,
+                    }
+                },
+                chatButtonProps: {
+                    controlProps: {
+                        hideChatTextContainer: false,
+                        hideChatSubtitle: true,
+                        titleText: localized_texts.webchatChatButton,
+                    }
+                },
+                confirmationPaneProps: {
+                    controlProps: {
+                        titleText: localized_texts.webchatAlertTitle,
+                        subtitleText: localized_texts.webchatAlertMessage,
+                        brightnessValueOnDim: "0.2",
+                        confirmButtonText: localized_texts.webchatYesButton,
+                        cancelButtonText: localized_texts.webchatNoButton,
+                    }
+                }
+            };
         }
     </script>
+
+    <!-- ===== Omnichannel LiveChatWidget for D365 ===== -->
     <script id="Microsoft_Omnichannel_LCWidget"
             src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
-            data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750" data-lcw-version="prod"
+            data-app-id="89344f03-2e01-449a-9cf2-306b4545c5d0"
+            data-lcw-version="prod"
             data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
             data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
             data-font-family-override="Roboto"
             data-color-override="#0000FF"
             data-customization-callback="lcw">
     </script>
+
     <script>
+        // UI translations for language & branding
         const translations = {
             en: {
                 langBtn: "Français",
@@ -165,29 +264,19 @@
                 brand: "Marque"
             }
         };
+
         function getLang() { return localStorage.getItem("lang") || "en"; }
         function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
         function getBrand() { return localStorage.getItem("brand") || "UP"; }
         function setBrand(value) { localStorage.setItem("brand", value); }
+
+        // Main SSO globals/state
         let accessToken = "";
         let userOid = "";
         let userName = "";
         let isLcwReady = false;
         let ssoProviderWasSet = false;
-        function resetChatAndReload() {
-            try {
-                if (
-                    window.Microsoft &&
-                    window.Microsoft.Omnichannel &&
-                    window.Microsoft.Omnichannel.LiveChatWidget &&
-                    window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
-                    typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat === "function"
-                ) {
-                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
-                }
-            } catch(e){}
-            setTimeout(() => { location.reload(); }, 400);
-        }
+
         function updateAuthUI() {
             const authBox = document.getElementById("authBox");
             const accounts = msalInstance.getAllAccounts();
@@ -231,39 +320,84 @@
         const loginRequest = { scopes: ["openid", "profile"] };
         const msalInstance = new msal.PublicClientApplication(msalConfig);
 
+        // ----------- SSO/CHAT LOGIC -----------------------
+
+        // 1. Log in with Microsoft; after SSO, set SSO provider and restart chat
         async function loginWithMicrosoft() {
             document.getElementById("ssoStatus").textContent = "";
-            resetChatAndReload();
-        }
-        async function logoutMSAL() { resetChatAndReload(); }
-        window.addEventListener("lcw:ready", function () {
-            isLcwReady = true;
-            // Try get MSAL session
-            const accounts = msalInstance.getAllAccounts();
-            if(accounts && accounts.length > 0){
-                const acc = accounts[0];
+            try {
+                await msalInstance.loginPopup(loginRequest);
+                const acc = msalInstance.getAllAccounts()[0];
                 msalInstance.setActiveAccount(acc);
-                msalInstance.acquireTokenSilent({ ...loginRequest, account: acc }).then(response => {
-                    accessToken = response.accessToken;
-                    const idTokenClaims = response.idTokenClaims || {};
-                    userOid = idTokenClaims.oid || acc.homeAccountId || "";
-                    userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
-                    // ВАЖЛИВО: реєструємо SSO provider по одному разу (бо lcw:ready firing each reload)
-                    if (accessToken && !ssoProviderWasSet
-                        && window.Microsoft &&
-                        window.Microsoft.Omnichannel &&
-                        window.Microsoft.Omnichannel.LiveChatWidget &&
-                        window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
-                        typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function"
-                    ) {
-                        window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
-                        ssoProviderWasSet = true;
-                    }
-                }).catch(() => {});
+                const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: acc });
+                accessToken = response.accessToken;
+                const idTokenClaims = response.idTokenClaims || {};
+                userOid = idTokenClaims.oid || acc.homeAccountId || "";
+                userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
+                ssoProviderWasSet = false;
+                await restartChatWithCurrentUser();
+                updateAuthUI();
+                document.getElementById("ssoStatus").textContent = "Welcome, " + userName + "! Starting chat...";
+            } catch (err) {
+                document.getElementById("ssoStatus").textContent = "SSO login failed: " + err.message;
             }
+        }
+
+        // 2. Log out action (MSAL + close old chat, clear globals, restart anon chat)
+        async function logoutMSAL() {
+            try {
+                await msalInstance.logoutPopup();
+                accessToken = "";
+                userName = "";
+                userOid = "";
+                ssoProviderWasSet = false;
+                await restartChatWithCurrentUser();
+                updateAuthUI();
+            } catch (err) {
+                document.getElementById("ssoStatus").textContent = "SSO logout failed: " + err.message;
+            }
+        }
+
+        // 3. Universal function to fully restart chat (close, then start new)
+        async function restartChatWithCurrentUser() {
+            try {
+                // Close active chat session
+                if (
+                    window.Microsoft &&
+                    window.Microsoft.Omnichannel &&
+                    window.Microsoft.Omnichannel.LiveChatWidget &&
+                    window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
+                    typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat === "function"
+                ) {
+                    await window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
+                }
+            } catch(e){}
+
+            // Wait for chat widget ready event (if not yet ready)
+            if(!isLcwReady){
+                // Wait for ready before all SSO/chat actions
+                await new Promise(resolve => {
+                    window.addEventListener("lcw:ready", function lcwReadyOnce(){
+                        window.removeEventListener("lcw:ready", lcwReadyOnce);
+                        isLcwReady = true; resolve();
+                    });
+                });
+            }
+            // Register new AuthTokenProvider if needed
+            if (accessToken && !ssoProviderWasSet
+                && window.Microsoft
+                && window.Microsoft.Omnichannel
+                && window.Microsoft.Omnichannel.LiveChatWidget
+                && window.Microsoft.Omnichannel.LiveChatWidget.SDK
+                && typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function"
+            ){
+                window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
+                ssoProviderWasSet = true;
+            }
+            // Force start new session with up-to-date customContext
             var lang = getLang();
             var brand = getBrand();
-            Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+            window.Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
                 customContext: {
                     'UserLanguage': { 'value': lang === "en" ? "English" : "French", 'isDisplayable': true },
                     'Brand': { 'value': brand, 'isDisplayable': true },
@@ -271,7 +405,37 @@
                     'Token': { 'value': userOid || '', 'isDisplayable': true }
                 }
             });
+        }
+
+        // 4. On first lcw:ready run chat as anon or SSO
+        window.addEventListener("lcw:ready", async function() {
+            isLcwReady = true;
+            // Try MSAL session
+            const accounts = msalInstance.getAllAccounts();
+            if(accounts && accounts.length > 0){
+                const acc = accounts[0];
+                msalInstance.setActiveAccount(acc);
+                const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account: acc });
+                accessToken = response.accessToken;
+                const idTokenClaims = response.idTokenClaims || {};
+                userOid = idTokenClaims.oid || acc.homeAccountId || "";
+                userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
+                if(accessToken && !ssoProviderWasSet
+                    && window.Microsoft
+                    && window.Microsoft.Omnichannel
+                    && window.Microsoft.Omnichannel.LiveChatWidget
+                    && window.Microsoft.Omnichannel.LiveChatWidget.SDK
+                    && typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function"
+                ) {
+                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
+                    ssoProviderWasSet = true;
+                }
+            }
+            // Always start new chat with proper user context
+            await restartChatWithCurrentUser();
         });
+
+        // 5. When SPA loads, try to restore session for userName, etc
         window.addEventListener("DOMContentLoaded", async function() {
             const accounts = msalInstance.getAllAccounts();
             if(accounts && accounts.length > 0){
@@ -282,15 +446,8 @@
                 const idTokenClaims = response.idTokenClaims || {};
                 userOid = idTokenClaims.oid || acc.homeAccountId || "";
                 userName = idTokenClaims.name || idTokenClaims.preferred_username || "";
-                if(isLcwReady && !ssoProviderWasSet &&
-                   window.Microsoft && window.Microsoft.Omnichannel &&
-                   window.Microsoft.Omnichannel.LiveChatWidget && window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
-                   typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider === "function") {
-                    window.Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(() => Promise.resolve(accessToken));
-                    ssoProviderWasSet = true;
-                }
-                setTimeout(renderApp, 100);
             }
+            setTimeout(renderApp, 100);
         });
     </script>
 </body>
