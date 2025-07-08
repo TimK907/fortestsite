@@ -117,7 +117,6 @@
         <div class="main-content">
             <h1 id="main-heading"></h1>
             <div class="subtitle" id="main-sub"></div>
-            <!-- ===== Brand Dropdown ==================== -->
             <div class="row">
                 <label for="brandSelect" id="brandLbl"></label>
                 <select id="brandSelect">
@@ -125,12 +124,9 @@
                     <option value="GO">GO</option>
                 </select>
             </div>
-            <!-- ===== Authentication Section ============= -->
             <div id="authBox"></div>
         </div>
     </div>
-
-    <!-- ====== LIVE CHAT WIDGET SCRIPTS AND CALLBACK ====== -->
     <script>
         function lcw() {
             let localized_texts = {
@@ -244,7 +240,7 @@
                     uname = p.userName;
                     uid = p.userId;
                 }
-            } catch (e) { }
+            } catch (e) {}
             Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
                 inNewWindow: false,
                 customContext: {
@@ -283,7 +279,7 @@
                 });
             } catch(e){}
         }
-        const translations = { /* ... (без змін) ... */ 
+        const translations = {
             en: {
                 langBtn: "Français",
                 heading: "We help you on every journey",
@@ -325,12 +321,13 @@
                 regSuccess: "Profil créé, vous pouvez vous connecter."
             }
         };
+
         function getLang() { return localStorage.getItem("lang") || "en"; }
         function setLang(lang) { localStorage.setItem("lang", lang); renderApp(); hardResetChatWidget(); }
         function getBrand() { return localStorage.getItem("brand") || "UP"; }
         function setBrand(value) { localStorage.setItem("brand", value); renderApp(); hardResetChatWidget(); }
         function setProfile(profile) { localStorage.setItem("profile", JSON.stringify(profile)); }
-        function getProfile() { try { return JSON.parse(localStorage.getItem("profile")); } catch { return null; } }
+        function getProfile() { try { return JSON.parse(localStorage.getItem("profile") || "{}"); } catch { return null; } }
         function clearProfile() { localStorage.removeItem("profile"); }
         function setAuthed(userId) { localStorage.setItem("authUser", userId); }
         function getAuthed() { return localStorage.getItem("authUser"); }
@@ -338,9 +335,10 @@
         function getCurrentUserData() {
             const a = getAuthed();
             const p = getProfile();
-            if (p && p.userId === a) return p;
+            if (p && typeof p.userId !== "undefined" && p.userId === a) return p;
             return null;
         }
+
         function renderApp() {
             const lang = getLang();
             const tr = translations[lang];
@@ -399,7 +397,8 @@
                 </div>`;
             }
             authBox.innerHTML = html;
-            document.getElementById("brandSelect").addEventListener("change", (e) => { setBrand(e.target.value); });
+
+            document.getElementById("brandSelect").onchange = (e) => { setBrand(e.target.value); };
             document.getElementById("langBtn").onclick = () => { setLang(getLang() === "en" ? "fr" : "en"); };
             if (currentProfile) {
                 document.getElementById("logoutBtn").onclick = () => { clearAuthed(); renderApp(); hardResetChatWidget(); };
