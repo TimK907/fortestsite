@@ -134,9 +134,8 @@
     <!-- ====== LIVE CHAT WIDGET SCRIPTS AND CALLBACK ====== -->
     <!-- lcw(): Customizes chat widget UI texts according to page language -->
     <script>
-        //Styling function
         function lcw() {
-            // Default as Engligh
+            // Default UI texts: English
             let localized_texts = {
                 webchatTitle: "Virtual Assistant",
                 webchatChatButton: "Chat",
@@ -148,9 +147,10 @@
                 webchatLoadingPaneSubTitle: "Live Chat Support!",
                 webchatLoadingPaneSpinnerText: "Loading\u2026",
             }
-            // check condition for language
-            if (true) {
-                //French Translations
+            // === Detect language from localStorage (used on whole site) ===
+            var lang = localStorage.getItem("lang") || "en";
+            if (lang === "fr") {
+                // French UI texts
                 localized_texts.webchatTitle = "Assistant virtuel";
                 localized_texts.webchatChatButton = "Clavarder";
                 localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
@@ -161,7 +161,7 @@
                 localized_texts.webchatLoadingPaneSubTitle = "Soutien par clavardage en direct!";
                 localized_texts.webchatLoadingPaneSpinnerText = "Chargement\u2026";
             }
-
+            // Return styleProps and controlProps for chat widget
             return {
                 styleProps: {
                     generalStyles: {
@@ -232,24 +232,37 @@
         }
     </script>
 
+    <!-- Live Chat Widget from Microsoft: do not modify below! -->
     <script id="Microsoft_Omnichannel_LCWidget"
         src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
         data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750" data-lcw-version="prod"
         data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
         data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
-        data-font-family-override="Roboto" data-color-override="#0000FF" data-customization-callback="lcw">
-        </script>
-    <script>
+        data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
+    </script>
 
-        // Ready event listner to call live chtat sdk
+    <!-- After widget loads, start chat and pass context taken from profile/language/brand -->
+    <script>
         window.addEventListener("lcw:ready", function () {
+            // === Get variables from saved state ===
+            var lang = localStorage.getItem("lang") || "en";
+            var userLang = lang === "en" ? "English" : "French";
+            var brand = localStorage.getItem("brand") || "UP";
+            var p = null, uname = "", uid = "";
+            try {
+                p = JSON.parse(localStorage.getItem("profile"));
+                if (p && p.userId === localStorage.getItem("authUser")) {
+                    uname = p.userName;
+                    uid = p.userId;
+                }
+            } catch (e) { }
             Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
                 inNewWindow: false,
                 customContext: {
-                    'UserLanguage': { 'value': 'lang', 'isDisplayable': true },
-                    'Brand': { 'value': 'brand', 'isDisplayable': true },
-					'UserName': { 'value': 'name', 'isDisplayable': true },
-                    'Token': { 'value': 'token', 'isDisplayable': true }
+                    'UserLanguage': { 'value': userLang, 'isDisplayable': true },
+                    'Brand': { 'value': brand, 'isDisplayable': true },
+                    'UserName': { 'value': uname, 'isDisplayable': true },
+                    'Token': { 'value': uid, 'isDisplayable': true }
                 }
             });
         });
@@ -397,7 +410,7 @@ function renderApp() {
                 </div>
                 <div class="row">
                     <label for="regUserId" style="min-width:90px">${tr.userId}: </label>
-                    <input type="text" id="regUserId" maxlength="50" required/>
+                    <input type="text" id="regUserId" maxlength="30" required/>
                 </div>
                 <div class="row">
                     <label for="regPw" style="min-width:90px">${tr.password}: </label>
