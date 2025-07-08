@@ -2,340 +2,486 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=360, initial-scale=1.0">
-    <title>Travel Support</title>
+    <title>Travel Assistance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts for UI -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
     <style>
-        html, body { height: 100%; margin: 0; padding: 0; }
+        /* ===== Page and Layout Styles ===== */
+        html, body { height: 100%; margin:0; }
         body {
-            min-height: 100vh; width: 100vw;
-            background-image: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw');
+            min-height: 100vh;
+            min-width: 100vw;
+            margin: 0;
+            padding: 0;
+            font-family: "Montserrat", Arial, sans-serif;
+            background: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw') no-repeat center center fixed;
             background-size: cover;
-            background-position: center;
-            font-family: Arial, sans-serif;
         }
-        .content-block {
-            background: rgba(255,255,255,0.87);
-            margin: 32px;
-            padding: 28px 32px 32px 32px;
-            border-radius: 18px;
-            box-shadow: 0 10px 28px 0 rgba(0,0,0,0.08),0 2px 4px 0 rgba(0,0,0,0.04);
-            max-width: 590px;
+        .main-content {
+            max-width: 420px;
+            margin: 60px 0 0 40px;
+            padding: 36px 32px 32px 32px;
+            background: rgba(255,255,255,.97);
+            border-radius: 12px;
+            box-shadow: 0 0 22px 3px rgba(50,50,50,0.12);
+            align-self: flex-start;
+        }
+        h1 {
+            margin-top: 0;
+            margin-bottom: 18px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1c1c1c;
+            text-align: left;
+        }
+        .subtitle {
+            margin-bottom: 18px;
+            color: #333;
+            font-size: 1.02rem;
+            line-height: 1.6;
+            text-align: left;
+        }
+        .row {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
         }
-        .lang-btns { margin: 0 0 16px 0; display: flex; gap: 10px; }
-        h1 { text-align: left; color: #15341a; margin-bottom: 16px;}
-        p { text-align: left; max-width: 500px; color: #1a282e; font-size: 1.12em; margin: 0 0 30px 0;}
-        .selectors { margin-bottom: 30px; display: flex; flex-direction: row; gap: 20px;}
-        label { margin-right: 12px; min-width: 64px; display: inline-block;}
-        input[type="text"], select { padding: 5.5px 10px; border-radius: 4px; border: 1px solid #bbb; }
-        .auth-btns { margin-bottom: 40px; display: flex; gap: 15px;}
-        #ms-login, #ms-logout { background: #399e46; color: white; border: none; border-radius: 5px; font-size: 1em; padding: 9px 22px; cursor: pointer;}
-        #ms-logout {background: #b50606;}
-        #ms-login:disabled, #ms-logout:disabled { opacity: 0.5; cursor: not-allowed;}
+        label {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #222;
+        }
+        select, input[type="text"], input[type="password"] {
+            font-size: 1rem;
+            padding: 7px 10px;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+        }
+        .auth-user {
+            font-size: 1rem;
+            color: #005196;
+            margin-bottom: 8px;
+        }
+        .btn {
+            border: none;
+            border-radius: 4px;
+            padding: 9px 24px;
+            background: #005196;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 5px 0;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #003862;
+        }
+        .lang-toggle {
+            position: fixed;
+            top: 24px;
+            right: 32px;
+            z-index: 2000;
+            background: #005196;
+            color: #fff;
+            border-radius: 30px;
+            box-shadow: 0 2px 12px #bbb3;
+            padding: 11px 26px 11px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+        }
         @media (max-width: 700px) {
-            .content-block {max-width: 98vw; margin: 16px 3vw; padding: 18px 10px 20px 10px;}
+            .main-content {
+                max-width: 98vw;
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 18px 5vw 10px 5vw;
+            }
+            .lang-toggle {
+                top: 10px;
+                right: 10px;
+                padding: 9px 18px 9px 17px;
+                font-size: 15px;
+            }
         }
     </style>
-    <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
 </head>
 <body>
-    <div class="content-block">
-        <div class="lang-btns">
-            <button id="en-btn" type="button">English</button>
-            <button id="fr-btn" type="button">Français</button>
-        </div>
-        <h1 id="site-title">
-            We make every journey easier for you
-        </h1>
-        <p id="site-desc">
-            Whether you travel by air, road, rail, or sea, you can always rely on our trustworthy support. Your comfort, safety, and experience are our priority – anywhere, anytime.
-        </p>
-        <div class="selectors">
-            <div>
-                <label for="brand-select" id="brand-label">Brand:</label>
-                <select id="brand-select">
+    <!-- ===== Language Switch Button ===== -->
+    <button class="lang-toggle" id="langBtn"></button>
+    <div style="display:flex;flex-direction:column;min-height:100vh;">
+        <div class="main-content">
+            <h1 id="main-heading"></h1>
+            <div class="subtitle" id="main-sub"></div>
+            <!-- ===== Brand Dropdown ==================== -->
+            <div class="row">
+                <label for="brandSelect" id="brandLbl"></label>
+                <select id="brandSelect">
                     <option value="UP">UP</option>
                     <option value="GO">GO</option>
                 </select>
             </div>
-        </div>
-        <div class="auth-btns">
-            <button id="ms-login">Log In with Microsoft</button>
-            <button id="ms-logout" style="display:none;">Log Out</button>
-            <span id="auth-username" style="margin-left:10px; font-weight:bold;"></span>
+            <!-- ===== Authentication Section ============= -->
+            <div id="authBox"></div>
         </div>
     </div>
-<script>
-    // Language, MSAL, and translation logic
-    let userLanguage = localStorage.getItem("lang") || "English";
-    const translations = {
-        'English': {
-            title: 'We make every journey easier for you',
-            desc: 'Whether you travel by air, road, rail, or sea, you can always rely on our trustworthy support. Your comfort, safety, and experience are our priority – anywhere, anytime.',
-            brand: 'Brand:',
-            ms_login: 'Log In with Microsoft',
-            ms_logout: 'Log Out'
-        },
-        'French': {
-            title: 'Nous facilitons chacun de vos voyages',
-            desc: 'Que vous voyagiez par avion, par route, par rail ou par mer, vous pouvez toujours compter sur notre soutien fiable. Votre confort, votre sécurité et votre expérience sont notre priorité – partout, à tout moment.',
-            brand: 'Marque :',
-            ms_login: 'Se connecter avec Microsoft',
-            ms_logout: 'Se déconnecter'
-        }
-    };
 
-    function setLanguage(lang, reload = true) {
-        userLanguage = lang;
-        localStorage.setItem("lang", lang);
-        if (reload) window.location.reload(true);
-    }
-    document.getElementById('en-btn').addEventListener('click', function() { setLanguage('English'); });
-    document.getElementById('fr-btn').addEventListener('click', function() { setLanguage('French'); });
-    function updateLangUI() {
-        let tr = translations[userLanguage];
-        document.getElementById('site-title').innerText = tr.title;
-        document.getElementById('site-desc').innerText = tr.desc;
-        document.getElementById('brand-label').innerText = tr.brand;
-        document.getElementById('ms-login').innerText = tr.ms_login;
-        document.getElementById('ms-logout').innerText = tr.ms_logout;
-        if(userLanguage === "English"){
-            document.getElementById('en-btn').style.fontWeight='bold';
-            document.getElementById('fr-btn').style.fontWeight='';
-        }else{
-            document.getElementById('fr-btn').style.fontWeight='bold';
-            document.getElementById('en-btn').style.fontWeight='';
-        }
-    }
+    <!-- ====== LIVE CHAT WIDGET SCRIPTS AND CALLBACK ====== -->
+    <!-- lcw(): Customizes chat widget UI texts according to page language -->
+    <script>
+        //Styling function
+        function lcw() {
+            // Default as Engligh
+            let localized_texts = {
+                webchatTitle: "Virtual Assistant",
+                webchatChatButton: "Chat",
+                webchatAlertTitle: "Are you sure you want to exit the chat?",
+                webchatAlertMessage: "Note: This will end your conversation, and you will lose your chat history.",
+                webchatNoButton: "No",
+                webchatYesButton: "Yes",
+                webchatLoadingPaneTitle: "Welcome to",
+                webchatLoadingPaneSubTitle: "Live Chat Support!",
+                webchatLoadingPaneSpinnerText: "Loading\u2026",
+            }
+            // check condition for language
+            if (true) {
+                //French Translations
+                localized_texts.webchatTitle = "Assistant virtuel";
+                localized_texts.webchatChatButton = "Clavarder";
+                localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
+                localized_texts.webchatAlertMessage = "Note\u202F: Cela mettra fin \u00E0 la conversation et vous perdrez votre historique de clavardage.";
+                localized_texts.webchatNoButton = "Non";
+                localized_texts.webchatYesButton = "Oui";
+                localized_texts.webchatLoadingPaneTitle = "Bienvenue au";
+                localized_texts.webchatLoadingPaneSubTitle = "Soutien par clavardage en direct!";
+                localized_texts.webchatLoadingPaneSpinnerText = "Chargement\u2026";
+            }
 
-    // Brand persistence
-    let brand = localStorage.getItem("brand") || "UP";
-    document.getElementById('brand-select').value = brand;
-    document.getElementById('brand-select').addEventListener('change', function(){
-        brand = this.value;
-        localStorage.setItem("brand", brand);
-        window.location.reload(true);
-    });
-
-    // MSAL config
-    let msalToken = null;
-    let msalAccount = null;
-    let isAuthenticated = false;
-    const msalConfig = {
-      auth: {
-        clientId: "20432056-2b97-43ca-9cfc-ec900428bbd4",
-        authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182",
-        redirectUri: window.location.origin + window.location.pathname,
-      }
-    };
-    const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-    async function msLogin() {
-        try {
-            const loginResponse = await msalInstance.loginPopup({ scopes: ["openid", "profile", "email"] });
-            msalAccount = loginResponse.account;
-            const tokenResponse = await msalInstance.acquireTokenSilent({ scopes: ["openid", "profile", "email"], account: msalAccount });
-            msalToken = tokenResponse.idToken;
-            isAuthenticated = true;
-            localStorage.setItem("msalAccount", JSON.stringify(msalAccount));
-            localStorage.setItem("msalToken", msalToken);
-            localStorage.setItem("isAuthenticated", "true");
-            document.getElementById('auth-username').innerText = msalAccount.name || "";
-            document.getElementById('ms-login').style.display = "none";
-            document.getElementById('ms-logout').style.display = "";
-            window.location.reload(true);
-        } catch (err) {
-            alert("Microsoft Login failed.");
-        }
-    }
-    function msLogout() {
-        msalInstance.logoutPopup();
-        localStorage.removeItem("msalAccount");
-        localStorage.removeItem("msalToken");
-        localStorage.removeItem("isAuthenticated");
-        window.location.reload(true);
-    }
-    function restoreAuthState(){
-        let acc = localStorage.getItem("msalAccount");
-        let tok = localStorage.getItem("msalToken");
-        let isAuth = localStorage.getItem("isAuthenticated")==="true";
-        if(acc && tok && isAuth){
-            msalAccount = JSON.parse(acc);
-            msalToken = tok;
-            isAuthenticated = true;
-            document.getElementById('auth-username').innerText = msalAccount.name || "";
-            document.getElementById('ms-login').style.display = "none";
-            document.getElementById('ms-logout').style.display = "";
-        }else{
-            document.getElementById('ms-login').style.display = "";
-            document.getElementById('ms-logout').style.display = "none";
-            document.getElementById('auth-username').innerText = '';
-        }
-    }
-    document.getElementById('ms-login').addEventListener('click', msLogin);
-    document.getElementById('ms-logout').addEventListener('click', msLogout);
-
-    updateLangUI();
-    restoreAuthState();
-</script>
-<script>
-    // Build chat context only if user authenticated
-    function getCurrentChatContext() {
-        let lang = localStorage.getItem("lang") || "English";
-        let brand = document.getElementById('brand-select') ? document.getElementById('brand-select').value : (localStorage.getItem("brand") || "UP");
-        let isAuth = localStorage.getItem("isAuthenticated")==="true";
-        let msalAccRaw = localStorage.getItem("msalAccount");
-        if(isAuth && msalAccRaw) {
-            let msalAcc = JSON.parse(msalAccRaw);
             return {
-                'UserLanguage': { 'value': lang === "French" ? "French" : "English", 'isDisplayable': true },
-                'Brand': { 'value': brand, 'isDisplayable': true },
-                'UserName': { 'value': msalAcc.name || "", 'isDisplayable': true },
-                'Token': { 'value': msalAcc.homeAccountId || "", 'isDisplayable': true }
-            };
-        } else {
-            return {
-                'UserLanguage': { 'value': lang === "French" ? "French" : "English", 'isDisplayable': true },
-                'Brand': { 'value': brand, 'isDisplayable': true },
-                'UserName': { 'value': "", 'isDisplayable': true },
-                'Token': { 'value': "", 'isDisplayable': true }
-            };
-        }
-    }
-    function getCurrentAuthToken() {
-        return localStorage.getItem('msalToken') || "";
-    }
-    // Chat UI customization (language)
-    function lcw() {
-        let lang = localStorage.getItem('lang') || "English";
-        let localized_texts = {
-            webchatTitle: "Virtual Assistant",
-            webchatChatButton: "Chat",
-            webchatAlertTitle: "Are you sure you want to exit the chat?",
-            webchatAlertMessage: "Note: This will end your conversation, and you will lose your chat history.",
-            webchatNoButton: "No",
-            webchatYesButton: "Yes",
-            webchatLoadingPaneTitle: "Welcome to",
-            webchatLoadingPaneSubTitle: "Live Chat Support!",
-            webchatLoadingPaneSpinnerText: "Loading\u2026",
-        }
-        if (lang === "French") {
-            localized_texts.webchatTitle = "Assistant virtuel";
-            localized_texts.webchatChatButton = "Clavarder";
-            localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
-            localized_texts.webchatAlertMessage = "Note\u202F: Cela mettra fin \u00E0 la conversation et vous perdrez votre historique de clavardage.";
-            localized_texts.webchatNoButton = "Non";
-            localized_texts.webchatYesButton = "Oui";
-            localized_texts.webchatLoadingPaneTitle = "Bienvenue au";
-            localized_texts.webchatLoadingPaneSubTitle = "Soutien par clavardage en direct!";
-            localized_texts.webchatLoadingPaneSpinnerText = "Chargement\u2026";
-        }
-        return {
-            styleProps: {
-                generalStyles: {
-                    width: "360px",
-                    height: "560px",
-                    bottom: "20px",
-                    right: "20px"
-                }
-            },
-            headerProps: {
                 styleProps: {
-                    generalStyleProps: { background: "#399e46" },
-                    titleStyleProps: { color: "#FFFFFF" },
-                    minimizeButtonStyleProps: { color: "#FFFFFF" },
-                    closeButtonStyleProps: { color: "#FFFFFF" }
+                    generalStyles: {
+                        width: "360px",
+                        height: "560px",
+                        bottom: "20px",
+                        right: "20px"
+                    }
                 },
-                controlProps: {
-                    headerTitleProps: { text: localized_texts.webchatTitle },
-                    hideIcon: false, hideTitle: false,
-                    headerIconProps: {
-                        src: "https://www.svgrepo.com/show/474732/assistant.svg",
-                        alt: "Discutons"
+                headerProps: {
+                    styleProps: {
+                        generalStyleProps: {
+                            background: "#399e46"
+                        },
+                        titleStyleProps: {
+                            color: "#FFFFFF"
+                        },
+                        minimizeButtonStyleProps: {
+                            color: "#FFFFFF"
+                        },
+                        closeButtonStyleProps: {
+                            color: "#FFFFFF"
+                        }
+                    },
+                    controlProps: {
+                        headerTitleProps: {
+                            text: localized_texts.webchatTitle
+                        },
+                        hideIcon: false,
+                        hideTitle: false,
+                        headerIconProps: {
+                            src: "https://www.svgrepo.com/show/474732/assistant.svg",
+                            alt: "Discutons"
+                        }
+                    }
+                },
+                loadingPaneProps: {
+                    styleProps: {
+                        generalStyleProps: {
+                            background: "#399e46"
+                        }
+                    },
+                    controlProps: {
+                        titleText: localized_texts.webchatLoadingPaneTitle,
+                        subtitleText: localized_texts.webchatLoadingPaneSubTitle,
+                        spinnerText: localized_texts.webchatLoadingPaneSpinnerText,
+                        hideSpinnerText: false,
+                        spinnerSize: 3,
+                    }
+                },
+                chatButtonProps: {
+                    controlProps: {
+                        hideChatTextContainer: false,
+                        hideChatSubtitle: true,
+                        titleText: localized_texts.webchatChatButton,
+                    }
+                },
+                confirmationPaneProps: {
+                    controlProps: {
+                        titleText: localized_texts.webchatAlertTitle,
+                        subtitleText: localized_texts.webchatAlertMessage,
+                        brightnessValueOnDim: "0.2",
+                        confirmButtonText: localized_texts.webchatYesButton,
+                        cancelButtonText: localized_texts.webchatNoButton,
                     }
                 }
-            },
-            loadingPaneProps: {
-                styleProps: { generalStyleProps: { background: "#399e46" } },
-                controlProps: {
-                    titleText: localized_texts.webchatLoadingPaneTitle,
-                    subtitleText: localized_texts.webchatLoadingPaneSubTitle,
-                    spinnerText: localized_texts.webchatLoadingPaneSpinnerText,
-                    hideSpinnerText: false, spinnerSize: 3,
-                }
-            },
-            chatButtonProps: {
-                controlProps: {
-                    hideChatTextContainer: false,
-                    hideChatSubtitle: true,
-                    titleText: localized_texts.webchatChatButton,
-                }
-            },
-            confirmationPaneProps: {
-                controlProps: {
-                    titleText: localized_texts.webchatAlertTitle,
-                    subtitleText: localized_texts.webchatAlertMessage,
-                    brightnessValueOnDim: "0.2",
-                    confirmButtonText: localized_texts.webchatYesButton,
-                    cancelButtonText: localized_texts.webchatNoButton,
-                }
-            }
-        };
-    }
-    window.lcw = lcw;
-</script>
-<script id="Microsoft_Omnichannel_LCWidget"
-    src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
-    data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750"
-    data-lcw-version="prod"
-    data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
-    data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
-    data-font-family-override="Monotype Corsiva"
-    data-color-override="#0000FF"
-    data-customization-callback="lcw">
-</script>
-<script>
-    // Start chat with correct variables
-    window.addEventListener("lcw:ready", function () {
-        var authToken = getCurrentAuthToken();
-        if(authToken) {
-            Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthToken(authToken);
+            };
         }
-        Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-            inNewWindow: false,
-            customContext: getCurrentChatContext()
-        });
-    });
+    </script>
 
-    // End chat completely and clear storage (chat is fully reset after closeChat)
-    function restartChat() {
+    <script id="Microsoft_Omnichannel_LCWidget"
+        src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
+        data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750" data-lcw-version="prod"
+        data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
+        data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
+        data-font-family-override="Roboto" data-color-override="#0000FF" data-customization-callback="lcw">
+        </script>
+    <script>
+
+        // Ready event listner to call live chtat sdk
+        window.addEventListener("lcw:ready", function () {
+            Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+                inNewWindow: false,
+                customContext: {
+                    'UserLanguage': { 'value': 'lang', 'isDisplayable': true },
+                    'Brand': { 'value': 'brand', 'isDisplayable': true },
+					'UserName': { 'value': 'name', 'isDisplayable': true },
+                    'Token': { 'value': 'token', 'isDisplayable': true }
+                }
+            });
+        });
+    </script>
+    <!-- ===== End Chat Widget Block ===== -->
+
+<!-- ===== Site JavaScript for UI, translations, authentication, lang, brand ===== -->
+<script>
+// End the chat session and clear its state on log out, lang or brand switch
+function hardResetChatWidget() {
+    try {
         if (
-            window.Microsoft
-            && Microsoft.Omnichannel
-            && Microsoft.Omnichannel.LiveChatWidget
-            && Microsoft.Omnichannel.LiveChatWidget.SDK
-            && Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat
+            window.Microsoft &&
+            window.Microsoft.Omnichannel &&
+            window.Microsoft.Omnichannel.LiveChatWidget &&
+            window.Microsoft.Omnichannel.LiveChatWidget.SDK &&
+            typeof window.Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat === "function"
         ) {
             Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
         }
-        // (optionally clear previous storage keys for chat history if needed)
-        if (window.sessionStorage) {
-            for(let k in sessionStorage){
-                if(k && typeof k === "string" && k.indexOf("lcw") === 0) sessionStorage.removeItem(k);
+    } catch(e) {}
+    // Remove chat/session keys as needed
+    try {
+        Object.keys(sessionStorage).forEach(function(key){
+            if (key.toLowerCase().includes('chat') || key.toLowerCase().includes('omnichannel')) {
+                sessionStorage.removeItem(key);
             }
-        }
-        if (window.localStorage) {
-            for(let k in localStorage){
-                if(k && typeof k === "string" && k.indexOf("lcw") === 0) localStorage.removeItem(k);
+        });
+        Object.keys(localStorage).forEach(function(key){
+            if ((key.startsWith('oc-') && key.indexOf('chat') !== -1)
+                || key.toLowerCase().includes('omnichannel_livechatwidget')) {
+                localStorage.removeItem(key);
             }
-        }
+        });
+    } catch(e){}
+}
+
+// UI language translations
+const translations = {
+    en: {
+        langBtn: "Français",
+        heading: "We help you on every journey",
+        sub: "No matter how or where you travel – you can always count on us. From the first step to the last stop, our support is with you at every stage.",
+        brand: "Brand",
+        login: "Log In",
+        password: "Password",
+        userId: "User ID",
+        userName: "User Name",
+        logout: "Log Out",
+        or: "or",
+        createProfile: "Create Profile",
+        haveAccount: "Already have an account?",
+        regBtn: "Create Profile",
+        loginBtn: "Log In",
+        userGreeting: "Hello, {name}!",
+        invalid: "Invalid User ID or Password.",
+        alreadyUser: "User ID already exists.",
+        regSuccess: "Profile created, you can log in now."
+    },
+    fr: {
+        langBtn: "English",
+        heading: "Nous vous accompagnons dans chaque voyage",
+        sub: "Peu importe comment ou où vous voyagez – vous pouvez toujours compter sur nous. De votre point de départ à l'arrivée, notre soutien vous accompagne à chaque étape.",
+        brand: "Marque",
+        login: "Connexion",
+        password: "Mot de passe",
+        userId: "Identifiant",
+        userName: "Nom d'utilisateur",
+        logout: "Déconnexion",
+        or: "ou",
+        createProfile: "Créer un profil",
+        haveAccount: "Vous avez déjà un compte ?",
+        regBtn: "Créer un profil",
+        loginBtn: "Connexion",
+        userGreeting: "Bonjour, {name} !",
+        invalid: "Identifiant ou mot de passe incorrect.",
+        alreadyUser: "Cet identifiant existe déjà.",
+        regSuccess: "Profil créé, vous pouvez vous connecter."
     }
-    document.getElementById('ms-logout').addEventListener('click', restartChat);
-    document.getElementById('en-btn').addEventListener('click', restartChat);
-    document.getElementById('fr-btn').addEventListener('click', restartChat);
-    document.getElementById('brand-select').addEventListener('change', restartChat);
+};
+
+// Helpers for language, brand, authentication state
+function getLang() { return localStorage.getItem("lang") || "en"; }
+function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
+function getBrand() { return localStorage.getItem("brand") || "UP"; }
+function setBrand(value) { localStorage.setItem("brand", value); }
+function setProfile(profile) { localStorage.setItem("profile", JSON.stringify(profile)); }
+function getProfile() { try { return JSON.parse(localStorage.getItem("profile")); } catch { return null; } }
+function clearProfile() { localStorage.removeItem("profile"); }
+function setAuthed(userId) { localStorage.setItem("authUser", userId); }
+function getAuthed() { return localStorage.getItem("authUser"); }
+function clearAuthed() { localStorage.removeItem("authUser"); }
+function getCurrentUserData() {
+    const a = getAuthed();
+    const p = getProfile();
+    if (p && p.userId === a) return p;
+    return null;
+}
+
+// All main UI logic and event handlers for forms/branding/lang/profile
+function renderApp() {
+    const lang = getLang();
+    const tr = translations[lang];
+    document.documentElement.lang = lang === "en" ? "en" : "fr";
+    document.getElementById("langBtn").textContent = tr.langBtn;
+    document.getElementById("main-heading").textContent = tr.heading;
+    document.getElementById("main-sub").textContent = tr.sub;
+    document.getElementById("brandLbl").textContent = tr.brand + ":";
+    document.getElementById("brandSelect").value = getBrand();
+
+    // ==== Authentication/Login/Register UI update ====
+    const authBox = document.getElementById("authBox");
+    const currentProfile = getCurrentUserData();
+    let html = "";
+
+    if (currentProfile) {
+        // Show if user is logged in
+        html += `<div>
+            <div class="auth-user">${tr.userGreeting.replace("{name}", currentProfile.userName)}</div>
+            <button class="btn" id="logoutBtn">${tr.logout}</button>
+        </div>`;
+    } else {
+        // Login/register forms
+        html += `<div class="login-section" id="loginSection">
+            <form id="loginForm" autocomplete="off">
+                <div class="row">
+                    <label for="loginUserId" style="min-width:90px">${tr.userId}: </label>
+                    <input type="text" id="loginUserId" required />
+                </div>
+                <div class="row">
+                    <label for="loginPw" style="min-width:90px">${tr.password}: </label>
+                    <input type="password" id="loginPw" required />
+                </div>
+                <button class="btn" id="loginBtn" type="submit" style="width:100%">${tr.loginBtn}</button>
+            </form>
+            <div style="margin: 8px 0; text-align:left"><span>${tr.or}</span></div>
+            <button class="btn" id="showReg">${tr.createProfile}</button>
+            <div id="authMsg" style="color:#cc0000;padding:2px 0 0 4px;font-size:0.93rem"></div>
+        </div>
+        <div class="register-section" id="registerSection" style="display:none">
+            <form id="registerForm" autocomplete="off">
+                <div class="row">
+                    <label for="regName" style="min-width:90px">${tr.userName}: </label>
+                    <input type="text" id="regName" maxlength="30" required/>
+                </div>
+                <div class="row">
+                    <label for="regUserId" style="min-width:90px">${tr.userId}: </label>
+                    <input type="text" id="regUserId" maxlength="50" required/>
+                </div>
+                <div class="row">
+                    <label for="regPw" style="min-width:90px">${tr.password}: </label>
+                    <input type="password" id="regPw" minlength="3" maxlength="24" required/>
+                </div>
+                <button class="btn" id="regBtn" type="submit" style="width:100%">${tr.regBtn}</button>
+            </form>
+            <div style="margin: 8px 0 2px 0; text-align:left">
+                <span>${tr.haveAccount}</span>
+            </div>
+            <button class="btn" id="hideReg">${tr.loginBtn}</button>
+            <div id="regMsg" style="color:#306404;padding:2px 0 0 4px;font-size:0.93rem"></div>
+        </div>`;
+    }
+    authBox.innerHTML = html;
+
+    // Brand select handler
+    document.getElementById("brandSelect").addEventListener("change", (e) => {
+        setBrand(e.target.value);
+        hardResetChatWidget();
+        setTimeout(() => location.reload(), 350);
+    });
+
+    // Language toggle handler
+    document.getElementById("langBtn").onclick = () => {
+        hardResetChatWidget();
+        setTimeout(() => setLang(lang === "en" ? "fr" : "en"), 350);
+    };
+
+    // Auth events
+    if (currentProfile) {
+        document.getElementById("logoutBtn").onclick = () => {
+            clearAuthed();
+            hardResetChatWidget();
+            setTimeout(() => location.reload(), 350);
+        };
+    } else {
+        document.getElementById("showReg").onclick = () => {
+            document.getElementById("registerSection").style.display = "block";
+            document.getElementById("loginSection").style.display = "none";
+        };
+        document.getElementById("hideReg").onclick = () => {
+            document.getElementById("registerSection").style.display = "none";
+            document.getElementById("loginSection").style.display = "block";
+        };
+        document.getElementById("loginForm").onsubmit = (e) => {
+            e.preventDefault();
+            const userId = document.getElementById("loginUserId").value.trim();
+            const pw = document.getElementById("loginPw").value;
+            const prof = getProfile();
+            const msg = document.getElementById("authMsg");
+            if (prof && prof.userId === userId && prof.pw === pw) {
+                setAuthed(userId);
+                hardResetChatWidget();
+                setTimeout(() => location.reload(), 350);
+            } else {
+                msg.textContent = translations[lang].invalid;
+            }
+        };
+        document.getElementById("registerForm").onsubmit = (e) => {
+            e.preventDefault();
+            const name = document.getElementById("regName").value.trim();
+            const userId = document.getElementById("regUserId").value.trim();
+            const pw = document.getElementById("regPw").value;
+            const msg = document.getElementById("regMsg");
+            const existing = getProfile();
+            if (existing && existing.userId === userId) {
+                msg.textContent = translations[lang].alreadyUser;
+                return;
+            }
+            setProfile({userName: name, userId: userId, pw: pw});
+            msg.textContent = translations[lang].regSuccess;
+            setTimeout(() => {
+                document.getElementById("registerSection").style.display = "none";
+                document.getElementById("loginSection").style.display = "block";
+            }, 1000);
+        };
+    }
+}
+
+// Render site on ready
+window.addEventListener('DOMContentLoaded', () => {
+    renderApp();
+});
 </script>
 </body>
 </html>
