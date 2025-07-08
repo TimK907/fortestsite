@@ -5,21 +5,16 @@
 <title>Travel Support</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-    html,body{
-        margin:0;padding:0;height:100%;
-        font-family:Arial,Helvetica,sans-serif;
-        background:url("https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw") no-repeat center/cover;
-        color:#fff;
-    }
-    .overlay{background:rgba(0,0,0,.55);position:absolute;top:0;left:0;right:0;bottom:0;}
-    .container{position:relative;z-index:2;padding:40px 30px;max-width:520px;}
-    h1,p,select,button{text-align:left;}
-    #brandSelect{padding:6px 8px;margin:12px 0 18px 0;}
-    .langBtn,.authBtn{margin-right:8px;padding:8px 16px;border:none;cursor:pointer;border-radius:4px;font-weight:bold;}
-    .langBtn{background:#399e46;color:#fff;opacity:.7;}
-    .langBtn.active{opacity:1;background:#ffcc00;color:#000;}
-    .authBtn{background:#0078d4;color:#fff;}
-    #status{margin-top:10px;font-weight:bold;}
+html,body{margin:0;padding:0;height:100%;font-family:Arial,Helvetica,sans-serif;background:url("https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg") no-repeat center/cover;color:#fff;}
+.overlay{background:rgba(0,0,0,.55);position:absolute;inset:0;}
+.container{position:relative;z-index:2;padding:40px 30px;max-width:520px;}
+h1,p,label,select,button{text-align:left;}
+select{padding:6px 8px;margin:12px 0 18px 0;}
+.langBtn,.authBtn{margin-right:8px;padding:8px 16px;border:none;cursor:pointer;border-radius:4px;font-weight:bold;}
+.langBtn{background:#399e46;color:#fff;opacity:.6;}
+.langBtn.active{opacity:1;background:#ffcc00;color:#000;}
+.authBtn{background:#0078d4;color:#fff;}
+#status{margin-top:10px;font-weight:bold;}
 </style>
 </head>
 <body>
@@ -29,16 +24,13 @@
         <button class="langBtn" id="enBtn" data-lang="en">English</button>
         <button class="langBtn" id="frBtn" data-lang="fr">Français</button>
     </div>
-
     <h1 id="mainTitle"></h1>
     <p id="mainText"></p>
-
     <label id="brandLabel" for="brandSelect"></label>
     <select id="brandSelect">
         <option value="UP">UP</option>
         <option value="GO">GO</option>
     </select><br>
-
     <button class="authBtn" id="loginBtn"></button>
     <div id="status"></div>
 </div>
@@ -46,31 +38,27 @@
 <!-- MSAL -->
 <script src="https://alcdn.msauth.net/browser/2.25.0/js/msal-browser.min.js"></script>
 <script>
-/* ---------- GLOBAL STATE ---------- */
-let currentLanguage = localStorage.getItem("lang") || "en";  // 'en' | 'fr'
-let brandValue       = localStorage.getItem("brand") || "UP";
-let userName         = "";
-let userToken        = "";   // custom userId
-/* ---------- LANGUAGE DATA ---------- */
+/* ---------------- GLOBAL STATE ---------------- */
+let currentLanguage = localStorage.getItem("lang") || "en";
+let brandValue      = localStorage.getItem("brand") || "UP";
+let userName        = "";
+let userToken       = "";     /* custom user id */
+/* ---------------- LANGUAGE DATA --------------- */
 const texts = {
-    en:{
-        title:"We help you on every journey",
+    en:{title:"We help you on every journey",
         text:"Whatever you travel by, you can count on our support everywhere and anytime.",
         brand:"Brand:",
         login:"Log in with Microsoft",
-        signed:"Signed in as "
-    },
-    fr:{
-        title:"Nous vous aidons dans chaque voyage",
+        signed:"Signed in as "},
+    fr:{title:"Nous vous aidons dans chaque voyage",
         text:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",
         brand:"Marque :",
         login:"Se connecter avec Microsoft",
-        signed:"Connecté : "
-    }
+        signed:"Connecté : "}
 };
-/* ---------- MSAL CONFIG (STEP 1) ---------- */
+/* ------------- MSAL CONFIG (Step 1) ----------- */
 var clientApplication;
-(function (){
+(function(){
     var msalConfig = {
         auth:{
             clientId:"20432056-2b97-43ca-9cfc-ec900428bbd4",
@@ -79,21 +67,20 @@ var clientApplication;
     };
     clientApplication = new msal.PublicClientApplication(msalConfig);
 })();
- 
-/* ---------- TOKEN ENDPOINT (STEP 2) ---------- */
+
+/* ------------- TOKEN ENDPOINT (Step 2) -------- */
 (async function main(){
-    var theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_agentMXBot/conversations?api-version=2022-03-01-preview";
+    var theURL = "https://directline.botframework.com/v3/directline/tokens/generate"; // updated
 })();
 
-/* ---------- USER ID GENERATION (STEP 3) ---------- */
+/* ------------- USER ID (Step 3) --------------- */
 function updateUserId(){
-    var userId = clientApplication.getActiveAccount()?.homeAccountId != null ?
+    userToken = clientApplication.getActiveAccount()?.homeAccountId != null ?
         ("My-custom-prefix"+clientApplication.getActiveAccount().homeAccountId).substr(0,64) :
         (Math.random().toString()+Date.now().toString()).substr(0,64);
-    userToken = userId;
 }
 
-/* ---------- UI RENDERING ---------- */
+/* ------------- UI ----------------------------- */
 function renderTexts(){
     const t = texts[currentLanguage];
     document.getElementById("mainTitle").innerText = t.title;
@@ -101,110 +88,87 @@ function renderTexts(){
     document.getElementById("brandLabel").innerText= t.brand;
     document.getElementById("loginBtn").innerText  = t.login;
     document.documentElement.lang = currentLanguage;
-    // language buttons style
-    document.querySelectorAll(".langBtn").forEach(btn=>{
-        btn.classList.toggle("active",btn.dataset.lang===currentLanguage);
-    });
+    document.querySelectorAll(".langBtn").forEach(b=>b.classList.toggle("active",b.dataset.lang===currentLanguage));
 }
 renderTexts();
 
-/* ---------- BRAND SELECT ---------- */
+/* ---------- BRAND SELECTION ------------------- */
 document.getElementById("brandSelect").value = brandValue;
 document.getElementById("brandSelect").addEventListener("change",e=>{
     brandValue = e.target.value;
     localStorage.setItem("brand",brandValue);
 });
 
-/* ---------- LANGUAGE SWITCH ---------- */
-document.getElementById("enBtn").onclick = ()=>switchLanguage("en");
-document.getElementById("frBtn").onclick = ()=>switchLanguage("fr");
-function switchLanguage(lang){
-    currentLanguage = lang;
-    localStorage.setItem("lang",lang);
-    renderTexts();
-}
+/* ---------- LANGUAGE SWITCH ------------------- */
+document.getElementById("enBtn").onclick = ()=>switchLang("en");
+document.getElementById("frBtn").onclick = ()=>switchLang("fr");
+function switchLang(l){currentLanguage=l;localStorage.setItem("lang",l);renderTexts();showStatus();}
 
-/* ---------- LOGIN ---------- */
-function showStatus(){
-    const st = document.getElementById("status");
-    if(userName){
-        st.innerText = texts[currentLanguage].signed + userName;
-    }else{
-        st.innerText = "";
-    }
-}
+/* ---------- LOGIN ----------------------------- */
 document.getElementById("loginBtn").addEventListener("click",async ()=>{
     try{
         const resp = await clientApplication.loginPopup({scopes:["user.read"]});
-        if(resp && resp.account){
+        if(resp?.account){
             clientApplication.setActiveAccount(resp.account);
             userName = resp.account.name || "";
             updateUserId();
             showStatus();
         }
-    }catch(err){console.log(err);}
+    }catch(e){console.log(e);}
 });
+function showStatus(){
+    const s=document.getElementById("status");
+    s.innerText=userName?texts[currentLanguage].signed+userName:"";
+}
 showStatus();
 
-/* ---------- MAKE LANGUAGE AVAILABLE FOR lcw ---------- */
-window.currentLanguageForLCW = ()=>currentLanguage;
-window.brandForLCW           = ()=>brandValue;
-window.userNameForLCW        = ()=>userName;
-window.userTokenForLCW       = ()=>userToken;
+/* ---------- DIRECT LINE TOKEN (optional) ------ */
+const BOT_SECRET = "8JmiFfIOMzdjI4LGxvuZVFy18WS0FLv38LCmdY8pM9V9yIDrNUeAJQQJ99BFAC4f1cMAArohAAABAZBS19Yb.3GsbooNGM2phmYdB1Lkalu8UJ3lDm1CskqIDfWKklY1aYdn47HkdJQQJ99BFAC4f1cMAArohAAABAZBS3gpd";
+let directLineToken="";
+async function fetchDirectLineToken(){
+    try{
+        const r = await fetch("https://directline.botframework.com/v3/directline/tokens/generate",{
+            method:"POST",
+            headers:{Authorization:"Bearer "+BOT_SECRET}
+        });
+        const j = await r.json();
+        directLineToken = j.token;
+    }catch(err){console.log("DL token error",err);}
+}
+fetchDirectLineToken();
+
+/* ---------- EXPORT FOR LCW -------------------- */
+window.appState = {
+    getLang: ()=>currentLanguage,
+    getBrand:()=>brandValue,
+    getUserName:()=>userName,
+    getUserId:  ()=>userToken
+};
 </script>
 
 <!-- CHAT -->
 <script>
 function lcw(){
-    const lang = window.currentLanguageForLCW()==="fr"?"fr":"en";
-    let txt = {
-        webchatTitle:"Virtual Assistant",
-        webchatChatButton:"Chat",
-        webchatAlertTitle:"Are you sure you want to exit the chat?",
-        webchatAlertMessage:"Note: This will end your conversation, and you will lose your chat history.",
-        webchatNoButton:"No",
-        webchatYesButton:"Yes",
-        webchatLoadingPaneTitle:"Welcome to",
-        webchatLoadingPaneSubTitle:"Live Chat Support!",
-        webchatLoadingPaneSpinnerText:"Loading…"
-    };
-    if(lang==="fr"){
-        txt={webchatTitle:"Assistant virtuel",webchatChatButton:"Clavarder",
-            webchatAlertTitle:"Êtes-vous certain de vouloir quitter la séance de clavardage?",
-            webchatAlertMessage:"Note : Cela mettra fin à la conversation et vous perdrez votre historique de clavardage.",
-            webchatNoButton:"Non",webchatYesButton:"Oui",
-            webchatLoadingPaneTitle:"Bienvenue au",
-            webchatLoadingPaneSubTitle:"Soutien par clavardage en direct!",
-            webchatLoadingPaneSpinnerText:"Chargement…"};
-    }
+    const lang = window.appState.getLang()==="fr";
+    const loc = lang?{
+        title:"Assistant virtuel",chat:"Clavarder",alertTitle:"Êtes-vous certain de vouloir quitter la séance de clavardage?",
+        alertMsg:"Note : Cela mettra fin à la conversation et vous perdrez votre historique de clavardage.",
+        no:"Non",yes:"Oui",loadTitle:"Bienvenue au",
+        loadSub:"Soutien par clavardage en direct!",loading:"Chargement…"}:
+    {title:"Virtual Assistant",chat:"Chat",alertTitle:"Are you sure you want to exit the chat?",
+        alertMsg:"Note: This will end your conversation, and you will lose your chat history.",
+        no:"No",yes:"Yes",loadTitle:"Welcome to",loadSub:"Live Chat Support!",loading:"Loading…"};
     return{
         styleProps:{generalStyles:{width:"360px",height:"560px",bottom:"20px",right:"20px"}},
-        headerProps:{
-            styleProps:{
-                generalStyleProps:{background:"#399e46"},
-                titleStyleProps:{color:"#FFFFFF"},
-                minimizeButtonStyleProps:{color:"#FFFFFF"},
-                closeButtonStyleProps:{color:"#FFFFFF"}
-            },
-            controlProps:{
-                headerTitleProps:{text:txt.webchatTitle},
-                hideIcon:false,hideTitle:false,
-                headerIconProps:{src:"https://www.svgrepo.com/show/474732/assistant.svg",alt:"Assistant"}
-            }
-        },
-        loadingPaneProps:{
-            styleProps:{generalStyleProps:{background:"#399e46"}},
-            controlProps:{
-                titleText:txt.webchatLoadingPaneTitle,
-                subtitleText:txt.webchatLoadingPaneSubTitle,
-                spinnerText:txt.webchatLoadingPaneSpinnerText,
-                hideSpinnerText:false,spinnerSize:3
-            }
-        },
-        chatButtonProps:{controlProps:{hideChatTextContainer:false,hideChatSubtitle:true,titleText:txt.webchatChatButton}},
-        confirmationPaneProps:{controlProps:{
-            titleText:txt.webchatAlertTitle,subtitleText:txt.webchatAlertMessage,
-            brightnessValueOnDim:"0.2",confirmButtonText:txt.webchatYesButton,cancelButtonText:txt.webchatNoButton}}
+        headerProps:{styleProps:{generalStyleProps:{background:"#399e46"},
+            titleStyleProps:{color:"#FFF"},minimizeButtonStyleProps:{color:"#FFF"},closeButtonStyleProps:{color:"#FFF"}},
+            controlProps:{headerTitleProps:{text:loc.title},hideIcon:false,hideTitle:false,
+                headerIconProps:{src:"https://www.svgrepo.com/show/474732/assistant.svg",alt:"Assistant"}}},
+        loadingPaneProps:{styleProps:{generalStyleProps:{background:"#399e46"}},
+            controlProps:{titleText:loc.loadTitle,subtitleText:loc.loadSub,spinnerText:loc.loading,hideSpinnerText:false,spinnerSize:3}},
+        chatButtonProps:{controlProps:{hideChatTextContainer:false,hideChatSubtitle:true,titleText:loc.chat}},
+        confirmationPaneProps:{controlProps:{titleText:loc.alertTitle,subtitleText:loc.alertMsg,
+            brightnessValueOnDim:"0.2",confirmButtonText:loc.yes,cancelButtonText:loc.no}}
     };
 }
 </script>
@@ -222,14 +186,13 @@ function lcw(){
 
 <script>
 window.addEventListener("lcw:ready",function(){
-    const langDisplay = currentLanguage==="fr"?"French":"English";
-    const ctx = {
-        'UserLanguage': { 'value': langDisplay, 'isDisplayable': true },
-        'Brand'       : { 'value': brandForLCW(), 'isDisplayable': true }
+    const ctx={
+        'UserLanguage':{value:window.appState.getLang()==="fr"?"French":"English",isDisplayable:true},
+        'Brand'       :{value:window.appState.getBrand(),isDisplayable:true}
     };
-    if(userNameForLCW()){
-        ctx.UserName = { 'value': userNameForLCW(), 'isDisplayable': true };
-        ctx.Token    = { 'value': userTokenForLCW(), 'isDisplayable': true };
+    if(window.appState.getUserName()){
+        ctx.UserName={value:window.appState.getUserName(),isDisplayable:true};
+        ctx.Token   ={value:window.appState.getUserId(),isDisplayable:true};
     }
     Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({inNewWindow:false,customContext:ctx});
 });
