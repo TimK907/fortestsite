@@ -5,35 +5,30 @@
   <title>Travel Helper</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      min-height: 100vh;
-    }
     body {
       background: url('https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg?_gl=1*1y7tkqd*_ga*MTMxOTQ0MzI2MC4xNzUwMzI3OTQx*_ga_8JE65Q40S6*czE3NTEzNTU4MTgkbzMkZzEkdDE3NTEzNTU4NTUkajIzJGwwJGgw') no-repeat center center fixed;
       background-size: cover;
-      min-height: 100vh;
-      color: #222;
+      margin:0; min-height:100vh;
     }
     .main-content {
-      background: rgba(255,255,255,0.98);
-      max-width: 510px;
-      border-radius: 20px;
+      background: rgba(255,255,255,0.96);
+      max-width: 490px;
+      border-radius: 16px;
       margin: 48px 0 0 48px;
-      padding: 44px 38px 38px 38px;
-      min-height: 340px;
-      box-shadow: 0 4px 18px rgba(0,0,0,.13);
+      padding: 44px 36px 36px 32px;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      box-shadow: 0 4px 16px rgba(0,0,0,.13);
+      min-height: 350px;
+      gap: 28px;
     }
     .lang-bar {
       position: absolute;
-      right: 44px;
-      top: 28px;
+      right: 40px;
+      top: 24px;
       display: flex;
-      gap: 13px;
+      gap: 10px;
       z-index: 10;
     }
     .lang-btn {
@@ -42,9 +37,9 @@
       color: #179c3f;
       font-weight: 700;
       border-radius: 20px;
-      padding: 6px 28px;
-      font-size: 1.09em;
-      transition: background .18s, color .18s;
+      padding: 5px 22px 5px 22px;
+      font-size: 1.07em;
+      transition: background .2s, color .2s;
       cursor:pointer;
       outline:none;
     }
@@ -53,94 +48,59 @@
       color: #fff;
     }
     #login-area {
-      margin-bottom: 20px;
-    }
-    #login-form, #create-form {
       display: flex;
-      gap: 8px;
       align-items: center;
-      margin-bottom: 9px;
-      flex-wrap: wrap;
+      gap: 12px;
     }
-    #login-form input, #create-form input {
-      padding: 7px 15px;
-      border: 1.8px solid #aaa;
-      font-size: 1em;
-      border-radius: 7px;
-      width: 178px;
-      max-width: 47vw;
-    }
-    #login-form button, #create-form button {
-      padding: 7px 16px;
-      border-radius: 11px;
-      border: none;
+    #ms-login-btn, #logout-btn {
+      background: #005abb;
       color: #fff;
-      background-color: #179c3f;
-      font-weight: 700;
-      font-size: 1.01em;
-      cursor: pointer;
-      transition: background .2s;
-      margin-left: 6px;
-    }
-    #login-form button#create-link, #create-form button#go-login-link {
-      background: #1c7fbd;
-      margin-left: 11px;
-    }
-    #logout-btn {
-      background: #c82333;
-      color: #fff;
-      border: none;
-      border-radius: 16px;
-      padding: 8px 22px;
-      cursor: pointer;
-      font-size: 1.02em;
       font-weight: 600;
-      margin-left: 10px;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 16px;
+      font-size: 1em;
+      cursor: pointer;
+      margin-right: 10px;
     }
-    #login-msg, #create-msg {
-      color: #c82333;
-      font-size: 0.98em;
-      margin-top: 2px;
-      min-height:22px;
+    #logout-btn { background: #c82333; margin-right: 0; }
+    #login-msg {
+      color: #179c3f;
+      font-weight: 700;
+      font-size: 1em;
     }
     h1 {
       color: #179c3f;
-      font-size: 2.15em;
-      margin-bottom: 14px;
+      font-size: 2.08em;
+      margin-bottom: 4px;
       margin-top: 4px;
-      font-weight: 900;
-      letter-spacing: -.02em;
-      line-height: 1.11;
+      font-weight: 800;
+      letter-spacing: -.03em;
     }
     #desc {
-      font-size: 1.13em;
+      font-size: 1.15em;
       color: #222;
-      margin-bottom: 21px;
-      margin-top: 4px;
+      margin-bottom: 10px;
+      margin-top: 6px;
     }
     #brand-select-label {
-      font-weight: 700;
-      font-size: 1.04em;
+      font-weight: 600;
+      font-size: 1.07em;
       margin-right: 8px;
-      margin-bottom: 11px!important;
-      display:inline-block;
+      margin-bottom: 18px!important;
     }
     #brand-select {
       font-size: 1em;
       padding: 7.5px 24px 7.5px 12px;
       border: 2px solid #179c3f;
-      border-radius: 8px;
-      margin-top: 6px;
+      border-radius: 7px;
+      margin-top: 7px;
       color: #222;
-      min-width: 92px;
+      min-width: 90px;
     }
-    /* Adaptive */
-    @media (max-width:950px){
-      .main-content { margin: 30px 4vw 0 4vw; }
-      .lang-bar { right: 10px;}
-    }
-    @media (max-width:600px){
-      .main-content { margin: 8px 0 0 0; padding: 22px 3vw;}
+    @media (max-width:750px) {
+      .main-content { margin: 22px 0 0 0; padding: 26px 10px;}
+      .lang-bar { right: 4vw; top: 8px;}
     }
   </style>
 </head>
@@ -150,7 +110,11 @@
     <button class="lang-btn" id="lang-fr">FR</button>
   </div>
   <div class="main-content">
-    <div id="login-area"></div>
+    <div id="login-area">
+      <button id="ms-login-btn"></button>
+      <span id="login-msg"></span>
+      <button id="logout-btn" style="display:none"></button>
+    </div>
     <h1 id="main-title"></h1>
     <div id="desc"></div>
     <label id="brand-select-label" for="brand-select"></label>
@@ -160,232 +124,216 @@
     </select>
   </div>
 
+  <!-- MSAL.js for Microsoft Login -->
+  <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
+
   <script>
+  // Мови
   const translations = {
     en: {
       title: "We support your journeys everywhere",
       desc: "No matter how you choose to travel, you can always rely on us for support and assistance. Focus on your experience, and let us handle the rest!",
       brand: "Brand:",
-      hello: "Welcome, {username}! You are now signed in.",
-      login: "Sign in",
+      login: "Sign in with Microsoft",
       logout: "Sign out",
-      userToken: "User token",
-      password: "Password",
-      createLink: "Create profile",
-      createProfile: "Create profile",
-      loginLink: "Back to sign in",
-      createName: "User name",
-      createSuccess: "Profile created! Now log in.",
-      wrong: "Wrong token or password."
+      greeting: "Welcome, {username}! You are now signed in.",
     },
     fr: {
       title: "Nous vous accompagnons lors de tous vos voyages",
       desc: "Peu importe votre moyen de transport, vous pouvez toujours compter sur notre assistance et notre soutien. Profitez de votre voyage, nous nous occupons du reste !",
       brand: "Marque :",
-      hello: "Bienvenue, {username} ! Vous êtes maintenant connecté.",
-      login: "Se connecter",
+      login: "Se connecter avec Microsoft",
       logout: "Déconnexion",
-      userToken: "Identifiant",
-      password: "Mot de passe",
-      createLink: "Créer un profil",
-      createProfile: "Créer un profil",
-      loginLink: "Retour à la connexion",
-      createName: "Nom d’utilisateur",
-      createSuccess: "Profil créé ! Veuillez vous connecter.",
-      wrong: "Identifiant ou mot de passe incorrect."
+      greeting: "Bienvenue, {username} ! Vous êtes maintenant connecté.",
     }
   };
+  // Мова за замовчуванням — англійська
   let currentLang = localStorage.getItem('lang') || 'en';
   let userProfile = null;
-  let profiles = JSON.parse(localStorage.getItem('profiles')||'{}');
-  function updateUI(){
+  let accessToken = null, msalInstance = null;
+
+  function applyTranslations() {
     document.getElementById('main-title').textContent = translations[currentLang].title;
     document.getElementById('desc').textContent = translations[currentLang].desc;
     document.getElementById('brand-select-label').textContent = translations[currentLang].brand;
-    const area = document.getElementById("login-area");
-    area.innerHTML = '';
-    if(userProfile){
-      area.innerHTML = `<span id="login-msg" style="color:#179c3f;">${translations[currentLang].hello.replace('{username}', userProfile.name)}</span>
-        <button id="logout-btn">${translations[currentLang].logout}</button>`;
-      document.getElementById('logout-btn').onclick = function(){
-        userProfile = null;
-        closeChatAndReload();
-      };
-    }else{
-      if(window.showCreate){
-        area.innerHTML = `<form id="create-form" autocomplete="off" onsubmit="return false;">
-          <input id="cr-token" required placeholder="${translations[currentLang].userToken}" maxlength="80"/>
-          <input id="cr-name"  required placeholder="${translations[currentLang].createName}" maxlength="32"/>
-          <input id="cr-pw"    required type="password" placeholder="${translations[currentLang].password}" maxlength="32"/>
-          <button type="submit">${translations[currentLang].createProfile}</button>
-          <button id="go-login-link" type="button">${translations[currentLang].loginLink}</button>
-        </form>
-        <div id="create-msg"></div>`;
-        document.getElementById("go-login-link").onclick = function(){ window.showCreate=false; updateUI();};
-        document.getElementById("create-form").onsubmit = function(){
-          const token = (document.getElementById("cr-token").value || "").trim();
-          const name  = (document.getElementById("cr-name").value || "").trim();
-          const pw    = document.getElementById("cr-pw").value;
-          if(token && name && pw){
-            profiles[token]={name:name,password:pw};
-            localStorage.setItem('profiles',JSON.stringify(profiles));
-            document.getElementById("create-msg").textContent=translations[currentLang].createSuccess;
-          }
-        };
-      }else{
-        area.innerHTML =
-        `<form id="login-form" autocomplete="off" onsubmit="return false;">
-          <input id="li-token" required placeholder="${translations[currentLang].userToken}" maxlength="80">
-          <input id="li-pw" required type="password" placeholder="${translations[currentLang].password}" maxlength="32">
-          <button>${translations[currentLang].login}</button>
-          <button id="create-link" type="button">${translations[currentLang].createLink}</button>
-        </form>
-        <div id="login-msg"></div>`;
-        document.getElementById("create-link").onclick=function(){window.showCreate=true; updateUI();};
-        document.getElementById("login-form").onsubmit = function(){
-          const token = (document.getElementById("li-token").value || "").trim();
-          const pw    = document.getElementById("li-pw").value;
-          if(token && profiles[token] && profiles[token].password===pw){
-            userProfile={token:token, name:profiles[token].name};
-            closeChatAndReload();
-          }else{
-            document.getElementById("login-msg").textContent=translations[currentLang].wrong;
-          }
-        };
-      }
+    document.getElementById('ms-login-btn').textContent = translations[currentLang].login;
+    document.getElementById('logout-btn').textContent = translations[currentLang].logout;
+    if (userProfile) {
+      document.getElementById('login-msg').textContent = translations[currentLang].greeting.replace("{username}", userProfile.name);
+    } else {
+      document.getElementById('login-msg').textContent = '';
     }
-  }
-  function getCurrentBrand(){return document.getElementById('brand-select')?.value || 'UP';}
-  function getCurrentLanguage(){
-    return currentLang==='en'?"English":"French";
-  }
-  function closeChatAndReload(){
-    try {
-      if(window.Microsoft && window.Microsoft.Omnichannel && window.Microsoft.Omnichannel.LiveChatWidget &&
-        window.Microsoft.Omnichannel.LiveChatWidget.SDK && typeof Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat === 'function'){
-        Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
-      }
-    } catch(e){}
-    // reload після закриття чату (ми не переносимо стан)
-    setTimeout(()=>window.location.reload(), 350);
   }
   document.getElementById('lang-en').onclick = function() {
-    if(currentLang !== 'en'){
-      currentLang = 'en'; localStorage.setItem('lang', 'en');
-      closeChatAndReload();
-    }
+    currentLang = 'en'; localStorage.setItem('lang', 'en');
+    document.getElementById('lang-en').classList.add('selected');
+    document.getElementById('lang-fr').classList.remove('selected');
+    applyTranslations();
   };
   document.getElementById('lang-fr').onclick = function() {
-    if(currentLang !== 'fr'){
-      currentLang = 'fr'; localStorage.setItem('lang', 'fr');
-      closeChatAndReload();
+    currentLang = 'fr'; localStorage.setItem('lang', 'fr');
+    document.getElementById('lang-fr').classList.add('selected');
+    document.getElementById('lang-en').classList.remove('selected');
+    applyTranslations();
+  };
+
+  // ---- MSAL login ----
+  const msalConfig = {
+    auth: {
+      clientId: '20432056-2b97-43ca-9cfc-ec900428bbd4',
+      authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182",
+      redirectUri: window.location.origin + window.location.pathname,
     }
   };
-  document.getElementById('brand-select').onchange=function(){
-    closeChatAndReload();
-  };
-  window.showCreate=false;
-  window.onload = function(){
-    if(!localStorage.getItem('lang')){ currentLang='en'; localStorage.setItem('lang','en'); }
-    document.getElementById('lang-en').classList.toggle('selected', currentLang==='en');
-    document.getElementById('lang-fr').classList.toggle('selected', currentLang==='fr');
-    updateUI();
-  };
-  function lcw() {
-      let lang = localStorage.getItem('lang') === 'fr' ? "French" : "English";
-      const localized_texts = {
-        "English": {
-          webchatTitle: "Virtual Assistant",
-          webchatChatButton: "Chat",
-          webchatAlertTitle: "Are you sure you want to exit the chat?",
-          webchatAlertMessage: "Note: This will end your conversation, and you will lose your chat history.",
-          webchatNoButton: "No",
-          webchatYesButton: "Yes",
-          webchatLoadingPaneTitle: "Welcome to",
-          webchatLoadingPaneSubTitle: "Live Chat Support!",
-          webchatLoadingPaneSpinnerText: "Loading\u2026",
-        },
-        "French": {
-          webchatTitle: "Assistant virtuel",
-          webchatChatButton: "Clavarder",
-          webchatAlertTitle: "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?",
-          webchatAlertMessage: "Note\u202F: Cela mettra fin \u00E0 la conversation et vous perdrez votre historique de clavardage.",
-          webchatNoButton: "Non",
-          webchatYesButton: "Oui",
-          webchatLoadingPaneTitle: "Bienvenue au",
-          webchatLoadingPaneSubTitle: "Soutien par clavardage en direct!",
-          webchatLoadingPaneSpinnerText: "Chargement\u2026",
-        }
-      }[lang];
+  msalInstance = new msal.PublicClientApplication(msalConfig);
 
-      return {
-          styleProps: {
-              generalStyles: {
-                  width: "360px",
-                  height: "560px",
-                  bottom: "20px",
-                  right: "20px"
-              }
-          },
-          headerProps: {
-              styleProps: {
-                  generalStyleProps: {
-                      background: "#399e46"
-                  },
-                  titleStyleProps: {
-                      color: "#FFFFFF"
-                  },
-                  minimizeButtonStyleProps: {
-                      color: "#FFFFFF"
-                  },
-                  closeButtonStyleProps: {
-                      color: "#FFFFFF"
-                  }
-              },
-              controlProps: {
-                  headerTitleProps: {
-                      text: localized_texts.webchatTitle
-                  },
-                  hideIcon: false,
-                  hideTitle: false,
-                  headerIconProps: {
-                      src: "https://www.svgrepo.com/show/474732/assistant.svg",
-                      alt: "Discutons"
-                  }
-              }
-          },
-          loadingPaneProps: {
-              styleProps: {
-                  generalStyleProps: {
-                      background: "#399e46"
-                  }
-              },
-              controlProps: {
-                  titleText: localized_texts.webchatLoadingPaneTitle,
-                  subtitleText: localized_texts.webchatLoadingPaneSubTitle,
-                  spinnerText: localized_texts.webchatLoadingPaneSpinnerText,
-                  hideSpinnerText: false,
-                  spinnerSize: 3,
-              }
-          },
-          chatButtonProps: {
-              controlProps: {
-                  hideChatTextContainer: false,
-                  hideChatSubtitle: true,
-                  titleText: localized_texts.webchatChatButton,
-              }
-          },
-          confirmationPaneProps: {
-              controlProps: {
-                  titleText: localized_texts.webchatAlertTitle,
-                  subtitleText: localized_texts.webchatAlertMessage,
-                  brightnessValueOnDim: "0.2",
-                  confirmButtonText: localized_texts.webchatYesButton,
-                  cancelButtonText: localized_texts.webchatNoButton,
-              }
-          }
+  async function msLogin() {
+    try {
+      const loginResp = await msalInstance.loginPopup({
+        scopes: [ "User.Read" ],
+        prompt: "select_account"
+      });
+      const tokenResp = await msalInstance.acquireTokenSilent({scopes: ["User.Read"], account: loginResp.account});
+      accessToken = tokenResp.accessToken;
+      const prof = await fetch("https://graph.microsoft.com/v1.0/me", {
+        headers: { 'Authorization': 'Bearer ' + accessToken }
+      }).then(r=>r.json());
+      userProfile = {
+        id: prof.id,
+        name: prof.displayName,
+        raw: prof
       };
+      showLoginGreeting();
+    } catch (e) {
+      alert("Login failed: "+ (e.errorMessage || e.message));
+    }
   }
+  document.getElementById('ms-login-btn').onclick = msLogin;
+  function showLoginGreeting() {
+    document.getElementById('login-msg').textContent =
+      translations[currentLang].greeting.replace("{username}", userProfile.name);
+    document.getElementById('ms-login-btn').style.display = "none";
+    document.getElementById('logout-btn').style.display = "";
+  }
+  document.getElementById('logout-btn').onclick = function() {
+    msalInstance.logoutPopup().then(() => {
+      userProfile = null; accessToken = null;
+      document.getElementById('ms-login-btn').style.display = "";
+      document.getElementById('logout-btn').style.display = "none";
+      document.getElementById('login-msg').textContent = "";
+    });
+  };
+
+  window.onload = applyTranslations;
+
+  // --- Заглушка для auth.getAuthenticationToken ---
+  window.auth = window.auth || {};
+  window.auth.getAuthenticationToken = function(callback) {
+      if (!window.userProfile) {
+          // Не залогінений — гостей пускаємо без токена (виджет не отримає JWT)
+          callback(null);
+          return;
+      }
+      // Залогінений користувач — тут можуть бути твоя справжня генерація JWT
+      // Для тесту:
+      callback("DUMMY_TOKEN_" + (window.userProfile.id || Date.now()));
+  };
+  </script>
+
+  <!-- Твій чат-скрипт (без змін!) -->
+  <script>
+      function lcw() {
+          let localized_texts = {
+              webchatTitle: "Virtual Assistant",
+              webchatChatButton: "Chat",
+              webchatAlertTitle: "Are you sure you want to exit the chat?",
+              webchatAlertMessage: "Note: This will end your conversation, and you will lose your chat history.",
+              webchatNoButton: "No",
+              webchatYesButton: "Yes",
+              webchatLoadingPaneTitle: "Welcome to",
+              webchatLoadingPaneSubTitle: "Live Chat Support!",
+              webchatLoadingPaneSpinnerText: "Loading\u2026",
+          }
+          if (true) {
+              localized_texts.webchatTitle = "Assistant virtuel";
+              localized_texts.webchatChatButton = "Clavarder";
+              localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
+              localized_texts.webchatAlertMessage = "Note\u202F: Cela mettra fin \u00E0 la conversation et vous perdrez votre historique de clavardage.";
+              localized_texts.webchatNoButton = "Non";
+              localized_texts.webchatYesButton = "Oui";
+              localized_texts.webchatLoadingPaneTitle = "Bienvenue au";
+              localized_texts.webchatLoadingPaneSubTitle = "Soutien par clavardage en direct!";
+              localized_texts.webchatLoadingPaneSpinnerText = "Chargement\u2026";
+          }
+
+          return {
+              styleProps: {
+                  generalStyles: {
+                      width: "360px",
+                      height: "560px",
+                      bottom: "20px",
+                      right: "20px"
+                  }
+              },
+              headerProps: {
+                  styleProps: {
+                      generalStyleProps: {
+                          background: "#399e46"
+                      },
+                      titleStyleProps: {
+                          color: "#FFFFFF"
+                      },
+                      minimizeButtonStyleProps: {
+                          color: "#FFFFFF"
+                      },
+                      closeButtonStyleProps: {
+                          color: "#FFFFFF"
+                      }
+                  },
+                  controlProps: {
+                      headerTitleProps: {
+                          text: localized_texts.webchatTitle
+                      },
+                      hideIcon: false,
+                      hideTitle: false,
+                      headerIconProps: {
+                          src: "https://www.svgrepo.com/show/474732/assistant.svg",
+                          alt: "Discutons"
+                      }
+                  }
+              },
+              loadingPaneProps: {
+                  styleProps: {
+                      generalStyleProps: {
+                          background: "#399e46"
+                      }
+                  },
+                  controlProps: {
+                      titleText: localized_texts.webchatLoadingPaneTitle,
+                      subtitleText: localized_texts.webchatLoadingPaneSubTitle,
+                      spinnerText: localized_texts.webchatLoadingPaneSpinnerText,
+                      hideSpinnerText: false,
+                      spinnerSize: 3,
+                  }
+              },
+              chatButtonProps: {
+                  controlProps: {
+                      hideChatTextContainer: false,
+                      hideChatSubtitle: true,
+                      titleText: localized_texts.webchatChatButton,
+                  }
+              },
+              confirmationPaneProps: {
+                  controlProps: {
+                      titleText: localized_texts.webchatAlertTitle,
+                      subtitleText: localized_texts.webchatAlertMessage,
+                      brightnessValueOnDim: "0.2",
+                      confirmButtonText: localized_texts.webchatYesButton,
+                      cancelButtonText: localized_texts.webchatNoButton,
+                  }
+              }
+          };
+      }
   </script>
 
   <script id="Microsoft_Omnichannel_LCWidget"
@@ -395,22 +343,18 @@
       data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
       data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
   </script>
-
   <script>
-    window.addEventListener("lcw:ready", function () {
-      let context = {
-        'UserLanguage': { 'value': getCurrentLanguage(), 'isDisplayable': true },
-        'Brand': { 'value': getCurrentBrand(), 'isDisplayable': true },
-      };
-      if (userProfile) {
-        context.UserName = { value: userProfile.name, isDisplayable: true };
-        context.Token = { value: userProfile.token, isDisplayable: true };
-      }
-      Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-        inNewWindow: false,
-        customContext: context
+      window.addEventListener("lcw:ready", function () {
+          Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+              inNewWindow: false,
+              customContext: {
+                  'UserLanguage': { 'value': 'lang', 'isDisplayable': true },
+                  'Brand': { 'value': 'brand', 'isDisplayable': true },
+                  'UserName': { 'value': 'name', 'isDisplayable': true },
+                  'Token': { 'value': 'id', 'isDisplayable': true }
+              }
+          });
       });
-    });
   </script>
 </body>
 </html>
