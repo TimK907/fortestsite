@@ -1,90 +1,291 @@
-Ось що саме потрібно зробити, щоб ① коректно працювало перемикання мови у функції lcw() та ② було явно виконано усі три кроки конфігурації MSAL (clientId / authority, token URL, userId).
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Travel Support</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+    html,body{margin:0;padding:0;height:100%;font-family:Arial,Helvetica,sans-serif;
+        background:url("https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg") no-repeat center/cover;color:#fff;}
+    .overlay{background:rgba(0,0,0,.55);position:absolute;inset:0;}
+    .container{position:relative;z-index:2;padding:40px 30px;max-width:520px;}
+    h1,p,label,select,button{text-align:left;}
+    select{padding:6px 8px;margin:12px 0 18px;}
+    .langBtn,.authBtn{margin-right:8px;padding:8px 16px;border:none;cursor:pointer;border-radius:4px;font-weight:bold;}
+    .langBtn{background:#399e46;color:#fff;opacity:.6;}
+    .langBtn.active{opacity:1;background:#ffcc00;color:#000;}
+    .authBtn{background:#0078d4;color:#fff;}
+    #status{margin-top:10px;font-weight:bold;}
+</style>
+</head>
+<body>
+<div class="overlay"></div>
+<div class="container">
+    <div>
+        <button class="langBtn" id="enBtn" data-lang="en">English</button>
+        <button class="langBtn" id="frBtn" data-lang="fr">Français</button>
+    </div>
 
---------------------------------------------------------------------
-1. Виправляємо проблем-у з мовою  
-   • lcw() перевіряє window.currentLanguage.  
-   • Значення window.currentLanguage при завантаженні вже є, але після перемикання мови ми його не оновлювали.  
-   • Достатньо додати один рядок у функцію switchLanguage (і один раз після першої ініціалізації), щоб window.currentLanguage завжди містила актуальну мову:
+    <h1 id="mainTitle"></h1>
+    <p id="mainText"></p>
 
-```javascript
-// відразу після визначення currentLanguage
-window.currentLanguage = currentLanguage;   // <-- додано
+    <label id="brandLabel" for="brandSelect"></label>
+    <select id="brandSelect">
+        <option value="UP">UP</option>
+        <option value="GO">GO</option>
+    </select><br />
 
-function switchLanguage(lang){
-    currentLanguage = lang;
-    localStorage.setItem("lang", lang);
-    window.currentLanguage = currentLanguage;   // <-- ДОДАНО
-    renderTexts();
-    showStatus();
-    restartChat();
-}
-```
+    <button class="authBtn" id="loginBtn"></button>
+    <button class="authBtn" id="logoutBtn" style="display:none;"></button>
+    <div id="status"></div>
+</div>
 
-lcw() залишаємо таким, як у тебе, – він просто читає window.currentLanguage щоразу, коли виджет стартує.
+<!-- MSAL -->
+<script src="https://alcdn.msauth.net/browser/2.25.0/js/msal-browser.min.js"></script>
+<script>
+/* =====================  GLOBAL STATE  ===================== */
+let currentLanguage = localStorage.getItem("lang") || "en";
+let brandValue      = localStorage.getItem("brand") || "UP";
+let userName        = "";
+let userToken       = "";        // pure GUID for Token
+window.currentLanguage = currentLanguage; // keep global reference
 
---------------------------------------------------------------------
-2. Перевіряємо 3 кроки MSAL SSO
-
-✔ Крок 1 – clientId / authority  
-```javascript
+/* =============  MSAL CONFIG  (Step 1 of SSO)  ============= */
 var clientApplication;
 (function (){
     var msalConfig = {
         auth: {
-            clientId: '20432056-2b97-43ca-9cfc-ec900428bbd4',            // <= твій Application ID
-            authority: 'https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182' // <= твій tenant
+            clientId: '20432056-2b97-43ca-9cfc-ec900428bbd4',
+            authority: 'https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182'
         }
     };
     clientApplication = new msal.PublicClientApplication(msalConfig);
 })();
-```
 
-✔ Крок 2 – token endpoint  
-```javascript
+/* ======  TOKEN ENDPOINT VARIABLE  (Step 2 of SSO)  ======= */
 (async function main() {
     var theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_agentMXBot/conversations?api-version=2022-03-01-preview";
 })();
-```
 
-✔ Крок 3 – userId з власним префіксом  
-```javascript
+/* =========  USER ID CREATION  (Step 3 of SSO)  =========== */
 function updateUserId(){
     const account = clientApplication.getActiveAccount();
-    var userId = account?.homeAccountId != null ?
+    let userId = account?.homeAccountId != null ?
         ("My-custom-prefix" + account.homeAccountId).substr(0, 64) :
         (Math.random().toString() + Date.now().toString()).substr(0,64);
 
-    /* прибираємо можливий початковий символ 'e' і tenant-частину,
-       щоб залишився «чистий» GUID довжиною 36 символів */
+    /* залишаємо чистий GUID для передачі у Token */
     if(userId.includes(".")) userId = userId.split(".")[0];
     if(userId.length > 36)   userId = userId.slice(userId.length-36);
 
-    window.userId = userId;        // доступний для chat-context
+    userToken = userId;
 }
-```
 
-updateUserId() викликаємо:
- • одразу після успішного login  
- • при restartChat, якщо потрібно
-
---------------------------------------------------------------------
-3. Надсилання SSO-даних у чат  
-У restartChat() / startLiveChat() формуємо customContext:
-
-```javascript
-const ctx = {
-    UserLanguage : { value: (currentLanguage==="fr" ? "French" : "English"), isDisplayable:true },
-    Brand        : { value: brandValue,  isDisplayable:true }
+/* ======================  UI TEXTS  ====================== */
+const texts = {
+    en:{title:"We help you on every journey",
+        text:"Whatever you travel by, you can count on our support everywhere and anytime.",
+        brand:"Brand:",
+        login:"Log in with Microsoft",
+        logout:"Sign out",
+        signed:"Signed in as "},
+    fr:{title:"Nous vous aidons dans chaque voyage",
+        text:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",
+        brand:"Marque :",
+        login:"Se connecter avec Microsoft",
+        logout:"Se déconnecter",
+        signed:"Connecté : "}
 };
-if (clientApplication.getActiveAccount()) {
-    ctx.UserName = { value: userName,  isDisplayable:true };
-    ctx.Token    = { value: window.userId, isDisplayable:true };
+
+/* ===================  UI RENDERING  ==================== */
+function renderTexts(){
+    const t = texts[currentLanguage];
+    document.getElementById("mainTitle").innerText = t.title;
+    document.getElementById("mainText").innerText  = t.text;
+    document.getElementById("brandLabel").innerText= t.brand;
+    document.getElementById("loginBtn").innerText  = t.login;
+    document.getElementById("logoutBtn").innerText = t.logout;
+    document.documentElement.lang = currentLanguage;
+    document.querySelectorAll(".langBtn").forEach(btn=>{
+        btn.classList.toggle("active", btn.dataset.lang === currentLanguage);
+    });
 }
-```
+function showStatus(){
+    const st = document.getElementById("status");
+    if(userName){
+        st.innerText = texts[currentLanguage].signed + userName;
+        document.getElementById("logoutBtn").style.display = "";
+        document.getElementById("loginBtn").style.display  = "none";
+    }else{
+        st.innerText = "";
+        document.getElementById("logoutBtn").style.display = "none";
+        document.getElementById("loginBtn").style.display  = "";
+    }
+}
+renderTexts(); showStatus();
 
---------------------------------------------------------------------
-Після цих змін:
-• lcw() завжди показує правильну локалізацію, бо window.currentLanguage синхронізується під час перемикань.  
-• Усі три кроки MSAL виконані й userId (Token) передається у чат разом із UserName лише після автентифікації; Language та Brand передаються завжди.
+/* ==================  LANGUAGE & BRAND  ================== */
+document.getElementById("enBtn").onclick = ()=>switchLanguage("en");
+document.getElementById("frBtn").onclick = ()=>switchLanguage("fr");
+function switchLanguage(lang){
+    currentLanguage = lang;
+    window.currentLanguage = currentLanguage;          // keep in global scope for lcw()
+    localStorage.setItem("lang", lang);
+    renderTexts();
+    showStatus();
+    restartChat();
+}
 
-Якщо усі кроки зрозумілі – підтверди, і я згенерую повний оновлений index.html.
+document.getElementById("brandSelect").value = brandValue;
+document.getElementById("brandSelect").addEventListener("change", e=>{
+    brandValue = e.target.value;
+    localStorage.setItem("brand", brandValue);
+    restartChat();
+});
+
+/* ===================  LOGIN / LOGOUT  =================== */
+document.getElementById("loginBtn").addEventListener("click", async ()=>{
+    try{
+        const resp = await clientApplication.loginPopup({scopes:["user.read"]});
+        if(resp?.account){
+            clientApplication.setActiveAccount(resp.account);
+            userName = resp.account.name || "";
+            updateUserId();
+            showStatus();
+            restartChat();
+        }
+    }catch(err){console.log(err);}
+});
+document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+    try{
+        await clientApplication.logoutPopup({ account: clientApplication.getActiveAccount() });
+    }catch(err){console.log(err);}
+    userName = "";
+    userToken = "";
+    showStatus();
+    restartChat();
+});
+
+/* ===================  CHAT HELPERS  ==================== */
+function getCustomContext(){
+    const ctx = {
+        'UserLanguage': { 'value': (currentLanguage==="fr" ? "French" : "English"), 'isDisplayable': true },
+        'Brand'       : { 'value': brandValue,                                      'isDisplayable': true }
+    };
+    if(userName){
+        ctx.UserName = { 'value': userName,  'isDisplayable': true };
+        ctx.Token    = { 'value': userToken, 'isDisplayable': true };
+    }
+    return ctx;
+}
+function startLiveChat(){
+    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+        inNewWindow:false,
+        customContext:getCustomContext()
+    });
+}
+function restartChat(){
+    try{ Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat(); }catch(e){}
+    startLiveChat();
+}
+</script>
+
+<!-- =================  CHAT SCRIPT (ORIGINAL)  ================= -->
+<script>
+    //Styling function
+    function lcw() {
+        // Default as English
+        let localized_texts = {
+            webchatTitle: "Virtual Assistant",
+            webchatChatButton: "Chat",
+            webchatAlertTitle: "Are you sure you want to exit the chat?",
+            webchatAlertMessage: "Note: This will end your conversation, and you will lose your chat history.",
+            webchatNoButton: "No",
+            webchatYesButton: "Yes",
+            webchatLoadingPaneTitle: "Welcome to",
+            webchatLoadingPaneSubTitle: "Live Chat Support!",
+            webchatLoadingPaneSpinnerText: "Loading\u2026",
+        }
+        // French translations
+        if (window.currentLanguage === "fr") {
+            localized_texts.webchatTitle = "Assistant virtuel";
+            localized_texts.webchatChatButton = "Clavarder";
+            localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
+            localized_texts.webchatAlertMessage = "Note\u202F: Cela mettra fin \u00E0 la conversation et vous perdrez votre historique de clavardage.";
+            localized_texts.webchatNoButton = "Non";
+            localized_texts.webchatYesButton = "Oui";
+            localized_texts.webchatLoadingPaneTitle = "Bienvenue au";
+            localized_texts.webchatLoadingPaneSubTitle = "Soutien par clavardage en direct!";
+            localized_texts.webchatLoadingPaneSpinnerText = "Chargement\u2026";
+        }
+
+        return {
+            styleProps: {
+                generalStyles: {
+                    width: "360px",
+                    height: "560px",
+                    bottom: "20px",
+                    right: "20px"
+                }
+            },
+            headerProps: {
+                styleProps: {
+                    generalStyleProps: { background: "#399e46" },
+                    titleStyleProps:   { color: "#FFFFFF" },
+                    minimizeButtonStyleProps:{ color: "#FFFFFF" },
+                    closeButtonStyleProps:   { color: "#FFFFFF" }
+                },
+                controlProps: {
+                    headerTitleProps: { text: localized_texts.webchatTitle },
+                    hideIcon: false,
+                    hideTitle: false,
+                    headerIconProps: {
+                        src: "https://www.svgrepo.com/show/474732/assistant.svg",
+                        alt: "Assistant"
+                    }
+                }
+            },
+            loadingPaneProps: {
+                styleProps:{ generalStyleProps:{ background: "#399e46" } },
+                controlProps: {
+                    titleText: localized_texts.webchatLoadingPaneTitle,
+                    subtitleText: localized_texts.webchatLoadingPaneSubTitle,
+                    spinnerText: localized_texts.webchatLoadingPaneSpinnerText,
+                    hideSpinnerText: false,
+                    spinnerSize: 3,
+                }
+            },
+            chatButtonProps: {
+                controlProps: {
+                    hideChatTextContainer: false,
+                    hideChatSubtitle: true,
+                    titleText: localized_texts.webchatChatButton,
+                }
+            },
+            confirmationPaneProps: {
+                controlProps: {
+                    titleText: localized_texts.webchatAlertTitle,
+                    subtitleText: localized_texts.webchatAlertMessage,
+                    brightnessValueOnDim: "0.2",
+                    confirmButtonText: localized_texts.webchatYesButton,
+                    cancelButtonText: localized_texts.webchatNoButton,
+                }
+            }
+        };
+    }
+</script>
+
+<script id="Microsoft_Omnichannel_LCWidget"
+    src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
+    data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750"
+    data-lcw-version="prod"
+    data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
+    data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
+    data-customization-callback="lcw">
+</script>
+<script>
+    // Start chat when widget is ready
+    window.addEventListener("lcw:ready", () => startLiveChat());
+</script>
+</body>
+</html>
