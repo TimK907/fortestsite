@@ -37,93 +37,39 @@ select{padding:6px 8px;margin:12px 0 18px}
     <div id="status"></div>
 </div>
 
-<!-- ==============   MSAL  +  TOKEN-HANDLING  (оновлено)   ============== -->
+<!-- =======================  MSAL  (оновлено)  ======================= -->
 <script src="https://alcdn.msauth.net/browser/2.32.0/js/msal-browser.min.js"></script>
 <script>
-/* -------- 1. Глобальна інформація про мову/бренд (було й лишилося) ---- */
-let currentLanguage = localStorage.getItem("lang")   || "en";
-let brandValue      = localStorage.getItem("brand")  || "UP";
-let userName        = "";           // показуємо у статусі
-window.currentLanguage = currentLanguage;            // для lcw()
+/* ---------- Глобальний стан (як і було) ---------- */
+let currentLanguage = localStorage.getItem("lang") || "en";
+let brandValue      = localStorage.getItem("brand") || "UP";
+let userName        = "";
+let userId          = "";                      // саме ЦЕ передаємо у customContext
+window.currentLanguage = currentLanguage;      // потрібен lcw()
 
-/* ------------- 2.  Конфігурація MSAL + Endpoint для DirectLine -------- */
-const clientId      = "20432056-2b97-43ca-9cfc-ec900428bbd4";
-const tenantId      = "d06629ae-56db-44af-880b-80afafa24182";
-const tokenEndpoint = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/powervirtualagents/botsbyschema/cr7d7_agentMXBot/directline/token?api-version=2022-03-01-preview";   // <-- якщо знадобиться
-
+/* ---------- MSAL конфіг ---------- */
 const msalInstance = new msal.PublicClientApplication({
-    auth: {
-        clientId,
-        authority: `https://login.microsoftonline.com/${tenantId}`
-    },
-    cache: {
-        cacheLocation: "sessionStorage",
-        storeAuthStateInCookie: false
-    }
+   auth:{
+      clientId : "20432056-2b97-43ca-9cfc-ec900428bbd4",
+      authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182"
+   },
+   cache:{
+      cacheLocation:"sessionStorage",
+      storeAuthStateInCookie:false
+   }
 });
-const loginRequest = { scopes: ["User.Read", "openid", "profile"] };
 
-let aadAccessToken = "";   // справжній AAD-токен (передаватимемо боту)
+/* ---------- userId із homeAccountId ---------- */
+function updateUserId(){
+   const acc = msalInstance.getActiveAccount();
+   if(!acc){ userId=""; return; }
 
-/* ---------------- 3.  Отримання/оновлення токена ---------------------- */
-async function acquireToken(scopes = ["User.Read"]) {
-    try {
-        return (await msalInstance.acquireTokenSilent({ scopes })).accessToken;
-    } catch {
-        return (await msalInstance.acquireTokenPopup({ scopes })).accessToken;
-    }
+   userId = ("My-custom-prefix" + acc.homeAccountId).substr(0,64);
+   if(userId.includes(".")) userId = userId.split(".")[0];
+   if(userId.length>36)     userId = userId.slice(userId.length-36);
 }
 
-/* ---------------- 4.  Логін / Логаут ---------------------------------- */
-document.getElementById("loginBtn").onclick = async () => {
-    try {
-        await msalInstance.loginPopup(loginRequest);
-        const account = msalInstance.getAllAccounts()[0];
-        if (!account) return;
-
-        msalInstance.setActiveAccount(account);
-        userName = account.name || "";
-        aadAccessToken = await acquireToken();
-        sessionStorage.setItem("pva_access_token", aadAccessToken);
-
-        showStatus();
-    } catch (e) { console.log(e); }
-};
-
-document.getElementById("logoutBtn").onclick = async () => {
-    try { await msalInstance.logoutPopup({ account: msalInstance.getActiveAccount() }); } catch {}
-    aadAccessToken = "";
-    userName = "";
-    sessionStorage.removeItem("pva_access_token");
-    showStatus();
-};
-
-/* ---------------- 5.  Відновлення сеансу після перезавантаження ------- */
-(function restoreSession() {
-    const acc = msalInstance.getAllAccounts()[0];
-    if (!acc) return;
-
-    msalInstance.setActiveAccount(acc);
-    userName = acc.name || "";
-    acquireToken().then(t => {
-        aadAccessToken = t;
-        sessionStorage.setItem("pva_access_token", t);
-        showStatus();
-    });
-})();
-
-/* ---------------- 6.  Функція, що віддає токен для бота --------------- */
-function getBotToken() {
-    return aadAccessToken || sessionStorage.getItem("pva_access_token") || "";
-}
-
-/* ----------------------------------------------------------------------
-   7.  УСІ ПОДАЛЬШІ БЛОКИ (UI-тексти, render(), buildContext()) БУЛИ
-       У ВАШОМУ ОРИГІНАЛІ – вони ЗАЛИШАЮТЬСЯ без змін, лише buildContext
-       тепер вставляє реальний токен, отриманий вище.
-   -------------------------------------------------------------------- */
-
-/* ---------- UI TEXTS (НЕ змінювали) ---------- */
+/* ---------- UI TEXTS (не змінювали) ---------- */
 const T={
  en:{h:"We help you on every journey",p:"Whatever you travel by, you can count on our support everywhere and anytime.",b:"Brand:",in:"Log in with Microsoft",out:"Sign out",s:"Signed in as "},
  fr:{h:"Nous vous aidons dans chaque voyage",p:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",b:"Marque :",in:"Se connecter avec Microsoft",out:"Se déconnecter",s:"Connecté : "}
@@ -144,7 +90,7 @@ function showStatus(){
      st.innerText=T[currentLanguage].s+userName;
      document.getElementById("loginBtn").style.display="none";
      document.getElementById("logoutBtn").style.display="";
- } else {
+ }else{
      st.innerText="";
      document.getElementById("loginBtn").style.display="";
      document.getElementById("logoutBtn").style.display="none";
@@ -152,26 +98,59 @@ function showStatus(){
 }
 render();
 
-/* ---------- EVENTS (НЕ змінювали) ---------- */
+/* ---------- EVENTS мови й бренду ---------- */
 document.getElementById("enBtn").onclick=()=>{localStorage.setItem("lang","en");location.reload();}
 document.getElementById("frBtn").onclick=()=>{localStorage.setItem("lang","fr");location.reload();}
 document.getElementById("brandSelect").value=brandValue;
 document.getElementById("brandSelect").addEventListener("change",e=>{localStorage.setItem("brand",e.target.value);location.reload();});
 
-/* ---------- CHAT CONTEXT (оновлено лише Token) ---------- */
+/* ---------- LOGIN / LOGOUT (з поверненням reload) ---------- */
+document.getElementById("loginBtn").onclick = async () => {
+   try{
+      const resp = await msalInstance.loginPopup({scopes:["User.Read"]});
+      if(resp?.account){
+         msalInstance.setActiveAccount(resp.account);
+         userName = resp.account.name || "";
+         updateUserId();
+         sessionStorage.setItem("reloaded","1");   // позначка для restore()
+         location.reload();                       // перезапускаємо сторінку -> чат стартує з контекстом
+      }
+   }catch(e){ console.log(e); }
+};
+document.getElementById("logoutBtn").onclick = async () => {
+   try{ await msalInstance.logoutPopup({account: msalInstance.getActiveAccount()}); }catch(e){}
+   sessionStorage.setItem("reloaded","1");
+   location.reload();
+};
+
+/* ---------- Відновити після reload ---------- */
+(function restore(){
+   if(!sessionStorage.getItem("reloaded")) return;
+
+   sessionStorage.removeItem("reloaded");
+   const acc = msalInstance.getAllAccounts()[0];
+   if(acc){
+      msalInstance.setActiveAccount(acc);
+      userName = acc.name || "";
+      updateUserId();
+   }
+   render();
+})();
+
+/* ---------- CHAT CONTEXT ---------- */
 function buildContext(){
   const ctx={
      UserLanguage:{value:(currentLanguage==="fr"?"French":"English"),isDisplayable:true},
      Brand       :{value:brandValue,isDisplayable:true}
   };
   if(userName){
-     ctx.UserName={value:userName          ,isDisplayable:true};
-     ctx.Token   ={value:getBotToken()     ,isDisplayable:true};   // ← тут живе AAD-токен
+     ctx.UserName={value:userName,isDisplayable:true};
+     ctx.Token   ={value:userId ,isDisplayable:true};   // ← те, що очікує бот
   }
   return ctx;
 }
 </script>
-<!-- ====================   КІНЕЦЬ ОНОВЛЕНОГО БЛОКУ   ==================== -->
+<!-- ===================  /MSAL  =================== -->
 
 
 <!-- ========== ORIGINAL CHAT SCRIPTS (NO MODIFICATIONS) ========== -->
