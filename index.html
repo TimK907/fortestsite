@@ -30,10 +30,16 @@
     .lang-switch button {
       margin-left: 10px;
       padding: 5px 10px;
+      background: transparent;
+      color: #fff;
+      border: 1px solid #fff;
+      cursor: pointer;
     }
     .lang-switch .active {
       font-weight: bold;
       text-decoration: underline;
+      background-color: #fff;
+      color: #000;
     }
     .container {
       max-width: 600px;
@@ -61,7 +67,7 @@
   </style>
   <script src="https://alcdn.msauth.net/browser/2.28.1/js/msal-browser.min.js"></script>
 </head>
-<body>
+<body onload="initializeApp()">
 <div class="overlay">
   <div class="lang-switch">
     <span id="langDisplay">Lang:</span>
@@ -89,21 +95,25 @@
   let account = null;
   let userName = '';
   let userId = '';
+  const theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_agentMXBot/conversations?api-version=2022-03-01-preview";
 
-  const msalConfig = {
-    auth: {
-      clientId: '20432056-2b97-43ca-9cfc-ec900428bbd4',
-      authority: 'https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182'
-    }
-  };
-  const msalInstance = new msal.PublicClientApplication(msalConfig);
+  var clientApplication;
+  (function () {
+    var msalConfig = {
+      auth: {
+        clientId: '20432056-2b97-43ca-9cfc-ec900428bbd4',
+        authority: 'https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182'
+      }
+    };
+    clientApplication = new msal.PublicClientApplication(msalConfig);
+  })();
 
   async function signIn() {
     try {
-      const loginResponse = await msalInstance.loginPopup({ scopes: ["user.read"] });
+      const loginResponse = await clientApplication.loginPopup({ scopes: ["user.read"] });
       account = loginResponse.account;
       userName = account.name;
-      userId = account.localAccountId ? ("My-custom-prefix" + account.localAccountId).substr(0, 64) : (Math.random().toString() + Date.now().toString()).substr(0,64);
+      userId = account.accountIdentifier != null ? ("My-custom-prefix" + account.accountIdentifier).substr(0, 64) : (Math.random().toString() + Date.now().toString()).substr(0, 64);
       document.getElementById('loginBtn').disabled = true;
       document.getElementById('userStatus').textContent = `${userName} signed in.`;
       closeChatIfOpen();
@@ -141,9 +151,32 @@
       Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();
     }
   }
+
+  function initializeApp() {
+    setLanguage(currentLang);
+  }
 </script>
 
-<!-- Original Unmodified Chat Script -->
+<script>
+  window.addEventListener("lcw:ready", function () {
+    const brand = document.getElementById('brand').value;
+    const langLabel = currentLang === 'fr' ? 'French' : 'English';
+    const context = {
+      'UserLanguage': { 'value': langLabel, 'isDisplayable': true },
+      'Brand': { 'value': brand, 'isDisplayable': true }
+    };
+    if (account) {
+      context['UserName'] = { 'value': userName, 'isDisplayable': true };
+      context['Token'] = { 'value': userId, 'isDisplayable': true };
+    }
+    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+      inNewWindow: false,
+      customContext: context
+    });
+  });
+</script>
+
+<!-- Chat Script (unchanged) -->
 <script>
   function lcw() {
     return {
@@ -204,24 +237,6 @@
         data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
         data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
         data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
-</script>
-<script>
-  window.addEventListener("lcw:ready", function () {
-    const brand = document.getElementById('brand').value;
-    const langLabel = currentLang === 'fr' ? 'French' : 'English';
-    const context = {
-      'UserLanguage': { 'value': langLabel, 'isDisplayable': true },
-      'Brand': { 'value': brand, 'isDisplayable': true }
-    };
-    if (account) {
-      context['UserName'] = { 'value': userName, 'isDisplayable': true };
-      context['Token'] = { 'value': userId, 'isDisplayable': true };
-    }
-    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-      inNewWindow: false,
-      customContext: context
-    });
-  });
 </script>
 </body>
 </html>
