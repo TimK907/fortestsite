@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,7 +49,7 @@ let currentLanguage = localStorage.getItem("lang") || "en";
 let brandValue      = localStorage.getItem("brand") || "UP";
 let userName        = "";
 let userToken       = "";        // pure GUID for Token
-window.currentLanguage = currentLanguage; // keep global reference
+window.currentLanguage = currentLanguage;              // used in lcw()
 
 /* =============  MSAL CONFIG  (Step 1 of SSO)  ============= */
 var clientApplication;
@@ -69,15 +70,11 @@ var clientApplication;
 
 /* =========  USER ID CREATION  (Step 3 of SSO)  =========== */
 function updateUserId(){
-    const account = clientApplication.getActiveAccount();
-    let userId = account?.homeAccountId != null ?
-        ("My-custom-prefix" + account.homeAccountId).substr(0, 64) :
-        (Math.random().toString() + Date.now().toString()).substr(0,64);
-
-    /* залишаємо чистий GUID для передачі у Token */
+    const acc = clientApplication.getActiveAccount();
+    let base = acc?.localAccountId || acc?.homeAccountId || acc?.accountIdentifier || "";
+    let userId = ("My-custom-prefix" + base).substr(0,64);
     if(userId.includes(".")) userId = userId.split(".")[0];
     if(userId.length > 36)   userId = userId.slice(userId.length-36);
-
     userToken = userId;
 }
 
@@ -125,22 +122,17 @@ function showStatus(){
 renderTexts(); showStatus();
 
 /* ==================  LANGUAGE & BRAND  ================== */
-document.getElementById("enBtn").onclick = ()=>switchLanguage("en");
-document.getElementById("frBtn").onclick = ()=>switchLanguage("fr");
-function switchLanguage(lang){
-    currentLanguage = lang;
-    window.currentLanguage = currentLanguage;          // keep in global scope for lcw()
+document.getElementById("enBtn").onclick = ()=>setLanguage("en");
+document.getElementById("frBtn").onclick = ()=>setLanguage("fr");
+function setLanguage(lang){
     localStorage.setItem("lang", lang);
-    renderTexts();
-    showStatus();
-    restartChat();
+    window.location.reload();       // full reload -> lcw styles apply
 }
 
 document.getElementById("brandSelect").value = brandValue;
 document.getElementById("brandSelect").addEventListener("change", e=>{
-    brandValue = e.target.value;
-    localStorage.setItem("brand", brandValue);
-    restartChat();
+    localStorage.setItem("brand", e.target.value);
+    window.location.reload();       // reload on brand change
 });
 
 /* ===================  LOGIN / LOGOUT  =================== */
@@ -151,8 +143,9 @@ document.getElementById("loginBtn").addEventListener("click", async ()=>{
             clientApplication.setActiveAccount(resp.account);
             userName = resp.account.name || "";
             updateUserId();
-            showStatus();
-            restartChat();
+            // persist flag for reload
+            sessionStorage.setItem("justLogged", "true");
+            window.location.reload();
         }
     }catch(err){console.log(err);}
 });
@@ -160,34 +153,22 @@ document.getElementById("logoutBtn").addEventListener("click", async ()=>{
     try{
         await clientApplication.logoutPopup({ account: clientApplication.getActiveAccount() });
     }catch(err){console.log(err);}
-    userName = "";
-    userToken = "";
-    showStatus();
-    restartChat();
+    sessionStorage.setItem("justLoggedOut", "true");
+    window.location.reload();
 });
 
-/* ===================  CHAT HELPERS  ==================== */
-function getCustomContext(){
-    const ctx = {
-        'UserLanguage': { 'value': (currentLanguage==="fr" ? "French" : "English"), 'isDisplayable': true },
-        'Brand'       : { 'value': brandValue,                                      'isDisplayable': true }
-    };
-    if(userName){
-        ctx.UserName = { 'value': userName,  'isDisplayable': true };
-        ctx.Token    = { 'value': userToken, 'isDisplayable': true };
+/*  Restore login state after reload (for status & chat) */
+(function restoreAfterReload(){
+    if(sessionStorage.getItem("justLogged")){
+        sessionStorage.removeItem("justLogged");
+        const acc = clientApplication.getAllAccounts()[0];
+        if(acc){ clientApplication.setActiveAccount(acc); userName=acc.name||""; updateUserId(); }
     }
-    return ctx;
-}
-function startLiveChat(){
-    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-        inNewWindow:false,
-        customContext:getCustomContext()
-    });
-}
-function restartChat(){
-    try{ Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat(); }catch(e){}
-    startLiveChat();
-}
+    if(sessionStorage.getItem("justLoggedOut")){
+        sessionStorage.removeItem("justLoggedOut");
+    }
+    renderTexts(); showStatus();
+})();
 </script>
 
 <!-- =================  CHAT SCRIPT (ORIGINAL)  ================= -->
@@ -230,23 +211,37 @@ function restartChat(){
             },
             headerProps: {
                 styleProps: {
-                    generalStyleProps: { background: "#399e46" },
-                    titleStyleProps:   { color: "#FFFFFF" },
-                    minimizeButtonStyleProps:{ color: "#FFFFFF" },
-                    closeButtonStyleProps:   { color: "#FFFFFF" }
+                    generalStyleProps: {
+                        background: "#399e46"
+                    },
+                    titleStyleProps: {
+                        color: "#FFFFFF"
+                    },
+                    minimizeButtonStyleProps: {
+                        color: "#FFFFFF"
+                    },
+                    closeButtonStyleProps: {
+                        color: "#FFFFFF"
+                    }
                 },
                 controlProps: {
-                    headerTitleProps: { text: localized_texts.webchatTitle },
+                    headerTitleProps: {
+                        text: localized_texts.webchatTitle
+                    },
                     hideIcon: false,
                     hideTitle: false,
                     headerIconProps: {
                         src: "https://www.svgrepo.com/show/474732/assistant.svg",
-                        alt: "Assistant"
+                        alt: "Discutons"
                     }
                 }
             },
             loadingPaneProps: {
-                styleProps:{ generalStyleProps:{ background: "#399e46" } },
+                styleProps: {
+                    generalStyleProps: {
+                        background: "#399e46"
+                    }
+                },
                 controlProps: {
                     titleText: localized_texts.webchatLoadingPaneTitle,
                     subtitleText: localized_texts.webchatLoadingPaneSubTitle,
@@ -284,8 +279,18 @@ function restartChat(){
     data-customization-callback="lcw">
 </script>
 <script>
-    // Start chat when widget is ready
-    window.addEventListener("lcw:ready", () => startLiveChat());
+    window.addEventListener("lcw:ready", () => {
+        const ctx = {
+            'UserLanguage': { 'value': (currentLanguage==="fr" ? "French" : "English"), 'isDisplayable': true },
+            'Brand'       : { 'value': brandValue, 'isDisplayable': true }
+        };
+        if(userName){
+            ctx.UserName = { 'value': userName,  'isDisplayable': true };
+            ctx.Token    = { 'value': userToken, 'isDisplayable': true };
+        }
+        Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({ inNewWindow:false, customContext:ctx });
+    });
 </script>
 </body>
 </html>
+```
