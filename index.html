@@ -17,10 +17,6 @@ select{padding:6px 8px;margin:12px 0 18px}
 .authBtn{background:#0078d4;color:#fff}
 #status{margin-top:10px;font-weight:bold}
 </style>
-<script>
-/* Make language available BEFORE LCW script loads */
-window.currentLanguage = localStorage.getItem("lang") || "en";
-</script>
 </head>
 <body>
 <div class="overlay"></div>
@@ -45,10 +41,11 @@ window.currentLanguage = localStorage.getItem("lang") || "en";
 <script src="https://alcdn.msauth.net/browser/2.25.0/js/msal-browser.min.js"></script>
 <script>
 /* ---------- GLOBAL STATE ---------- */
-let currentLanguage = window.currentLanguage;              // synced
+let currentLanguage = localStorage.getItem("lang") || "en";
 let brandValue      = localStorage.getItem("brand") || "UP";
 let userName        = "";
-var userId          = "";                                  // Token
+var userId          = "";             // Token
+window.currentLanguage = currentLanguage;  // for lcw()
 
 /* ---------- MSAL CONFIG (STEP-1) ---------- */
 var clientApplication;
@@ -62,29 +59,27 @@ var clientApplication;
    clientApplication = new msal.PublicClientApplication(msalConfig);
 })();
 
-/* ---------- Token Endpoint variable (STEP-2) ---------- */
+/* ---------- TOKEN ENDPOINT VAR (STEP-2) ---------- */
 (async function main(){
    var theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_agentMXBot/conversations?api-version=2022-03-01-preview";
 })();
 
-/* ---------- userId creation (STEP-3) ---------- */
+/* ---------- userId CREATION  (STEP-3) ---------- */
 function updateUserId(){
    const acc = clientApplication.getActiveAccount();
    if(!acc){ userId=""; return; }
-   userId = ("My-custom-prefix" + (acc.accountIdentifier ?? acc.homeAccountId ?? "")).substr(0,64);
+   userId = ("My-custom-prefix" + acc.homeAccountId).substr(0,64);
    if(userId.includes(".")) userId = userId.split(".")[0];
    if(userId.length>36)     userId = userId.slice(userId.length-36);
 }
 
 /* ---------- UI TEXTS ---------- */
-const TXT={
- en:{h:"We help you on every journey",p:"Whatever you travel by, you can count on our support everywhere and anytime.",
-     b:"Brand:",in:"Log in with Microsoft",out:"Sign out",s:"Signed in as "},
- fr:{h:"Nous vous aidons dans chaque voyage",p:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",
-     b:"Marque :",in:"Se connecter avec Microsoft",out:"Se déconnecter",s:"Connecté : "}
+const T={
+ en:{h:"We help you on every journey",p:"Whatever you travel by, you can count on our support everywhere and anytime.",b:"Brand:",in:"Log in with Microsoft",out:"Sign out",s:"Signed in as "},
+ fr:{h:"Nous vous aidons dans chaque voyage",p:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",b:"Marque :",in:"Se connecter avec Microsoft",out:"Se déconnecter",s:"Connecté : "}
 };
 function render(){
- const t=TXT[currentLanguage];
+ const t=T[currentLanguage];
  document.getElementById("mainTitle").innerText=t.h;
  document.getElementById("mainText").innerText =t.p;
  document.getElementById("brandLabel").innerText=t.b;
@@ -95,7 +90,7 @@ function render(){
 }
 function showStatus(){
  const st=document.getElementById("status");
- if(userName){st.innerText=TXT[currentLanguage].s+userName;document.getElementById("loginBtn").style.display="none";document.getElementById("logoutBtn").style.display="";}
+ if(userName){st.innerText=T[currentLanguage].s+userName;document.getElementById("loginBtn").style.display="none";document.getElementById("logoutBtn").style.display="";}
  else        {st.innerText="";document.getElementById("loginBtn").style.display="";document.getElementById("logoutBtn").style.display="none";}
 }
 render();
@@ -136,11 +131,11 @@ function buildContext(){
      ctx.UserName={value:userName,isDisplayable:true};
      ctx.Token   ={value:userId ,isDisplayable:true};
   }
-  return { customContext: ctx };
+  return ctx;
 }
 </script>
 
-<!-- ================= ORIGINAL CHAT SCRIPTS – UNMODIFIED ================= -->
+<!-- ========== ORIGINAL CHAT SCRIPTS (NO MODIFICATIONS) ========== -->
 <script>
         //Styling function
         function lcw() {
@@ -240,6 +235,26 @@ function buildContext(){
         }
 </script>
 
+<!-- Override lcw AFTER original definition so language switch works -->
+<script>
+const _origLcw = lcw;
+window.lcw = function(){
+   const cfg=_origLcw();
+   if(window.currentLanguage!=="fr"){       // need English
+      cfg.headerProps.controlProps.headerTitleProps.text="Virtual Assistant";
+      cfg.loadingPaneProps.controlProps.titleText="Welcome to";
+      cfg.loadingPaneProps.controlProps.subtitleText="Live Chat Support!";
+      cfg.loadingPaneProps.controlProps.spinnerText="Loading…";
+      cfg.chatButtonProps.controlProps.titleText="Chat";
+      cfg.confirmationPaneProps.controlProps.titleText="Are you sure you want to exit the chat?";
+      cfg.confirmationPaneProps.controlProps.subtitleText="Note: This will end your conversation, and you will lose your chat history.";
+      cfg.confirmationPaneProps.controlProps.confirmButtonText="Yes";
+      cfg.confirmationPaneProps.controlProps.cancelButtonText="No";
+   }
+   return cfg;
+};
+</script>
+
 <script id="Microsoft_Omnichannel_LCWidget"
         src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
         data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750" data-lcw-version="prod"
@@ -248,19 +263,14 @@ function buildContext(){
         data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
 </script>
 <script>
-function startOrRestartChat(){
-   const sdk = Microsoft.Omnichannel.LiveChatWidget.SDK;
-   const opts = { liveChatContext: buildContext() };
-
-   // close only if chat active and method exists
-   if(typeof sdk.isChatActive==="function" && sdk.isChatActive()){
-        sdk.closeChat().then(()=>sdk.startChat(opts));
-   }else{
-        sdk.startChat(opts);
-   }
-}
-
-window.addEventListener("lcw:ready", startOrRestartChat);
+// Ready event listener
+window.addEventListener("lcw:ready", function () {
+    try{ Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat(); }catch(e){}
+    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+        inNewWindow:false,
+        customContext: buildContext()
+    });
+});
 </script>
 </body>
 </html>
