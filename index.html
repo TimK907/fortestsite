@@ -17,6 +17,8 @@ select{padding:6px 8px;margin:12px 0 18px}
 .authBtn{background:#0078d4;color:#fff}
 #status{margin-top:10px;font-weight:bold}
 </style>
+<!-- expose language before LCW loads -->
+<script>window.currentLanguage=localStorage.getItem("lang")||"en";</script>
 </head>
 <body>
 <div class="overlay"></div>
@@ -41,11 +43,12 @@ select{padding:6px 8px;margin:12px 0 18px}
 <script src="https://alcdn.msauth.net/browser/2.25.0/js/msal-browser.min.js"></script>
 <script>
 /* ---------- GLOBAL STATE ---------- */
-let currentLanguage = localStorage.getItem("lang") || "en";
+let currentLanguage = window.currentLanguage;
 let brandValue      = localStorage.getItem("brand") || "UP";
 let userName        = "";
-var userId          = "";             // Token
-window.currentLanguage = currentLanguage;  // for lcw()
+var userId          = "";             // Token (GUID)
+const AAD_SCOPE     = "api://89344f03-2e01-449a-9cf2-306b4545c5d0/Test.Read";
+let directLineToken = "";             // token for Copilot Studio
 
 /* ---------- MSAL CONFIG (STEP-1) ---------- */
 var clientApplication;
@@ -59,12 +62,10 @@ var clientApplication;
    clientApplication = new msal.PublicClientApplication(msalConfig);
 })();
 
-/* ---------- TOKEN ENDPOINT VAR (STEP-2) ---------- */
-(async function main(){
-   var theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_agentMXBot/conversations?api-version=2022-03-01-preview";
-})();
+/* ---------- Token Endpoint variable (STEP-2) ---------- */
+const theURL = "https://aa9a827baedfee7db575bfb7ebdcf7.17.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/cr7d7_agentMXBot/conversations?api-version=2022-03-01-preview";
 
-/* ---------- userId CREATION  (STEP-3) ---------- */
+/* ---------- userId creation (STEP-3) ---------- */
 function updateUserId(){
    const acc = clientApplication.getActiveAccount();
    if(!acc){ userId=""; return; }
@@ -74,12 +75,14 @@ function updateUserId(){
 }
 
 /* ---------- UI TEXTS ---------- */
-const T={
- en:{h:"We help you on every journey",p:"Whatever you travel by, you can count on our support everywhere and anytime.",b:"Brand:",in:"Log in with Microsoft",out:"Sign out",s:"Signed in as "},
- fr:{h:"Nous vous aidons dans chaque voyage",p:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",b:"Marque :",in:"Se connecter avec Microsoft",out:"Se déconnecter",s:"Connecté : "}
+const TXT={
+ en:{h:"We help you on every journey",p:"Whatever you travel by, you can count on our support everywhere and anytime.",
+     b:"Brand:",in:"Log in with Microsoft",out:"Sign out",s:"Signed in as "},
+ fr:{h:"Nous vous aidons dans chaque voyage",p:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",
+     b:"Marque :",in:"Se connecter avec Microsoft",out:"Se déconnecter",s:"Connecté : "}
 };
 function render(){
- const t=T[currentLanguage];
+ const t=TXT[currentLanguage];
  document.getElementById("mainTitle").innerText=t.h;
  document.getElementById("mainText").innerText =t.p;
  document.getElementById("brandLabel").innerText=t.b;
@@ -90,7 +93,7 @@ function render(){
 }
 function showStatus(){
  const st=document.getElementById("status");
- if(userName){st.innerText=T[currentLanguage].s+userName;document.getElementById("loginBtn").style.display="none";document.getElementById("logoutBtn").style.display="";}
+ if(userName){st.innerText=TXT[currentLanguage].s+userName;document.getElementById("loginBtn").style.display="none";document.getElementById("logoutBtn").style.display="";}
  else        {st.innerText="";document.getElementById("loginBtn").style.display="";document.getElementById("logoutBtn").style.display="none";}
 }
 render();
@@ -104,8 +107,14 @@ document.getElementById("brandSelect").addEventListener("change",e=>{localStorag
 /* ---------- LOGIN / LOGOUT ---------- */
 document.getElementById("loginBtn").onclick=async()=>{
   try{
-     const r=await clientApplication.loginPopup({scopes:["user.read"]});
-     if(r?.account){clientApplication.setActiveAccount(r.account);userName=r.account.name||"";updateUserId();sessionStorage.setItem("reloaded","1");location.reload();}
+     const r=await clientApplication.loginPopup({scopes:[AAD_SCOPE]});
+     if(r?.account){
+        clientApplication.setActiveAccount(r.account);
+        userName=r.account.name||"";
+        updateUserId();
+        sessionStorage.setItem("reloaded","1");
+        location.reload();
+     }
   }catch(e){console.log(e);}
 };
 document.getElementById("logoutBtn").onclick=async()=>{
@@ -121,21 +130,58 @@ document.getElementById("logoutBtn").onclick=async()=>{
   }
 })();
 
-/* ---------- CHAT CONTEXT BUILDER ---------- */
-function buildContext(){
-  const ctx={
-     UserLanguage:{value:(currentLanguage==="fr"?"French":"English"),isDisplayable:true},
-     Brand       :{value:brandValue,isDisplayable:true}
-  };
-  if(userName){
-     ctx.UserName={value:userName,isDisplayable:true};
-     ctx.Token   ={value:userId ,isDisplayable:true};
-  }
-  return ctx;
+/* ---------- AAD token / DirectLine token utilities ---------- */
+async function getAADToken(){
+    const acc = clientApplication.getActiveAccount();
+    if(!acc) return null;
+    try{
+        const resp = await clientApplication.acquireTokenSilent({scopes:[AAD_SCOPE],account:acc});
+        return resp.accessToken;
+    }catch{
+        try{
+            const resp = await clientApplication.acquireTokenPopup({scopes:[AAD_SCOPE]});
+            return resp.accessToken;
+        }catch(err){
+            console.log("AAD token error",err);
+            return null;
+        }
+    }
+}
+async function fetchDirectLineToken(aadToken){
+    try{
+        const r = await fetch(theURL,{
+            method:"POST",
+            headers:{
+                "Authorization":"Bearer "+aadToken,
+                "Content-Type":"application/json"
+            }
+        });
+        const j = await r.json();
+        return j.token;
+    }catch(e){
+        console.log("DirectLine token fetch error",e);
+        return "";
+    }
+}
+
+/* ---------- Build liveChatContext ---------- */
+function buildLiveChatContext(dlToken){
+   const context={
+       authToken: dlToken || undefined,
+       customContext:{
+           UserLanguage:{value:(currentLanguage==="fr"?"French":"English"),isDisplayable:true},
+           Brand       :{value:brandValue,isDisplayable:true}
+       }
+   };
+   if(userName){
+       context.customContext.UserName={value:userName,isDisplayable:true};
+       context.customContext.Token   ={value:userId ,isDisplayable:true};
+   }
+   return { liveChatContext: context };
 }
 </script>
 
-<!-- ========== ORIGINAL CHAT SCRIPTS (NO MODIFICATIONS) ========== -->
+<!-- ================= ORIGINAL CHAT SCRIPTS (UNMODIFIED) ================= -->
 <script>
         //Styling function
         function lcw() {
@@ -235,12 +281,12 @@ function buildContext(){
         }
 </script>
 
-<!-- Override lcw AFTER original definition so language switch works -->
+<!-- Override lcw for English texts (keeps script unmodified) -->
 <script>
 const _origLcw = lcw;
 window.lcw = function(){
    const cfg=_origLcw();
-   if(window.currentLanguage!=="fr"){       // need English
+   if(window.currentLanguage!=="fr"){
       cfg.headerProps.controlProps.headerTitleProps.text="Virtual Assistant";
       cfg.loadingPaneProps.controlProps.titleText="Welcome to";
       cfg.loadingPaneProps.controlProps.subtitleText="Live Chat Support!";
@@ -263,14 +309,21 @@ window.lcw = function(){
         data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
 </script>
 <script>
-// Ready event listener
-window.addEventListener("lcw:ready", function () {
-    try{ Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat(); }catch(e){}
-    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-        inNewWindow:false,
-        customContext: buildContext()
-    });
-});
+async function startOrRestartChat(){
+   const sdk = Microsoft.Omnichannel.LiveChatWidget.SDK;
+
+   let dlToken="";
+   const aadToken = await getAADToken();
+   if(aadToken) dlToken = await fetchDirectLineToken(aadToken);
+
+   const options = buildLiveChatContext(dlToken);
+
+   if(typeof sdk.isChatActive==="function" && sdk.isChatActive()){
+        await sdk.closeChat();
+   }
+   sdk.startChat(options);
+}
+window.addEventListener("lcw:ready", startOrRestartChat);
 </script>
 </body>
 </html>
