@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Travel Support</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
-html,body{margin:0;padding:0;height:100%;font-family:Arial,Helvetica,sans-serif;background:url("https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg") no-repeat center/cover;color:#fff;}
-.overlay{background:rgba(0,0,0,.55);position:absolute;inset:0;}
-.container{position:relative;z-index:2;padding:40px 30px;max-width:520px;}
-h1,p,label,select,button{text-align:left;}
-select{padding:6px 8px;margin:12px 0 18px;}
-.langBtn,.authBtn{margin-right:8px;padding:8px 16px;border:none;cursor:pointer;border-radius:4px;font-weight:bold;}
-.langBtn{background:#399e46;color:#fff;opacity:.6;}
-.langBtn.active{opacity:1;background:#ffcc00;color:#000;}
-.authBtn{background:#0078d4;color:#fff;}
-#status{margin-top:10px;font-weight:bold;}
+    html,body{margin:0;padding:0;height:100%;font-family:Arial,Helvetica,sans-serif;
+        background:url("https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg") no-repeat center/cover;color:#fff;}
+    .overlay{background:rgba(0,0,0,.55);position:absolute;inset:0;}
+    .container{position:relative;z-index:2;padding:40px 30px;max-width:520px;}
+    h1,p,label,select,button{text-align:left;}
+    select{padding:6px 8px;margin:12px 0 18px;}
+    .langBtn,.authBtn{margin-right:8px;padding:8px 16px;border:none;cursor:pointer;border-radius:4px;font-weight:bold;}
+    .langBtn{background:#399e46;color:#fff;opacity:.6;}
+    .langBtn.active{opacity:1;background:#ffcc00;color:#000;}
+    .authBtn{background:#0078d4;color:#fff;}
+    #status{margin-top:10px;font-weight:bold;}
 </style>
 </head>
 <body>
@@ -32,52 +33,67 @@ select{padding:6px 8px;margin:12px 0 18px;}
     <select id="brandSelect">
         <option value="UP">UP</option>
         <option value="GO">GO</option>
-    </select><br>
+    </select><br />
 
     <button class="authBtn" id="loginBtn"></button>
-    <button class="authBtn" id="logoutBtn" style="display:none;">Sign out</button>
+    <button class="authBtn" id="logoutBtn" style="display:none;"></button>
     <div id="status"></div>
 </div>
 
 <!-- MSAL -->
 <script src="https://alcdn.msauth.net/browser/2.25.0/js/msal-browser.min.js"></script>
 <script>
-/* ============ GLOBAL STATE ============ */
+/* ========== GLOBAL STATE ========== */
 let currentLanguage = localStorage.getItem("lang") || "en";
 let brandValue      = localStorage.getItem("brand") || "UP";
 let userName        = "";
-let userToken       = "";      // custom user id
+let userToken       = "";        // pure GUID (36 chars)
 const BOT_SECRET    = "8JmiFfIOMzdjI4LGxvuZVFy18WS0FLv38LCmdY8pM9V9yIDrNUeAJQQJ99BFAC4f1cMAArohAAABAZBS19Yb.3GsbooNGM2phmYdB1Lkalu8UJ3lDm1CskqIDfWKklY1aYdn47HkdJQQJ99BFAC4f1cMAArohAAABAZBS3gpd";
 let directLineToken = "";
 
-/* ============ LANGUAGE DATA ============ */
+/* ========== UI TEXTS ========== */
 const texts = {
-    en:{title:"We help you on every journey",text:"Whatever you travel by, you can count on our support everywhere and anytime.",
-        brand:"Brand:",login:"Log in with Microsoft",logout:"Sign out",signed:"Signed in as "},
-    fr:{title:"Nous vous aidons dans chaque voyage",text:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",
-        brand:"Marque :",login:"Se connecter avec Microsoft",logout:"Se déconnecter",signed:"Connecté : "}
+    en:{title:"We help you on every journey",
+        text:"Whatever you travel by, you can count on our support everywhere and anytime.",
+        brand:"Brand:",
+        login:"Log in with Microsoft",
+        logout:"Sign out",
+        signed:"Signed in as "},
+    fr:{title:"Nous vous aidons dans chaque voyage",
+        text:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",
+        brand:"Marque :",
+        login:"Se connecter avec Microsoft",
+        logout:"Se déconnecter",
+        signed:"Connecté : "}
 };
 
-/* ============ MSAL CONFIG ============ */
-var clientApplication;
+/* ========== MSAL CONFIGURATION ========== */
+let clientApplication;
 (function(){
-  var msalConfig={
-      auth:{
-          clientId:"20432056-2b97-43ca-9cfc-ec900428bbd4",
-          authority:"https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182"
-      }
-  };
-  clientApplication=new msal.PublicClientApplication(msalConfig);
+    const msalConfig = {
+        auth:{
+            clientId:"20432056-2b97-43ca-9cfc-ec900428bbd4",
+            authority:"https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182"
+        }
+    };
+    clientApplication = new msal.PublicClientApplication(msalConfig);
 })();
 
-/* ============ USER ID ============ */
+/* ========== USER ID HANDLING (UPDATED) ========== */
 function updateUserId(){
-  userToken = clientApplication.getActiveAccount()?.homeAccountId
-       ? ("My-custom-prefix"+clientApplication.getActiveAccount().homeAccountId).substr(0,64)
-       : (Math.random().toString()+Date.now().toString()).substr(0,64);
+    const acc = clientApplication.getActiveAccount();
+    if(!acc?.homeAccountId){ userToken = ""; return; }
+
+    // Typical format: "<uid>.<tenantId>" or "e<guid>.<tenantId>"
+    let raw = acc.homeAccountId.split(".")[0]; // take part before '.'
+
+    // Remove leading prefix character(s) so the result is 36-char GUID
+    if(raw.length > 36) raw = raw.slice(raw.length - 36);
+
+    userToken = raw; // expected pure GUID
 }
 
-/* ============ UI RENDERING ============ */
+/* ========== UI RENDERING ========== */
 function renderTexts(){
     const t = texts[currentLanguage];
     document.getElementById("mainTitle").innerText = t.title;
@@ -86,39 +102,48 @@ function renderTexts(){
     document.getElementById("loginBtn").innerText  = t.login;
     document.getElementById("logoutBtn").innerText = t.logout;
     document.documentElement.lang = currentLanguage;
-    document.querySelectorAll(".langBtn").forEach(btn=>btn.classList.toggle("active",btn.dataset.lang===currentLanguage));
+    document.querySelectorAll(".langBtn").forEach(btn=>{
+        btn.classList.toggle("active", btn.dataset.lang === currentLanguage);
+    });
 }
 function showStatus(){
-    const st=document.getElementById("status");
+    const st = document.getElementById("status");
     if(userName){
-        st.innerText=texts[currentLanguage].signed+userName;
-        document.getElementById("logoutBtn").style.display="";
-        document.getElementById("loginBtn").style.display="none";
+        st.innerText = texts[currentLanguage].signed + userName;
+        document.getElementById("logoutBtn").style.display = "";
+        document.getElementById("loginBtn").style.display  = "none";
     }else{
-        st.innerText="";
-        document.getElementById("logoutBtn").style.display="none";
-        document.getElementById("loginBtn").style.display="";
+        st.innerText = "";
+        document.getElementById("logoutBtn").style.display = "none";
+        document.getElementById("loginBtn").style.display  = "";
     }
 }
-renderTexts();showStatus();
+renderTexts(); showStatus();
 
-/* ============ BRAND & LANGUAGE EVENTS ============ */
-document.getElementById("brandSelect").value=brandValue;
-document.getElementById("brandSelect").addEventListener("change",e=>{
-    brandValue=e.target.value;localStorage.setItem("brand",brandValue);
+/* ========== BRAND & LANGUAGE EVENTS ========== */
+document.getElementById("brandSelect").value = brandValue;
+document.getElementById("brandSelect").addEventListener("change", e=>{
+    brandValue = e.target.value;
+    localStorage.setItem("brand", brandValue);
     restartChat();
 });
-document.getElementById("enBtn").onclick=()=>switchLang("en");
-document.getElementById("frBtn").onclick=()=>switchLang("fr");
-function switchLang(l){currentLanguage=l;localStorage.setItem("lang",l);renderTexts();showStatus();restartChat();}
+document.getElementById("enBtn").onclick = ()=>switchLanguage("en");
+document.getElementById("frBtn").onclick = ()=>switchLanguage("fr");
+function switchLanguage(lang){
+    currentLanguage = lang;
+    localStorage.setItem("lang", lang);
+    renderTexts();
+    showStatus();
+    restartChat();
+}
 
-/* ============ LOGIN / LOGOUT ============ */
-document.getElementById("loginBtn").addEventListener("click",async ()=>{
+/* ========== LOGIN / LOGOUT ========== */
+document.getElementById("loginBtn").addEventListener("click", async ()=>{
     try{
-        const resp=await clientApplication.loginPopup({scopes:["user.read"]});
+        const resp = await clientApplication.loginPopup({scopes:["user.read"]});
         if(resp?.account){
             clientApplication.setActiveAccount(resp.account);
-            userName=resp.account.name||"";
+            userName = resp.account.name || "";
             updateUserId();
             showStatus();
             restartChat();
@@ -127,63 +152,80 @@ document.getElementById("loginBtn").addEventListener("click",async ()=>{
 });
 document.getElementById("logoutBtn").addEventListener("click", async ()=>{
     try{
-        await clientApplication.logoutPopup({account:clientApplication.getActiveAccount()});
-    }catch(e){console.log(e);}
-    userName="";userToken="";showStatus();restartChat();
+        await clientApplication.logoutPopup({ account: clientApplication.getActiveAccount() });
+    }catch(err){console.log(err);}
+    userName = "";
+    userToken = "";
+    showStatus();
+    restartChat();
 });
 
-/* ============ DIRECT LINE TOKEN ============ */
+/* ========== DIRECT LINE TOKEN ========== */
 async function fetchDirectLineToken(){
     if(directLineToken) return;
     try{
-        const r=await fetch("https://directline.botframework.com/v3/directline/tokens/generate",{method:"POST",headers:{Authorization:"Bearer "+BOT_SECRET}});
-        const j=await r.json();directLineToken=j.token;
-    }catch(e){console.log("DL token error",e);}
+        const r = await fetch("https://directline.botframework.com/v3/directline/tokens/generate",{
+            method:"POST",
+            headers:{ Authorization:"Bearer "+BOT_SECRET }
+        });
+        const j = await r.json();
+        directLineToken = j.token;
+    }catch(err){ console.log("Direct Line token error", err); }
 }
 fetchDirectLineToken();
 
-/* ============ CHAT RESTART LOGIC ============ */
+/* ========== CHAT RESTART LOGIC ========== */
 function getCustomContext(){
-    const ctx={
-        'UserLanguage':{value:(currentLanguage==="fr"?"French":"English"),isDisplayable:true},
-        'Brand'       :{value:brandValue,isDisplayable:true}
+    const context = {
+        UserLanguage:{ value:(currentLanguage==="fr"?"French":"English"), isDisplayable:true },
+        Brand       :{ value:brandValue,                             isDisplayable:true }
     };
     if(userName){
-        ctx.UserName={value:userName,isDisplayable:true};
-        ctx.Token   ={value:userToken,isDisplayable:true};
+        context.UserName = { value:userName, isDisplayable:true };
+        context.Token    = { value:userToken,isDisplayable:true };
     }
-    return ctx;
+    return context;
 }
 function restartChat(){
-    try{Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat();}catch(e){}
-    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({inNewWindow:false,customContext:getCustomContext()});
+    try{ Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat(); }catch(e){}
+    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+        inNewWindow:false,
+        customContext:getCustomContext()
+    });
 }
 
-/* ============ EXPOSE FOR LCW CALLBACK ============ */
+/* ========== LCW CUSTOMIZATION ========== */
 function lcw(){
-    const fr=currentLanguage==="fr";
-    const t=fr?
-        {ttl:"Assistant virtuel",btn:"Clavarder",alT:"Êtes-vous certain de vouloir quitter la séance de clavardage?",
-         alM:"Note : Cela mettra fin à la conversation et vous perdrez votre historique de clavardage.",
-         no:"Non",yes:"Oui",lT:"Bienvenue au",lS:"Soutien par clavardage en direct!",ld:"Chargement…"}:
-        {ttl:"Virtual Assistant",btn:"Chat",alT:"Are you sure you want to exit the chat?",
-         alM:"Note: This will end your conversation, and you will lose your chat history.",
-         no:"No",yes:"Yes",lT:"Welcome to",lS:"Live Chat Support!",ld:"Loading…"};
+    const fr = currentLanguage === "fr";
+    const l = fr
+      ? {title:"Assistant virtuel",btn:"Clavarder",
+         alertTitle:"Êtes-vous certain de vouloir quitter la séance de clavardage?",
+         alertMsg:"Note : Cela mettra fin à la conversation et vous perdrez votre historique de clavardage.",
+         no:"Non",yes:"Oui",
+         loadTitle:"Bienvenue au",loadSub:"Soutien par clavardage en direct!",loading:"Chargement…"}
+      : {title:"Virtual Assistant",btn:"Chat",
+         alertTitle:"Are you sure you want to exit the chat?",
+         alertMsg:"Note: This will end your conversation, and you will lose your chat history.",
+         no:"No",yes:"Yes",
+         loadTitle:"Welcome to",loadSub:"Live Chat Support!",loading:"Loading…"};
+
     return{
         styleProps:{generalStyles:{width:"360px",height:"560px",bottom:"20px",right:"20px"}},
-        headerProps:{styleProps:{generalStyleProps:{background:"#399e46"},titleStyleProps:{color:"#FFF"},
-            minimizeButtonStyleProps:{color:"#FFF"},closeButtonStyleProps:{color:"#FFF"}},
-            controlProps:{headerTitleProps:{text:t.ttl},hideIcon:false,hideTitle:false,
+        headerProps:{styleProps:{generalStyleProps:{background:"#399e46"},
+                titleStyleProps:{color:"#FFF"},minimizeButtonStyleProps:{color:"#FFF"},closeButtonStyleProps:{color:"#FFF"}},
+            controlProps:{headerTitleProps:{text:l.title},hideIcon:false,hideTitle:false,
                 headerIconProps:{src:"https://www.svgrepo.com/show/474732/assistant.svg",alt:"Assistant"}}},
         loadingPaneProps:{styleProps:{generalStyleProps:{background:"#399e46"}},
-            controlProps:{titleText:t.lT,subtitleText:t.lS,spinnerText:t.ld,hideSpinnerText:false,spinnerSize:3}},
-        chatButtonProps:{controlProps:{hideChatTextContainer:false,hideChatSubtitle:true,titleText:t.btn}},
-        confirmationPaneProps:{controlProps:{titleText:t.alT,subtitleText:t.alM,brightnessValueOnDim:"0.2",
-            confirmButtonText:t.yes,cancelButtonText:t.no}}
+            controlProps:{titleText:l.loadTitle,subtitleText:l.loadSub,spinnerText:l.loading,
+                hideSpinnerText:false,spinnerSize:3}},
+        chatButtonProps:{controlProps:{hideChatTextContainer:false,hideChatSubtitle:true,titleText:l.btn}},
+        confirmationPaneProps:{controlProps:{titleText:l.alertTitle,subtitleText:l.alertMsg,
+            brightnessValueOnDim:"0.2",confirmButtonText:l.yes,cancelButtonText:l.no}}
     };
 }
 </script>
 
+<!-- Live Chat Widget -->
 <script id="Microsoft_Omnichannel_LCWidget"
     src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
     data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750"
@@ -194,7 +236,7 @@ function lcw(){
 </script>
 
 <script>
-window.addEventListener("lcw:ready",()=>restartChat());
+window.addEventListener("lcw:ready", () => restartChat());
 </script>
 </body>
 </html>
