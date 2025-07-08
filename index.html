@@ -147,6 +147,7 @@
       greeting: "Bienvenue, {username} ! Vous êtes maintenant connecté.",
     }
   };
+  // Мова за замовчуванням — англійська
   let currentLang = localStorage.getItem('lang') || 'en';
   let userProfile = null;
   let accessToken = null, msalInstance = null;
@@ -224,13 +225,24 @@
   };
 
   window.onload = applyTranslations;
+
+  // --- Заглушка для auth.getAuthenticationToken ---
+  window.auth = window.auth || {};
+  window.auth.getAuthenticationToken = function(callback) {
+      if (!window.userProfile) {
+          // Не залогінений — гостей пускаємо без токена (виджет не отримає JWT)
+          callback(null);
+          return;
+      }
+      // Залогінений користувач — тут можуть бути твоя справжня генерація JWT
+      // Для тесту:
+      callback("DUMMY_TOKEN_" + (window.userProfile.id || Date.now()));
+  };
   </script>
 
-  <!-- Твій чат-скрипт встав тут, БЕЗ змін -->
+  <!-- Твій чат-скрипт (без змін!) -->
   <script>
-      //Styling function
       function lcw() {
-          // Default as Engligh
           let localized_texts = {
               webchatTitle: "Virtual Assistant",
               webchatChatButton: "Chat",
@@ -242,9 +254,7 @@
               webchatLoadingPaneSubTitle: "Live Chat Support!",
               webchatLoadingPaneSpinnerText: "Loading\u2026",
           }
-          // check condition for language
           if (true) {
-              //French Translations
               localized_texts.webchatTitle = "Assistant virtuel";
               localized_texts.webchatChatButton = "Clavarder";
               localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
@@ -334,7 +344,6 @@
       data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
   </script>
   <script>
-      // Ready event listner to call live chtat sdk
       window.addEventListener("lcw:ready", function () {
           Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
               inNewWindow: false,
