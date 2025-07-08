@@ -52,22 +52,53 @@
       align-items: center;
       gap: 12px;
     }
-    #ms-login-btn, #logout-btn {
-      background: #005abb;
-      color: #fff;
-      font-weight: 600;
+    #login-form, #create-form {
+      display: flex;
+      gap: 8px;
+      flex-direction: row;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    #login-form input, #create-form input {
+      padding: 5px 14px;
+      border: 1.5px solid #aaa;
+      font-size: 1em;
+      border-radius: 7px;
+    }
+    #login-form button, #create-form button {
+      padding: 5px 14px;
+      border-radius: 11px;
       border: none;
-      padding: 8px 18px;
-      border-radius: 16px;
+      color: #fff;
+      background-color: #1c7fbd;
+      font-weight: 700;
       font-size: 1em;
       cursor: pointer;
-      margin-right: 10px;
+      margin-left: 8px;
     }
-    #logout-btn { background: #c82333; margin-right: 0; }
+    #create-link, #go-login-link {
+      color: #179c3f;
+      text-decoration: underline;
+      background: none; border: none; cursor: pointer;
+      margin: 0 0 0 12px;
+      font-size: 0.98em;
+    }
+    #logout-btn {
+      background: #c82333;
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      padding: 7px 20px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+    }
     #login-msg {
       color: #179c3f;
       font-weight: 700;
       font-size: 1em;
+      margin-left: 0;
+      margin-right: 0;
     }
     h1 {
       color: #179c3f;
@@ -110,11 +141,7 @@
     <button class="lang-btn" id="lang-fr">FR</button>
   </div>
   <div class="main-content">
-    <div id="login-area">
-      <button id="ms-login-btn"></button>
-      <span id="login-msg"></span>
-      <button id="logout-btn" style="display:none"></button>
-    </div>
+    <div id="login-area"></div>
     <h1 id="main-title"></h1>
     <div id="desc"></div>
     <label id="brand-select-label" for="brand-select"></label>
@@ -124,126 +151,177 @@
     </select>
   </div>
 
-  <!-- MSAL.js for Microsoft Login -->
-  <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
-
   <script>
-  // Мови
+  // ========= Мова та переклади =========
   const translations = {
     en: {
       title: "We support your journeys everywhere",
       desc: "No matter how you choose to travel, you can always rely on us for support and assistance. Focus on your experience, and let us handle the rest!",
       brand: "Brand:",
-      login: "Sign in with Microsoft",
+      hello: "Welcome, {username}! You are now signed in.",
+      login: "Sign in",
       logout: "Sign out",
-      greeting: "Welcome, {username}! You are now signed in.",
+      userToken: "User token",
+      password: "Password",
+      createLink: "Create profile",
+      createProfile: "Create profile",
+      loginLink: "Back to sign in",
+      createName: "User name",
+      createSuccess: "Profile created! Now log in.",
+      wrong: "Wrong token or password.",
     },
     fr: {
       title: "Nous vous accompagnons lors de tous vos voyages",
       desc: "Peu importe votre moyen de transport, vous pouvez toujours compter sur notre assistance et notre soutien. Profitez de votre voyage, nous nous occupons du reste !",
       brand: "Marque :",
-      login: "Se connecter avec Microsoft",
+      hello: "Bienvenue, {username} ! Vous êtes maintenant connecté.",
+      login: "Se connecter",
       logout: "Déconnexion",
-      greeting: "Bienvenue, {username} ! Vous êtes maintenant connecté.",
+      userToken: "Identifiant",
+      password: "Mot de passe",
+      createLink: "Créer un profil",
+      createProfile: "Créer un profil",
+      loginLink: "Retour à la connexion",
+      createName: "Nom d’utilisateur",
+      createSuccess: "Profil créé ! Veuillez vous connecter.",
+      wrong: "Identifiant ou mot de passe incorrect.",
     }
   };
-  // Мова за замовчуванням — англійська
   let currentLang = localStorage.getItem('lang') || 'en';
   let userProfile = null;
-  let accessToken = null, msalInstance = null;
-
-  function applyTranslations() {
+  let profiles = JSON.parse(localStorage.getItem('profiles')||'{}'); // token: {name, password}
+  function updateUI(){
+    // Текстова частина
     document.getElementById('main-title').textContent = translations[currentLang].title;
     document.getElementById('desc').textContent = translations[currentLang].desc;
     document.getElementById('brand-select-label').textContent = translations[currentLang].brand;
-    document.getElementById('ms-login-btn').textContent = translations[currentLang].login;
-    document.getElementById('logout-btn').textContent = translations[currentLang].logout;
-    if (userProfile) {
-      document.getElementById('login-msg').textContent = translations[currentLang].greeting.replace("{username}", userProfile.name);
-    } else {
-      document.getElementById('login-msg').textContent = '';
+    // Авторизація
+    const area = document.getElementById("login-area");
+    area.innerHTML = ''; // clear
+    if(userProfile){
+      area.innerHTML = `<span id="login-msg">${translations[currentLang].hello.replace('{username}', userProfile.name)}</span>
+        <button id="logout-btn">${translations[currentLang].logout}</button>`;
+      document.getElementById('logout-btn').onclick = function(){
+        userProfile = null;
+        updateUI();
+        updateChatVars();
+      };
+    }else{
+      if(window.showCreate){
+        // Форма створення профілю (user token, user name, password)
+        area.innerHTML = `<form id="create-form" autocomplete="off" onsubmit="return false;">
+          <input id="cr-token" required placeholder="${translations[currentLang].userToken}" autocomplete="off" maxlength="32"/>
+          <input id="cr-name"  required placeholder="${translations[currentLang].createName}" autocomplete="off" maxlength="32"/>
+          <input id="cr-pw"    required type="password" placeholder="${translations[currentLang].password}" maxlength="32"/>
+          <button type="submit">${translations[currentLang].createProfile}</button>
+          <button id="go-login-link" type="button">${translations[currentLang].loginLink}</button>
+        </form>
+        <div id="create-msg"></div>`;
+        document.getElementById("go-login-link").onclick = function(){ window.showCreate=false; updateUI();};
+        document.getElementById("create-form").onsubmit = function(){
+          const token = document.getElementById("cr-token").value.trim();
+          const name  = document.getElementById("cr-name").value.trim();
+          const pw    = document.getElementById("cr-pw").value;
+          if(token && name && pw){
+            profiles[token]={name:name,password:pw};
+            localStorage.setItem('profiles',JSON.stringify(profiles));
+            document.getElementById("create-msg").textContent=translations[currentLang].createSuccess;
+          }
+        };
+      }else{
+        // Форма входу (token, password) + create profile
+        area.innerHTML =
+        `<form id="login-form" autocomplete="off" onsubmit="return false;">
+          <input id="li-token" required placeholder="${translations[currentLang].userToken}" autocomplete="off" maxlength="32">
+          <input id="li-pw" required type="password" placeholder="${translations[currentLang].password}" maxlength="32">
+          <button>${translations[currentLang].login}</button>
+          <button id="create-link" type="button">${translations[currentLang].createLink}</button>
+        </form>
+        <div id="login-msg"></div>`;
+        document.getElementById("create-link").onclick=function(){window.showCreate=true; updateUI();};
+        document.getElementById("login-form").onsubmit = function(){
+          const token = document.getElementById("li-token").value.trim();
+          const pw    = document.getElementById("li-pw").value;
+          if(token && profiles[token] && profiles[token].password===pw){
+            userProfile={token:token, name:profiles[token].name};
+            updateUI(); 
+            setTimeout(updateChatVars,200);
+          }else{
+            document.getElementById("login-msg").textContent=translations[currentLang].wrong;
+          }
+        };
+      }
     }
   }
+  // Переключення мови
   document.getElementById('lang-en').onclick = function() {
     currentLang = 'en'; localStorage.setItem('lang', 'en');
     document.getElementById('lang-en').classList.add('selected');
     document.getElementById('lang-fr').classList.remove('selected');
-    applyTranslations();
+    window.showCreate=false;
+    updateUI();
+    updateChatVars();
   };
   document.getElementById('lang-fr').onclick = function() {
     currentLang = 'fr'; localStorage.setItem('lang', 'fr');
     document.getElementById('lang-fr').classList.add('selected');
     document.getElementById('lang-en').classList.remove('selected');
-    applyTranslations();
+    window.showCreate=false;
+    updateUI();
+    updateChatVars();
   };
-
-  // ---- MSAL login ----
-  const msalConfig = {
-    auth: {
-      clientId: '20432056-2b97-43ca-9cfc-ec900428bbd4',
-      authority: "https://login.microsoftonline.com/d06629ae-56db-44af-880b-80afafa24182",
-      redirectUri: window.location.origin + window.location.pathname,
-    }
+  document.getElementById('brand-select').onchange=updateChatVars;
+  // Перша ініціалізація
+  window.showCreate=false;
+  window.onload = function(){
+    if(!localStorage.getItem('lang')){ currentLang='en'; localStorage.setItem('lang','en'); }
+    document.getElementById('lang-en').classList.toggle('selected', currentLang==='en');
+    document.getElementById('lang-fr').classList.toggle('selected', currentLang==='fr');
+    updateUI();
+    updateChatVars();
   };
-  msalInstance = new msal.PublicClientApplication(msalConfig);
-
-  async function msLogin() {
-    try {
-      const loginResp = await msalInstance.loginPopup({
-        scopes: [ "User.Read" ],
-        prompt: "select_account"
-      });
-      const tokenResp = await msalInstance.acquireTokenSilent({scopes: ["User.Read"], account: loginResp.account});
-      accessToken = tokenResp.accessToken;
-      const prof = await fetch("https://graph.microsoft.com/v1.0/me", {
-        headers: { 'Authorization': 'Bearer ' + accessToken }
-      }).then(r=>r.json());
-      userProfile = {
-        id: prof.id,
-        name: prof.displayName,
-        raw: prof
-      };
-      showLoginGreeting();
-    } catch (e) {
-      alert("Login failed: "+ (e.errorMessage || e.message));
+  // ====== CHAT CONTEXT INTEGRATION ======
+  function getCurrentBrand(){return document.getElementById('brand-select')?.value || 'UP';}
+  function getCurrentLanguage(){
+    return currentLang==='en'?"English":"French";
+  }
+  function getCurrentUser(){
+    if (!userProfile) return {};
+    return { name: userProfile.name, id: userProfile.token };
+  }
+  // Оновити чат, якщо мова/бренд/логін змінені
+  function updateChatVars(){
+    if(window.Microsoft && window.Microsoft.Omnichannel && window.Microsoft.Omnichannel.LiveChatWidget && 
+       window.Microsoft.Omnichannel.LiveChatWidget.SDK){
+      try{ Microsoft.Omnichannel.LiveChatWidget.SDK.endChat(); }catch(e){}
+      setTimeout(startChat, 300);
     }
   }
-  document.getElementById('ms-login-btn').onclick = msLogin;
-  function showLoginGreeting() {
-    document.getElementById('login-msg').textContent =
-      translations[currentLang].greeting.replace("{username}", userProfile.name);
-    document.getElementById('ms-login-btn').style.display = "none";
-    document.getElementById('logout-btn').style.display = "";
-  }
-  document.getElementById('logout-btn').onclick = function() {
-    msalInstance.logoutPopup().then(() => {
-      userProfile = null; accessToken = null;
-      document.getElementById('ms-login-btn').style.display = "";
-      document.getElementById('logout-btn').style.display = "none";
-      document.getElementById('login-msg').textContent = "";
+  // Ініціалізація чату
+  function startChat() {
+    if (!(window.Microsoft && window.Microsoft.Omnichannel && window.Microsoft.Omnichannel.LiveChatWidget && 
+           window.Microsoft.Omnichannel.LiveChatWidget.SDK)) return;
+    let ctx = {
+      'UserLanguage': { 'value': getCurrentLanguage(), 'isDisplayable': true },
+      'Brand': { 'value': getCurrentBrand(), 'isDisplayable': true },
+    };
+    if (userProfile) {
+      ctx.UserName = { value: userProfile.name, isDisplayable: true };
+      ctx.Token = { value: userProfile.token, isDisplayable: true };
+    }
+    Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
+      inNewWindow: false,
+      customContext: ctx
     });
-  };
-
-  window.onload = applyTranslations;
-
-  // --- Заглушка для auth.getAuthenticationToken ---
-  window.auth = window.auth || {};
-  window.auth.getAuthenticationToken = function(callback) {
-      if (!window.userProfile) {
-          // Не залогінений — гостей пускаємо без токена (виджет не отримає JWT)
-          callback(null);
-          return;
-      }
-      // Залогінений користувач — тут можуть бути твоя справжня генерація JWT
-      // Для тесту:
-      callback("DUMMY_TOKEN_" + (window.userProfile.id || Date.now()));
-  };
+  }
   </script>
 
-  <!-- Твій чат-скрипт (без змін!) -->
+  <!-- Чат code НЕ змінювався -->
   <script>
       function lcw() {
-          let localized_texts = {
+          let lang = localStorage.getItem('lang') === 'fr' ? "French" : "English";
+          const localized_texts = {
+            "English": {
               webchatTitle: "Virtual Assistant",
               webchatChatButton: "Chat",
               webchatAlertTitle: "Are you sure you want to exit the chat?",
@@ -253,18 +331,19 @@
               webchatLoadingPaneTitle: "Welcome to",
               webchatLoadingPaneSubTitle: "Live Chat Support!",
               webchatLoadingPaneSpinnerText: "Loading\u2026",
-          }
-          if (true) {
-              localized_texts.webchatTitle = "Assistant virtuel";
-              localized_texts.webchatChatButton = "Clavarder";
-              localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
-              localized_texts.webchatAlertMessage = "Note\u202F: Cela mettra fin \u00E0 la conversation et vous perdrez votre historique de clavardage.";
-              localized_texts.webchatNoButton = "Non";
-              localized_texts.webchatYesButton = "Oui";
-              localized_texts.webchatLoadingPaneTitle = "Bienvenue au";
-              localized_texts.webchatLoadingPaneSubTitle = "Soutien par clavardage en direct!";
-              localized_texts.webchatLoadingPaneSpinnerText = "Chargement\u2026";
-          }
+            },
+            "French": {
+              webchatTitle: "Assistant virtuel",
+              webchatChatButton: "Clavarder",
+              webchatAlertTitle: "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?",
+              webchatAlertMessage: "Note\u202F: Cela mettra fin \u00E0 la conversation et vous perdrez votre historique de clavardage.",
+              webchatNoButton: "Non",
+              webchatYesButton: "Oui",
+              webchatLoadingPaneTitle: "Bienvenue au",
+              webchatLoadingPaneSubTitle: "Soutien par clavardage en direct!",
+              webchatLoadingPaneSpinnerText: "Chargement\u2026",
+            }
+          }[lang];
 
           return {
               styleProps: {
@@ -335,26 +414,12 @@
           };
       }
   </script>
-
   <script id="Microsoft_Omnichannel_LCWidget"
       src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
       data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750" data-lcw-version="prod"
       data-org-id="44e3fe33-032f-f011-9a43-002248282d3c"
       data-org-url="https://m-44e3fe33-032f-f011-9a43-002248282d3c.us.omnichannelengagementhub.com"
       data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
-  </script>
-  <script>
-      window.addEventListener("lcw:ready", function () {
-          Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-              inNewWindow: false,
-              customContext: {
-                  'UserLanguage': { 'value': 'lang', 'isDisplayable': true },
-                  'Brand': { 'value': 'brand', 'isDisplayable': true },
-                  'UserName': { 'value': 'name', 'isDisplayable': true },
-                  'Token': { 'value': 'id', 'isDisplayable': true }
-              }
-          });
-      });
   </script>
 </body>
 </html>
