@@ -133,7 +133,6 @@
     <!-- ====== LIVE CHAT WIDGET SCRIPTS AND CALLBACK ====== -->
     <script>
         function lcw() {
-            // Default UI texts: English
             let localized_texts = {
                 webchatTitle: "Virtual Assistant",
                 webchatChatButton: "Chat",
@@ -258,7 +257,6 @@
         });
     </script>
     <script>
-        // End the chat session and clear its state on log out, lang or brand switch
         function hardResetChatWidget() {
             try {
                 if (
@@ -285,8 +283,7 @@
                 });
             } catch(e){}
         }
-
-        const translations = {
+        const translations = { /* ... (без змін) ... */ 
             en: {
                 langBtn: "Français",
                 heading: "We help you on every journey",
@@ -328,11 +325,10 @@
                 regSuccess: "Profil créé, vous pouvez vous connecter."
             }
         };
-
         function getLang() { return localStorage.getItem("lang") || "en"; }
-        function setLang(lang) { localStorage.setItem("lang", lang); location.reload(); }
+        function setLang(lang) { localStorage.setItem("lang", lang); renderApp(); hardResetChatWidget(); }
         function getBrand() { return localStorage.getItem("brand") || "UP"; }
-        function setBrand(value) { localStorage.setItem("brand", value); }
+        function setBrand(value) { localStorage.setItem("brand", value); renderApp(); hardResetChatWidget(); }
         function setProfile(profile) { localStorage.setItem("profile", JSON.stringify(profile)); }
         function getProfile() { try { return JSON.parse(localStorage.getItem("profile")); } catch { return null; } }
         function clearProfile() { localStorage.removeItem("profile"); }
@@ -345,7 +341,6 @@
             if (p && p.userId === a) return p;
             return null;
         }
-
         function renderApp() {
             const lang = getLang();
             const tr = translations[lang];
@@ -355,11 +350,9 @@
             document.getElementById("main-sub").textContent = tr.sub;
             document.getElementById("brandLbl").textContent = tr.brand + ":";
             document.getElementById("brandSelect").value = getBrand();
-
             const authBox = document.getElementById("authBox");
             const currentProfile = getCurrentUserData();
             let html = "";
-
             if (currentProfile) {
                 html += `<div>
                     <div class="auth-user">${tr.userGreeting.replace("{name}", currentProfile.userName)}</div>
@@ -406,27 +399,10 @@
                 </div>`;
             }
             authBox.innerHTML = html;
-
-            // Brand select handler
-            document.getElementById("brandSelect").addEventListener("change", (e) => {
-                setBrand(e.target.value);
-                hardResetChatWidget();
-                setTimeout(() => location.reload(), 350);
-            });
-
-            // Language toggle handler
-            document.getElementById("langBtn").onclick = () => {
-                hardResetChatWidget();
-                setTimeout(() => setLang(lang === "en" ? "fr" : "en"), 350);
-            };
-
-            // Auth events
+            document.getElementById("brandSelect").addEventListener("change", (e) => { setBrand(e.target.value); });
+            document.getElementById("langBtn").onclick = () => { setLang(getLang() === "en" ? "fr" : "en"); };
             if (currentProfile) {
-                document.getElementById("logoutBtn").onclick = () => {
-                    clearAuthed();
-                    hardResetChatWidget();
-                    setTimeout(() => location.reload(), 350);
-                };
+                document.getElementById("logoutBtn").onclick = () => { clearAuthed(); renderApp(); hardResetChatWidget(); };
             } else {
                 document.getElementById("showReg").onclick = () => {
                     document.getElementById("registerSection").style.display = "block";
@@ -443,9 +419,7 @@
                     const prof = getProfile();
                     const msg = document.getElementById("authMsg");
                     if (prof && prof.userId === userId && prof.pw === pw) {
-                        setAuthed(userId);
-                        hardResetChatWidget();
-                        setTimeout(() => location.reload(), 350);
+                        setAuthed(userId); renderApp(); hardResetChatWidget();
                     } else {
                         msg.textContent = translations[lang].invalid;
                     }
@@ -470,24 +444,7 @@
                 };
             }
         }
-
-        // Render site on ready (MUST be after all DOM rendered!)
-        window.addEventListener('DOMContentLoaded', function() {
-            // Defensive: check main contents exist
-            if(
-                document.getElementById("langBtn") &&
-                document.getElementById("main-heading") &&
-                document.getElementById("main-sub") &&
-                document.getElementById("brandLbl") &&
-                document.getElementById("brandSelect") &&
-                document.getElementById("authBox")
-            ) {
-                renderApp();
-            } else {
-                document.body.insertAdjacentHTML('beforeend',
-                    '<div style="color:red;font-size:1.3em;text-align:center">Error loading main UI blocks - check HTML structure!</div>');
-            }
-        });
+        window.addEventListener('DOMContentLoaded', renderApp);
     </script>
 </body>
 </html>
