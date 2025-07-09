@@ -37,17 +37,17 @@ select{padding:6px 8px;margin:12px 0 18px}
     <div id="status"></div>
 </div>
 
-<!-- =======================  MSAL  (оновлено)  ======================= -->
+<!-- ======================  MSAL  (updated)  ======================= -->
 <script src="https://alcdn.msauth.net/browser/2.32.0/js/msal-browser.min.js"></script>
 <script>
-/* ---------- Глобальний стан (як і було) ---------- */
+/* ---------- Global state for language, brand, and user auth (remains as before) ---------- */
 let currentLanguage = localStorage.getItem("lang") || "en";
 let brandValue      = localStorage.getItem("brand") || "UP";
 let userName        = "";
-let userId          = "";                      // саме ЦЕ передаємо у customContext
-window.currentLanguage = currentLanguage;      // потрібен lcw()
+let userId          = "";                      // This value is passed to customContext
+window.currentLanguage = currentLanguage;      // Needed for lcw()
 
-/* ---------- MSAL конфіг ---------- */
+/* ---------- MSAL (Microsoft Authentication Library) configuration ---------- */
 const msalInstance = new msal.PublicClientApplication({
    auth:{
       clientId : "20432056-2b97-43ca-9cfc-ec900428bbd4",
@@ -59,7 +59,7 @@ const msalInstance = new msal.PublicClientApplication({
    }
 });
 
-/* ---------- userId із homeAccountId ---------- */
+/* ---------- Updates userId based on the authenticated account ---------- */
 function updateUserId(){
    const acc = msalInstance.getActiveAccount();
    if(!acc){ userId=""; return; }
@@ -69,11 +69,13 @@ function updateUserId(){
    if(userId.length>36)     userId = userId.slice(userId.length-36);
 }
 
-/* ---------- UI TEXTS (не змінювали) ---------- */
+/* ---------- UI TEXTS per language (not modified) ---------- */
 const T={
  en:{h:"We help you on every journey",p:"Whatever you travel by, you can count on our support everywhere and anytime.",b:"Brand:",in:"Log in with Microsoft",out:"Sign out",s:"Signed in as "},
  fr:{h:"Nous vous aidons dans chaque voyage",p:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",b:"Marque :",in:"Se connecter avec Microsoft",out:"Se déconnecter",s:"Connecté : "}
 };
+
+/* ---------- Renders all UI texts and updates button states ---------- */
 function render(){
  const t=T[currentLanguage];
  document.getElementById("mainTitle").innerText=t.h;
@@ -84,6 +86,8 @@ function render(){
  document.querySelectorAll(".langBtn").forEach(b=>b.classList.toggle("active",b.dataset.lang===currentLanguage));
  showStatus();
 }
+
+/* ---------- Shows signed-in status and toggles login/logout button visibility ---------- */
 function showStatus(){
  const st=document.getElementById("status");
  if(userName){
@@ -98,13 +102,13 @@ function showStatus(){
 }
 render();
 
-/* ---------- EVENTS мови й бренду ---------- */
+/* ---------- Event handlers: language and brand switch ---------- */
 document.getElementById("enBtn").onclick=()=>{localStorage.setItem("lang","en");location.reload();}
 document.getElementById("frBtn").onclick=()=>{localStorage.setItem("lang","fr");location.reload();}
 document.getElementById("brandSelect").value=brandValue;
 document.getElementById("brandSelect").addEventListener("change",e=>{localStorage.setItem("brand",e.target.value);location.reload();});
 
-/* ---------- LOGIN / LOGOUT (з поверненням reload) ---------- */
+/* ---------- LOGIN / LOGOUT events with page reload ---------- */
 document.getElementById("loginBtn").onclick = async () => {
    try{
       const resp = await msalInstance.loginPopup({scopes:["User.Read"]});
@@ -112,8 +116,8 @@ document.getElementById("loginBtn").onclick = async () => {
          msalInstance.setActiveAccount(resp.account);
          userName = resp.account.name || "";
          updateUserId();
-         sessionStorage.setItem("reloaded","1");   // позначка для restore()
-         location.reload();                       // перезапускаємо сторінку -> чат стартує з контекстом
+         sessionStorage.setItem("reloaded","1");   // mark session for restore()
+         location.reload();                       // reload to start chat with context
       }
    }catch(e){ console.log(e); }
 };
@@ -123,7 +127,7 @@ document.getElementById("logoutBtn").onclick = async () => {
    location.reload();
 };
 
-/* ---------- Відновити після reload ---------- */
+/* ---------- Restore session state after reload (e.g. after login/logout) ---------- */
 (function restore(){
    if(!sessionStorage.getItem("reloaded")) return;
 
@@ -137,7 +141,7 @@ document.getElementById("logoutBtn").onclick = async () => {
    render();
 })();
 
-/* ---------- CHAT CONTEXT ---------- */
+/* ---------- Build custom context object for chat widget ---------- */
 function buildContext(){
   const ctx={
      UserLanguage:{value:(currentLanguage==="fr"?"French":"English"),isDisplayable:true},
@@ -145,19 +149,18 @@ function buildContext(){
   };
   if(userName){
      ctx.UserName={value:userName,isDisplayable:true};
-     ctx.Token   ={value:userId ,isDisplayable:true};   // ← те, що очікує бот
+     ctx.Token   ={value:userId ,isDisplayable:true};   // ← value expected by bot
   }
   return ctx;
 }
 </script>
 <!-- ===================  /MSAL  =================== -->
 
-
 <!-- ========== ORIGINAL CHAT SCRIPTS (NO MODIFICATIONS) ========== -->
 <script>
-        //Styling function
+        // Chat styling and localization configuration for LCW (Live Chat Widget)
         function lcw() {
-            // Default as Engligh
+            // Set default UI texts as English
             let localized_texts = {
                 webchatTitle: "Virtual Assistant",
                 webchatChatButton: "Chat",
@@ -169,9 +172,8 @@ function buildContext(){
                 webchatLoadingPaneSubTitle: "Live Chat Support!",
                 webchatLoadingPaneSpinnerText: "Loading\u2026",
             }
-            // check condition for language
-            if (true) {
-                //French Translations
+            // Set French translations if needed (update actual selection logic if needed)
+            if (true) { // Always true, update for real language check logic if needed
                 localized_texts.webchatTitle = "Assistant virtuel";
                 localized_texts.webchatChatButton = "Clavarder";
                 localized_texts.webchatAlertTitle = "\u00CAtes-vous certain de vouloir quitter la s\u00E9ance de clavardage?";
@@ -253,12 +255,13 @@ function buildContext(){
         }
 </script>
 
-<!-- Override lcw AFTER original definition so language switch works -->
+<!-- ========== Localization override for LCW to support live language switch ========== -->
 <script>
 const _origLcw = lcw;
 window.lcw = function(){
    const cfg=_origLcw();
-   if(window.currentLanguage!=="fr"){       // need English
+   // Apply English texts for anything but French
+   if(window.currentLanguage!=="fr"){
       cfg.headerProps.controlProps.headerTitleProps.text="Virtual Assistant";
       cfg.loadingPaneProps.controlProps.titleText="Welcome to";
       cfg.loadingPaneProps.controlProps.subtitleText="Live Chat Support!";
@@ -273,6 +276,7 @@ window.lcw = function(){
 };
 </script>
 
+<!-- ========== Live Chat Widget Loader (LCW - Microsoft Omnichannel) ========== -->
 <script id="Microsoft_Omnichannel_LCWidget"
         src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
         data-app-id="d9f84d07-eecf-4bac-8385-084026ce5750" data-lcw-version="prod"
@@ -281,7 +285,7 @@ window.lcw = function(){
         data-font-family-override="Monotype Corsiva" data-color-override="#0000FF" data-customization-callback="lcw">
 </script>
 <script>
-// Ready event listener
+/* ---------- Event: fires when live chat is ready. Automatically starts chat session with custom context ---------- */
 window.addEventListener("lcw:ready", function () {
     try{ Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat(); }catch(e){}
     Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
