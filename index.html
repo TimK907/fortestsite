@@ -37,15 +37,15 @@ select{padding:6px 8px;margin:12px 0 18px}
     <div id="status"></div>
 </div>
 
-<!-- =======================  MSAL  ======================= -->
+<!-- =======================  MSAL  (оновлено)  ======================= -->
 <script src="https://alcdn.msauth.net/browser/2.32.0/js/msal-browser.min.js"></script>
 <script>
-/* ---------- Глобальний стан ---------- */
+/* ---------- Глобальний стан (як і було) ---------- */
 let currentLanguage = localStorage.getItem("lang") || "en";
 let brandValue      = localStorage.getItem("brand") || "UP";
 let userName        = "";
-let aadToken        = sessionStorage.getItem("pva_access_token") || ""; // ← справжній access-token
-window.currentLanguage = currentLanguage;                                // для lcw()
+let userId          = "";                      // саме ЦЕ передаємо у customContext
+window.currentLanguage = currentLanguage;      // потрібен lcw()
 
 /* ---------- MSAL конфіг ---------- */
 const msalInstance = new msal.PublicClientApplication({
@@ -58,37 +58,18 @@ const msalInstance = new msal.PublicClientApplication({
       storeAuthStateInCookie:false
    }
 });
-const loginRequest = { scopes:["User.Read"] };
 
-/* ---------- Отримати/оновити AAD access-token ---------- */
-async function refreshToken(){
-   const account = msalInstance.getActiveAccount();
-   if(!account){ aadToken=""; sessionStorage.removeItem("pva_access_token"); return; }
+/* ---------- userId із homeAccountId ---------- */
+function updateUserId(){
+   const acc = msalInstance.getActiveAccount();
+   if(!acc){ userId=""; return; }
 
-   try{
-       const t = await msalInstance.acquireTokenSilent({scopes:["User.Read"]});
-       aadToken = t.accessToken;
-       sessionStorage.setItem("pva_access_token", aadToken);
-   }catch(e){
-       try{
-           const t = await msalInstance.acquireTokenPopup({scopes:["User.Read"]});
-           aadToken = t.accessToken;
-           sessionStorage.setItem("pva_access_token", aadToken);
-       }catch(err){ console.log(err); aadToken=""; }
-   }
+   userId = ("My-custom-prefix" + acc.homeAccountId).substr(0,64);
+   if(userId.includes(".")) userId = userId.split(".")[0];
+   if(userId.length>36)     userId = userId.slice(userId.length-36);
 }
 
-/* ---------- Первинна перевірка сесії ---------- */
-(function initialSessionCheck(){
-   const acc = msalInstance.getAllAccounts()[0];
-   if(acc){
-       msalInstance.setActiveAccount(acc);
-       userName = acc.name || "";
-       refreshToken();
-   }
-})();
-
-/* ---------- UI TEXTS ---------- */
+/* ---------- UI TEXTS (не змінювали) ---------- */
 const T={
  en:{h:"We help you on every journey",p:"Whatever you travel by, you can count on our support everywhere and anytime.",b:"Brand:",in:"Log in with Microsoft",out:"Sign out",s:"Signed in as "},
  fr:{h:"Nous vous aidons dans chaque voyage",p:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",b:"Marque :",in:"Se connecter avec Microsoft",out:"Se déconnecter",s:"Connecté : "}
@@ -123,16 +104,16 @@ document.getElementById("frBtn").onclick=()=>{localStorage.setItem("lang","fr");
 document.getElementById("brandSelect").value=brandValue;
 document.getElementById("brandSelect").addEventListener("change",e=>{localStorage.setItem("brand",e.target.value);location.reload();});
 
-/* ---------- LOGIN / LOGOUT ---------- */
+/* ---------- LOGIN / LOGOUT (з поверненням reload) ---------- */
 document.getElementById("loginBtn").onclick = async () => {
    try{
-      const resp = await msalInstance.loginPopup(loginRequest);
+      const resp = await msalInstance.loginPopup({scopes:["User.Read"]});
       if(resp?.account){
          msalInstance.setActiveAccount(resp.account);
          userName = resp.account.name || "";
-         await refreshToken();
-         sessionStorage.setItem("reloaded","1");
-         location.reload();                      // чат зупиняється й стартує з новим контекстом
+         updateUserId();
+         sessionStorage.setItem("reloaded","1");   // позначка для restore()
+         location.reload();                       // перезапускаємо сторінку -> чат стартує з контекстом
       }
    }catch(e){ console.log(e); }
 };
@@ -142,8 +123,8 @@ document.getElementById("logoutBtn").onclick = async () => {
    location.reload();
 };
 
-/* ---------- Відновлення після reload ---------- */
-(function restoreAfterReload(){
+/* ---------- Відновити після reload ---------- */
+(function restore(){
    if(!sessionStorage.getItem("reloaded")) return;
 
    sessionStorage.removeItem("reloaded");
@@ -151,7 +132,7 @@ document.getElementById("logoutBtn").onclick = async () => {
    if(acc){
       msalInstance.setActiveAccount(acc);
       userName = acc.name || "";
-      refreshToken();              // гарантовано отримати токен
+      updateUserId();
    }
    render();
 })();
@@ -163,8 +144,8 @@ function buildContext(){
      Brand       :{value:brandValue,isDisplayable:true}
   };
   if(userName){
-     ctx.UserName={value:userName ,isDisplayable:true};
-     ctx.Token   ={value:aadToken,isDisplayable:true}; // ← тепер access-token, а не userId
+     ctx.UserName={value:userName,isDisplayable:true};
+     ctx.Token   ={value:userId ,isDisplayable:true};   // ← те, що очікує бот
   }
   return ctx;
 }
@@ -176,7 +157,7 @@ function buildContext(){
 <script>
         //Styling function
         function lcw() {
-            // Default as English
+            // Default as Engligh
             let localized_texts = {
                 webchatTitle: "Virtual Assistant",
                 webchatChatButton: "Chat",
@@ -302,7 +283,7 @@ window.lcw = function(){
 <script>
 // Ready event listener
 window.addEventListener("lcw:ready", function () {
-    try{ Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat(); }catch(e){}  // ← крапка з комою є
+    try{ Microsoft.Omnichannel.LiveChatWidget.SDK.closeChat(); }catch(e){}
     Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
         inNewWindow:false,
         customContext: buildContext()
