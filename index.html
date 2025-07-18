@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Travel Support</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-
-  <!-- Page background & basic styles --------------------------------------------------- -->
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     html,body{margin:0;height:100%;font-family:Arial,Helvetica,sans-serif;
-      background:url("https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg") center/cover no-repeat;
-      color:#fff}
+      background:url("https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg") center/cover no-repeat;color:#fff}
     .overlay{position:absolute;inset:0;background:rgba(0,0,0,.55)}
     .container{position:relative;z-index:2;max-width:520px;padding:40px 30px}
     h1,p,label,select,button{text-align:left}
@@ -21,11 +18,8 @@
     #status{margin-top:10px;font-weight:bold}
   </style>
 </head>
-
 <body>
-  <!-- --------------------------------------------------------------- -->
-  <!--  UI (language switch, login buttons etc.)                      -->
-  <!-- --------------------------------------------------------------- -->
+  <!-- ---------- UI ---------- -->
   <div class="overlay"></div>
   <div class="container">
     <div>
@@ -38,254 +32,177 @@
     <select id="brandSelect">
       <option value="UP">UP</option>
       <option value="GO">GO</option>
-    </select><br>
+    </select><br />
     <button class="authBtn" id="loginBtn"></button>
     <button class="authBtn" id="logoutBtn" style="display:none;"></button>
     <div id="status"></div>
   </div>
 
-  <!-- MSAL (Microsoft identity, used for SSO) ----------------------------------------- -->
+  <!-- MSAL ----------------------------------------------------------- -->
   <script src="https://alcdn.msauth.net/browser/2.25.0/js/msal-browser.min.js"></script>
   <script>
-    /* =========================================================================
-       GLOBAL STATE
-       ========================================================================= */
+    /* ---------------- GLOBAL STATE ---------------- */
     let currentLanguage = localStorage.getItem("lang") || "en";
     let brandValue      = localStorage.getItem("brand") || "UP";
     let userName        = "";
-    var userId          = "";      // e-mail – used as userId for LCW
-    window.currentLanguage = currentLanguage; // used inside lcw() for localisation
+    let userId          = "";
+    window.currentLanguage = currentLanguage;   // used inside lcw()
 
-    /* =========================================================================
-       MSAL CONFIGURATION (STEP-1)
-       ========================================================================= */
-    var clientApplication;
-    (function () {
-      const msalConfig = {
-        auth: {
-          clientId : '7811612f-d1b3-4226-806a-4700a8a9669c',
-          authority: 'https://login.microsoftonline.com/67ac26e0-cfa4-4273-bf20-46627500a25d'
-        }
-      };
-      clientApplication = new msal.PublicClientApplication(msalConfig);
-    })();
+    /* ---------------- MSAL CONFIG ----------------- */
+    const clientApplication = new msal.PublicClientApplication({
+      auth:{ clientId:"7811612f-d1b3-4226-806a-4700a8a9669c",
+             authority:"https://login.microsoftonline.com/67ac26e0-cfa4-4273-bf20-46627500a25d" }
+    });
 
-    /* =========================================================================
-       USER-ID CREATION  (STEP-3)
-       ========================================================================= */
     function updateUserId(){
       const acc = clientApplication.getActiveAccount();
-      if(!acc){ userId=""; return;}
-      userId = acc.username; // keep it simple – username will be our id
+      userId = acc ? acc.username : "";
     }
 
-    /* =========================================================================
-       UI TEXTS (multi-lingual)
-       ========================================================================= */
-    const T = {
+    /* ---------------- UI TEXTS -------------------- */
+    const T={
       en:{h:"We help you on every journey",
           p:"Whatever you travel by, you can count on our support everywhere and anytime.",
-          b:"Brand:",
-          in:"Log in with Microsoft",
-          out:"Sign out",
-          s:"Signed in as "},
+          b:"Brand:",in:"Log in with Microsoft",out:"Sign out",s:"Signed in as "},
       fr:{h:"Nous vous aidons dans chaque voyage",
           p:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",
-          b:"Marque :",
-          in:"Se connecter avec Microsoft",
-          out:"Se déconnecter",
-          s:"Connecté : "}
+          b:"Marque :",in:"Se connecter avec Microsoft",out:"Se déconnecter",s:"Connecté : "}
     };
     function render(){
       const t=T[currentLanguage];
-      mainTitle.innerText = t.h;
-      mainText.innerText  = t.p;
-      brandLabel.innerText= t.b;
-      loginBtn.innerText  = t.in;
-      logoutBtn.innerText = t.out;
+      mainTitle.innerText=t.h; mainText.innerText=t.p; brandLabel.innerText=t.b;
+      loginBtn.innerText=t.in; logoutBtn.innerText=t.out;
       document.querySelectorAll(".langBtn")
               .forEach(b=>b.classList.toggle("active",b.dataset.lang===currentLanguage));
       showStatus();
     }
     function showStatus(){
-      const st=status;
-      if(userName){
-        st.innerText = T[currentLanguage].s + userName;
-        loginBtn.style.display="none"; logoutBtn.style.display="";
-      }else{
-        st.innerText=""; loginBtn.style.display=""; logoutBtn.style.display="none";
-      }
+      if(userName){status.innerText=T[currentLanguage].s+userName;
+                   loginBtn.style.display="none"; logoutBtn.style.display="";}
+      else        {status.innerText=""; loginBtn.style.display=""; logoutBtn.style.display="none";}
     }
     render();
 
-    /* =========================================================================
-       EVENTS (switch lang / brand)
-       ========================================================================= */
-    enBtn.onclick = () => {localStorage.setItem("lang","en"); location.reload();}
-    frBtn.onclick = () => {localStorage.setItem("lang","fr"); location.reload();}
-    brandSelect.value = brandValue;
-    brandSelect.addEventListener("change",e=>{
-      localStorage.setItem("brand",e.target.value); location.reload();
-    });
+    /* ---------------- EVENTS ---------------------- */
+    enBtn.onclick=()=>{localStorage.setItem("lang","en");location.reload();}
+    frBtn.onclick=()=>{localStorage.setItem("lang","fr");location.reload();}
+    brandSelect.value=brandValue;
+    brandSelect.onchange=e=>{localStorage.setItem("brand",e.target.value);location.reload();};
 
-    /* =========================================================================
-       LOGIN / LOGOUT
-       ========================================================================= */
-    loginBtn.onclick = async () =>{
+    /* ---------------- LOGIN/LOGOUT ---------------- */
+    loginBtn.onclick=async()=>{
       try{
-        const r = await clientApplication.loginPopup({scopes:["user.read"]});
-        if(r?.account){
-          clientApplication.setActiveAccount(r.account);
-          userName = r.account.name||"";
-          updateUserId();
-          sessionStorage.setItem("reloaded","1");
-          location.reload();
-        }
+        const r=await clientApplication.loginPopup({scopes:["user.read"]});
+        if(r?.account){clientApplication.setActiveAccount(r.account);
+                       userName=r.account.name||"";updateUserId();
+                       sessionStorage.setItem("reloaded","1");location.reload();}
       }catch(e){console.log(e);}
     };
-    logoutBtn.onclick = async ()=>{
-      try{await clientApplication.logoutPopup({account:clientApplication.getActiveAccount()});}
-      catch(e){}
-      sessionStorage.setItem("reloaded","1"); location.reload();
+    logoutBtn.onclick=async()=>{
+      try{await clientApplication.logoutPopup({account:clientApplication.getActiveAccount()});}catch(e){}
+      sessionStorage.setItem("reloaded","1");location.reload();
     };
     (function restore(){
       if(sessionStorage.getItem("reloaded")){
         sessionStorage.removeItem("reloaded");
-        const acc = clientApplication.getAllAccounts()[0];
-        if(acc){clientApplication.setActiveAccount(acc); userName=acc.name||""; updateUserId();}
+        const acc=clientApplication.getAllAccounts()[0];
+        if(acc){clientApplication.setActiveAccount(acc);userName=acc.name||"";updateUserId();}
         render();
       }
     })();
 
-    /* =========================================================================
-       CHAT CONTEXT OBJECT (sent to Copilot Studio)
-       ========================================================================= */
+    /* ---------------- CHAT CONTEXT ---------------- */
     function buildContext(){
-      const ctx={
-        UserLanguage : (localStorage.getItem("lang")==="fr"?"French":"English"),
-        Brand        : localStorage.getItem("brand"),
+      return {
+        UserLanguage : currentLanguage==="fr" ? "French" : "English",
+        Brand        : brandValue,
         Email        : userId,
-        // If userId is empty – user is anonymous and Sub is left blank
-        Sub          : userId===""? "": "15833b70-5062-f011-bec1-0022480a4751"
+        Sub          : userId==="" ? "" : "15833b70-5062-f011-bec1-0022480a4751"
       };
-      return ctx;
     }
   </script>
 
-  <!-- =========================================================================
-       TOKEN PROVIDER  (called by Dynamics if user is authenticated)
-       ========================================================================= -->
+  <!-- TOKEN PROVIDER (works for both modes) --------------------------- -->
   <script>
-    var auth = {};
-    auth.getAuthenticationToken = function (callback){
-      const customContext = buildContext();
+    const auth={};
+    auth.getAuthenticationToken=function(callback){
+      const ctx=buildContext();
 
-      // Anonymous user – just run the chat without JWT/token
-      if(customContext.Sub === ""){
-        console.log("No authenticated user. Running chat anonymously.");
-        callback(""); // callback with empty string fulfils Dynamics contract
+      /* Anonymous => tell LCW we have no token */
+      if(!ctx.Sub){
+        console.log("Anonymous user → no JWT returned.");
+        callback(null);          // MUST be null, not empty string
         return;
       }
 
-      // Authenticated user – request JWT from our backend
-      const xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function(){
-        if(this.readyState === 4){
-          if(this.status === 200){
-            console.log("JWT received:",this.responseText);
-            callback(this.responseText);  // pass token back to LCW
-          }else{
-            console.error("JWT request failed – status:",this.status);
-            callback(null);
-          }
+      /* Authenticated => fetch token from backend */
+      const xhr=new XMLHttpRequest();
+      xhr.onreadystatechange=function(){
+        if(this.readyState===4){
+          if(this.status===200){console.log("JWT received");callback(this.responseText);}
+          else                 {console.error("JWT error, status:",this.status);callback(null);}
         }
       };
-      xhttp.onerror = err =>{ console.error("XHR error:",err); callback(null); };
-
-      const url=`/privatekey?email=${encodeURIComponent(customContext.Email)}&brand=${encodeURIComponent(customContext.Brand)}&language=${encodeURIComponent(customContext.UserLanguage)}&sub=${encodeURIComponent(customContext.Sub)}`;
-      xhttp.open("GET",url,true);
-      xhttp.send();
+      xhr.onerror=e=>{console.error("XHR error:",e);callback(null);}
+      const url=`/privatekey?email=${encodeURIComponent(ctx.Email)}&brand=${encodeURIComponent(ctx.Brand)}&language=${encodeURIComponent(ctx.UserLanguage)}&sub=${encodeURIComponent(ctx.Sub)}`;
+      xhr.open("GET",url,true);xhr.send();
     };
   </script>
 
-  <!-- =========================================================================
-       LCW CUSTOMISATION FUNCTION  (colour, texts, etc.)
-       ========================================================================= -->
+  <!-- LCW CUSTOMISATION (style + localisation) ------------------------ -->
   <script>
     function lcw(){
-      /* ----------- localisation (based on currentLanguage) ---------------- */
-      let localized_texts = {
-        webchatTitle              : "Virtual Assistant",
-        webchatChatButton         : "Chat",
-        webchatAlertTitle         : "Are you sure you want to exit the chat?",
-        webchatAlertMessage       : "Note: This will end your conversation, and you will lose your chat history.",
-        webchatNoButton           : "No",
-        webchatYesButton          : "Yes",
-        webchatLoadingPaneTitle   : "Welcome to",
-        webchatLoadingPaneSubTitle: "Live Chat Support!",
-        webchatLoadingPaneSpinnerText: "Loading…"
+      /* --- Build localisation dictionary depending on currentLanguage --- */
+      const localized_texts = (window.currentLanguage==="fr") ? {
+        webchatTitle:"Assistant virtuel",
+        webchatChatButton:"Clavarder",
+        webchatAlertTitle:"Êtes-vous certain de vouloir quitter la séance de clavardage ?",
+        webchatAlertMessage:"Note : Cela mettra fin à la conversation et vous perdrez votre historique de clavardage.",
+        webchatNoButton:"Non",
+        webchatYesButton:"Oui",
+        webchatLoadingPaneTitle:"Bienvenue au",
+        webchatLoadingPaneSubTitle:"Soutien par clavardage en direct !",
+        webchatLoadingPaneSpinnerText:"Chargement…"
+      } : { /* English (default) */
+        webchatTitle:"Virtual Assistant",
+        webchatChatButton:"Chat",
+        webchatAlertTitle:"Are you sure you want to exit the chat?",
+        webchatAlertMessage:"Note: This will end your conversation, and you will lose your chat history.",
+        webchatNoButton:"No",
+        webchatYesButton:"Yes",
+        webchatLoadingPaneTitle:"Welcome to",
+        webchatLoadingPaneSubTitle:"Live Chat Support!",
+        webchatLoadingPaneSpinnerText:"Loading…"
       };
 
-      if(window.currentLanguage === "fr"){          // French version
-        localized_texts.webchatTitle                = "Assistant virtuel";
-        localized_texts.webchatChatButton           = "Clavarder";
-        localized_texts.webchatAlertTitle           = "Êtes-vous certain de vouloir quitter la séance de clavardage?";
-        localized_texts.webchatAlertMessage         = "Note : Cela mettra fin à la conversation et vous perdrez votre historique de clavardage.";
-        localized_texts.webchatNoButton             = "Non";
-        localized_texts.webchatYesButton            = "Oui";
-        localized_texts.webchatLoadingPaneTitle     = "Bienvenue au";
-        localized_texts.webchatLoadingPaneSubTitle  = "Soutien par clavardage en direct!";
-        localized_texts.webchatLoadingPaneSpinnerText="Chargement…";
-      }
-
-      /* ----------- Style & other props ------------------------------------ */
+      /* --- Return customisation object expected by LCW ------------------ */
       return {
+        localizationProps : localized_texts,
         styleProps:{
           generalStyles:{borderRadius:"10px"}
         },
-        headerProps:{
-          styleProps:{generalStyleProps:{borderRadius:"10px 10px 0 0"}}
-        },
+        headerProps:{styleProps:{generalStyleProps:{borderRadius:"10px 10px 0 0"}}},
         chatButtonProps:{
           controlProps:{hideChatTextContainer:true},
           styleProps:{generalStyleProps:{minWidth:"60px",width:"60px",height:"60px"}}
         },
         webChatContainerProps:{
-          webChatStyles:{
-            avatarSize:0,
-            suggestedActionBackgroundColor:"black",
-            suggestedActionBorderColor:"black"
-          },
-          renderingMiddlewareProps:{
-            disableAvatarMiddleware:true,
-            avatarTextStyleProps:{display:"none"}
-          }
+          webChatStyles:{avatarSize:0,suggestedActionBackgroundColor:"black",suggestedActionBorderColor:"black"},
+          renderingMiddlewareProps:{disableAvatarMiddleware:true,avatarTextStyleProps:{display:"none"}}
         },
         loadingPaneProps:{
-          controlProps:{
-            titleText   : localized_texts.webchatLoadingPaneTitle,
-            subtitleText: localized_texts.webchatLoadingPaneSubTitle,
-            hideSpinnerText:true,
-            spinnerSize:3
-          }
+          controlProps:{titleText:localized_texts.webchatLoadingPaneTitle,
+                        subtitleText:localized_texts.webchatLoadingPaneSubTitle,
+                        hideSpinnerText:true,spinnerSize:3}
         },
-        footerProps:{
-          controlProps:{
-            hideEmailTranscriptButton:false,
-            hideAudioNotificationButton:true,
-            rightGroup:{children:["© Microsoft 2023"]}
-          }
-        },
-        // expose actual texts to LCW localisation engine
-        ...localized_texts
+        footerProps:{controlProps:{hideEmailTranscriptButton:false,
+                                   hideAudioNotificationButton:true,
+                                   rightGroup:{children:["© Microsoft 2023"]}}}
       };
     }
   </script>
 
-  <!-- =========================================================================
-       LIVE CHAT WIDGET BOOTSTRAPPER
-       (set data-customization-callback="lcw" so our function runs)
-       ========================================================================= -->
+  <!-- LIVE CHAT BOOTSTRAPPER ------------------------------------------ -->
   <script id="Microsoft_Omnichannel_LCWidget"
           src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
           data-app-id="99c9d54a-c161-4575-9b89-d416cb1829f6"
@@ -295,24 +212,15 @@
           data-customization-callback="lcw">
   </script>
 
-  <!-- =========================================================================
-       lcw:ready      – widget fully loaded
-       Here we decide whether to work authenticated or not.
-       ========================================================================= -->
+  <!-- lcw:ready -> register token provider + start chat ---------------- -->
   <script>
-    window.addEventListener("lcw:ready",() => {
-      const customContext = buildContext();
-      const isAuthenticated = !!customContext.Sub;   // Sub present → user is signed-in
+    window.addEventListener("lcw:ready",()=>{
+      /* Always register provider – it will decide itself what to return */
+      Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(auth.getAuthenticationToken);
 
-      // Register token provider only for authenticated users
-      if(isAuthenticated){
-        Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(auth.getAuthenticationToken);
-      }
-
-      // Start the chat (works the same for both cases)
       Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
         inNewWindow:false,
-        customContext
+        customContext:buildContext()
       });
     });
   </script>
