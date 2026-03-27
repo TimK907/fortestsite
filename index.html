@@ -1,228 +1,799 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Travel Support</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    html,body{margin:0;height:100%;font-family:Arial,Helvetica,sans-serif;
-      background:url("https://images.pexels.com/photos/20409358/pexels-photo-20409358.jpeg") center/cover no-repeat;color:#fff}
-    .overlay{position:absolute;inset:0;background:rgba(0,0,0,.55)}
-    .container{position:relative;z-index:2;max-width:520px;padding:40px 30px}
-    h1,p,label,select,button{text-align:left}
-    select{padding:6px 8px;margin:12px 0 18px}
-    .langBtn,.authBtn{margin-right:8px;padding:8px 16px;border:none;cursor:pointer;border-radius:4px;font-weight:bold}
-    .langBtn{background:#399e46;color:#fff;opacity:.6}
-    .langBtn.active{opacity:1;background:#ffcc00;color:#000}
-    .authBtn{background:#0078d4;color:#fff}
-    #status{margin-top:10px;font-weight:bold}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contoso Electronics — Help Center</title>
+    <style>
+        /* ========== RESET & BASE ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1a1a2e;
+            background: #f5f6fa;
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
+            background: #1a1a2e;
+            color: white;
+            padding: 0 40px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-logo .icon {
+            width: 36px;
+            height: 36px;
+            background: #6c63ff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .header-nav a {
+            color: #b0b0c8;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .header-nav a:hover,
+        .header-nav a.active {
+            color: white;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 6px 16px 6px 6px;
+            border-radius: 24px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: #6c63ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .user-name {
+            font-size: 13px;
+            color: #e0e0e0;
+        }
+
+        /* ========== HERO ========== */
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            padding: 60px 40px 70px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: 16px;
+            color: #a0a8c8;
+            margin-bottom: 32px;
+        }
+
+        .search-box {
+            max-width: 560px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 16px 20px 16px 52px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.08);
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: border 0.3s, background 0.3s;
+        }
+
+        .search-box input::placeholder {
+            color: #7a80a0;
+        }
+
+        .search-box input:focus {
+            border-color: #6c63ff;
+            background: rgba(255,255,255,0.12);
+        }
+
+        .search-box .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: #7a80a0;
+        }
+
+        /* ========== QUICK ACTIONS ========== */
+        .quick-actions {
+            max-width: 1100px;
+            margin: -36px auto 0;
+            padding: 0 40px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        }
+
+        .action-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .action-icon.purple { background: #ededff; color: #6c63ff; }
+        .action-icon.blue   { background: #e3f2fd; color: #1976d2; }
+        .action-icon.green  { background: #e8f5e9; color: #388e3c; }
+
+        .action-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .action-card p {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* ========== SECTIONS ========== */
+        .section {
+            max-width: 1100px;
+            margin: 48px auto;
+            padding: 0 40px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #6c63ff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a52e0;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #6c63ff;
+            border: 2px solid #6c63ff;
+        }
+
+        .btn-outline:hover {
+            background: #6c63ff;
+            color: white;
+        }
+
+        /* ========== CASES TABLE ========== */
+        .cases-table {
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+        }
+
+        .cases-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .cases-table thead {
+            background: #f8f9fc;
+        }
+
+        .cases-table th {
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cases-table td {
+            padding: 16px 20px;
+            font-size: 14px;
+            border-top: 1px solid #f0f1f5;
+        }
+
+        .cases-table tbody tr {
+            transition: background 0.15s;
+        }
+
+        .cases-table tbody tr:hover {
+            background: #f8f9fc;
+        }
+
+        .case-id {
+            font-weight: 600;
+            color: #6c63ff;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .status-resolved   { background: #e8f5e9; color: #2e7d32; }
+        .status-resolved .dot { background: #2e7d32; }
+
+        .status-active      { background: #fff3e0; color: #e65100; }
+        .status-active .dot  { background: #e65100; }
+
+        .status-new         { background: #e3f2fd; color: #1565c0; }
+        .status-new .dot    { background: #1565c0; }
+
+        .priority-high {
+            color: #d32f2f;
+            font-weight: 600;
+        }
+
+        .priority-normal {
+            color: #666;
+        }
+
+        /* ========== KB ARTICLES ========== */
+        .kb-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .kb-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+        }
+
+        .kb-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            border-left-color: #6c63ff;
+        }
+
+        .kb-card .kb-category {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #6c63ff;
+            margin-bottom: 10px;
+        }
+
+        .kb-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .kb-card p {
+            font-size: 13px;
+            color: #777;
+            line-height: 1.5;
+        }
+
+        .kb-card .kb-meta {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 36px;
+            width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.15);
+        }
+
+        .modal h2 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .modal .subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #444;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e8e9f0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #6c63ff;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 28px;
+        }
+
+        .btn-cancel {
+            background: #f0f1f5;
+            color: #555;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e1e8;
+        }
+
+        /* ========== TOAST ========== */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1a1a2e;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ========== FOOTER ========== */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+            font-size: 13px;
+            border-top: 1px solid #e8e9f0;
+            margin-top: 60px;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .quick-actions { grid-template-columns: 1fr; }
+            .kb-grid { grid-template-columns: 1fr; }
+            .header { padding: 0 20px; }
+            .section { padding: 0 20px; }
+        }
+    </style>
 </head>
 <body>
-  <!-- ---------- UI ---------- -->
-  <div class="overlay"></div>
-  <div class="container">
-    <div>
-      <button class="langBtn" id="enBtn" data-lang="en">English</button>
-      <button class="langBtn" id="frBtn" data-lang="fr">Français</button>
+
+<!-- ============ HEADER ============ -->
+<header class="header">
+    <div class="header-logo">
+        <div class="icon">☕</div>
+        Contoso Electronics
     </div>
-    <h1 id="mainTitle"></h1>
-    <p id="mainText"></p>
-    <label id="brandLabel" for="brandSelect"></label>
-    <select id="brandSelect">
-      <option value="UP">UP</option>
-      <option value="GO">GO</option>
-    </select><br />
-    <button class="authBtn" id="loginBtn"></button>
-    <button class="authBtn" id="logoutBtn" style="display:none;"></button>
-    <div id="status"></div>
-  </div>
+    <nav class="header-nav">
+        <a href="#" class="active">Help Center</a>
+        <a href="#cases">My Cases</a>
+        <a href="#kb">Knowledge Base</a>
+    </nav>
+    <div class="user-badge">
+        <div class="user-avatar">CM</div>
+        <span class="user-name">Claudia Mazzanti</span>
+    </div>
+</header>
 
-  <!-- MSAL ----------------------------------------------------------- -->
-  <script src="https://alcdn.msauth.net/browser/2.25.0/js/msal-browser.min.js"></script>
-  <script>
-    /* ---------------- GLOBAL STATE ---------------- */
-    let currentLanguage = localStorage.getItem("lang") || "en";
-    let brandValue      = localStorage.getItem("brand") || "UP";
-    let userName        = "";
-    let userId          = "";
-    window.currentLanguage = currentLanguage;   // used inside lcw()
+<!-- ============ HERO ============ -->
+<section class="hero">
+    <h1>How can we help you?</h1>
+    <p>Search our knowledge base or get in touch with our support team</p>
+    <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search for answers... (e.g. 'Error E-42', 'warranty')">
+    </div>
+</section>
 
-    /* ---------------- MSAL CONFIG ----------------- */
-    const clientApplication = new msal.PublicClientApplication({
-      auth:{ clientId:"7811612f-d1b3-4226-806a-4700a8a9669c",
-             authority:"https://login.microsoftonline.com/67ac26e0-cfa4-4273-bf20-46627500a25d" }
+<!-- ============ QUICK ACTIONS ============ -->
+<div class="quick-actions">
+    <div class="action-card" onclick="openModal()">
+        <div class="action-icon purple">📝</div>
+        <div>
+            <h3>Submit a Request</h3>
+            <p>Create a new support case and we'll get back to you within 2 hours</p>
+        </div>
+    </div>
+    <div class="action-card" onclick="scrollTo('#kb')">
+        <div class="action-icon blue">📖</div>
+        <div>
+            <h3>Browse Articles</h3>
+            <p>Find answers in our knowledge base with troubleshooting guides</p>
+        </div>
+    </div>
+    <div class="action-card">
+        <div class="action-icon green">💬</div>
+        <div>
+            <h3>Chat with Us</h3>
+            <p>Talk to our virtual assistant or connect with a live agent</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============ MY CASES ============ -->
+<section class="section" id="cases">
+    <div class="section-header">
+        <h2>📋 My Cases</h2>
+        <button class="btn btn-primary" onclick="openModal()">+ New Case</button>
+    </div>
+    <div class="cases-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Case #</th>
+                    <th>Subject</th>
+                    <th>Product</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="case-id">CAS-2025-0042</td>
+                    <td>Error E-42 displayed on machine</td>
+                    <td>Smart Brew 300</td>
+                    <td><span class="priority-high">⚡ High</span></td>
+                    <td><span class="status-badge status-active"><span class="dot"></span>Active</span></td>
+                    <td>Jan 15, 2025</td>
+                </tr>
+                <tr>
+                    <td class="case-id">CAS-2024-0189</td>
+                    <td>Wi-Fi connectivity setup assistance</td>
+                    <td>Smart Brew 300</td>
+                    <td><span class="priority-normal">Normal</span></td>
+                    <td><span class="status-badge status-resolved"><span class="dot"></span>Resolved</span></td>
+                    <td>Nov 3, 2024</td>
+                </tr>
+                <tr>
+                    <td class="case-id">CAS-2024-0134</td>
+                    <td>Delivery scheduling request</td>
+                    <td>Smart Brew 300</td>
+                    <td><span class="priority-normal">Normal</span></td>
+                    <td><span class="status-badge status-resolved"><span class="dot"></span>Resolved</span></td>
+                    <td>Oct 18, 2024</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ============ KNOWLEDGE BASE ============ -->
+<section class="section" id="kb">
+    <div class="section-header">
+        <h2>📖 Knowledge Base</h2>
+        <button class="btn btn-outline">View All Articles →</button>
+    </div>
+    <div class="kb-grid">
+        <div class="kb-card">
+            <div class="kb-category">Troubleshooting</div>
+            <h3>Smart Brew 300 — Error E-42: Clogged Filter Detection</h3>
+            <p>Step-by-step guide to diagnose and resolve the E-42 error code on your Smart Brew 300 machine.</p>
+            <div class="kb-meta">
+                <span>📄 5 min read</span>
+                <span>•</span>
+                <span>Updated Jan 10, 2025</span>
+            </div>
+        </div>
+        <div class="kb-card">
+            <div class="kb-category">Reference</div>
+            <h3>Smart Brew 300 — Error Codes E-40 to E-45 Overview</h3>
+            <p>Quick reference guide for all common error codes with symptoms and recommended actions.</p>
+            <div class="kb-meta">
+                <span>📄 3 min read</span>
+                <span>•</span>
+                <span>Updated Dec 22, 2024</span>
+            </div>
+        </div>
+        <div class="kb-card">
+            <div class="kb-category">Policy</div>
+            <h3>Device Replacement Policy — Under Warranty</h3>
+            <p>Learn about eligibility conditions, required documentation, and the step-by-step replacement process.</p>
+            <div class="kb-meta">
+                <span>📄 4 min read</span>
+                <span>•</span>
+                <span>Updated Nov 15, 2024</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+    © 2025 Contoso Electronics, Inc. All rights reserved. &nbsp;|&nbsp; 
+    Privacy Policy &nbsp;|&nbsp; Terms of Service &nbsp;|&nbsp; 
+    Contact: support@contoso-electronics.com
+</footer>
+
+<!-- ============ NEW CASE MODAL ============ -->
+<div class="modal-overlay" id="caseModal">
+    <div class="modal">
+        <h2>Submit a Support Request</h2>
+        <p class="subtitle">We'll respond within our SLA timeframe based on priority</p>
+
+        <div class="form-group">
+            <label>Subject *</label>
+            <input type="text" placeholder="Brief description of your issue" id="caseSubject">
+        </div>
+
+        <div class="form-group">
+            <label>Product</label>
+            <select>
+                <option selected>Smart Brew 300</option>
+                <option>Smart Brew 500 Pro</option>
+                <option>Smart Brew Mini</option>
+                <option>Accessories</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Priority</label>
+            <select>
+                <option>Normal</option>
+                <option>High</option>
+                <option>Critical</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Description</label>
+            <textarea placeholder="Please describe your issue in detail. Include any error codes, steps you've already tried, etc."></textarea>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitCase()">Submit Case</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast">
+    ✅ &nbsp;Case submitted successfully! Case #CAS-2025-0043 created.
+</div>
+
+<!-- ============ SCRIPTS ============ -->
+<script>
+    function openModal() {
+        document.getElementById('caseModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('caseModal').classList.remove('active');
+    }
+
+    function submitCase() {
+        closeModal();
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+
+        // Add new case row to table
+        const tbody = document.querySelector('.cases-table tbody');
+        const newRow = document.createElement('tr');
+        const subject = document.getElementById('caseSubject').value || 'New support request';
+        newRow.innerHTML = `
+            <td class="case-id">CAS-2025-0043</td>
+            <td>${subject}</td>
+            <td>Smart Brew 300</td>
+            <td><span class="priority-high">⚡ High</span></td>
+            <td><span class="status-badge status-new"><span class="dot"></span>New</span></td>
+            <td>Jan 16, 2025</td>
+        `;
+        tbody.insertBefore(newRow, tbody.firstChild);
+    }
+
+    // Close modal on overlay click
+    document.getElementById('caseModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
     });
 
-    function updateUserId(){
-      const acc = clientApplication.getActiveAccount();
-      userId = acc ? acc.username : "";
-    }
-
-    /* ---------------- UI TEXTS -------------------- */
-    const T={
-      en:{h:"We help you on every journey",
-          p:"Whatever you travel by, you can count on our support everywhere and anytime.",
-          b:"Brand:",in:"Log in with Microsoft",out:"Sign out",s:"Signed in as "},
-      fr:{h:"Nous vous aidons dans chaque voyage",
-          p:"Quel que soit votre mode de voyage, vous pouvez compter sur notre soutien partout et à tout moment.",
-          b:"Marque :",in:"Se connecter avec Microsoft",out:"Se déconnecter",s:"Connecté : "}
-    };
-    function render(){
-      const t=T[currentLanguage];
-      mainTitle.innerText=t.h; mainText.innerText=t.p; brandLabel.innerText=t.b;
-      loginBtn.innerText=t.in; logoutBtn.innerText=t.out;
-      document.querySelectorAll(".langBtn")
-              .forEach(b=>b.classList.toggle("active",b.dataset.lang===currentLanguage));
-      showStatus();
-    }
-    function showStatus(){
-      if(userName){status.innerText=T[currentLanguage].s+userName;
-                   loginBtn.style.display="none"; logoutBtn.style.display="";}
-      else        {status.innerText=""; loginBtn.style.display=""; logoutBtn.style.display="none";}
-    }
-    render();
-
-    /* ---------------- EVENTS ---------------------- */
-    enBtn.onclick=()=>{localStorage.setItem("lang","en");location.reload();}
-    frBtn.onclick=()=>{localStorage.setItem("lang","fr");location.reload();}
-    brandSelect.value=brandValue;
-    brandSelect.onchange=e=>{localStorage.setItem("brand",e.target.value);location.reload();};
-
-    /* ---------------- LOGIN/LOGOUT ---------------- */
-    loginBtn.onclick=async()=>{
-      try{
-        const r=await clientApplication.loginPopup({scopes:["user.read"]});
-        if(r?.account){clientApplication.setActiveAccount(r.account);
-                       userName=r.account.name||"";updateUserId();
-                       sessionStorage.setItem("reloaded","1");location.reload();}
-      }catch(e){console.log(e);}
-    };
-    logoutBtn.onclick=async()=>{
-      try{await clientApplication.logoutPopup({account:clientApplication.getActiveAccount()});}catch(e){}
-      sessionStorage.setItem("reloaded","1");location.reload();
-    };
-    (function restore(){
-      if(sessionStorage.getItem("reloaded")){
-        sessionStorage.removeItem("reloaded");
-        const acc=clientApplication.getAllAccounts()[0];
-        if(acc){clientApplication.setActiveAccount(acc);userName=acc.name||"";updateUserId();}
-        render();
-      }
-    })();
-
-    /* ---------------- CHAT CONTEXT ---------------- */
-    function buildContext(){
-      return {
-        UserLanguage : currentLanguage==="fr" ? "French" : "English",
-        Brand        : brandValue,
-        Email        : userId,
-        Sub          : userId==="" ? "" : "15833b70-5062-f011-bec1-0022480a4751"
-      };
-    }
-  </script>
-
-  <!-- TOKEN PROVIDER (works for both modes) --------------------------- -->
-  <script>
-    const auth={};
-    auth.getAuthenticationToken=function(callback){
-      const ctx=buildContext();
-
-      /* Anonymous => tell LCW we have no token */
-      if(!ctx.Sub){
-        console.log("Anonymous user → no JWT returned.");
-        callback(null);          // MUST be null, not empty string
-        return;
-      }
-
-      /* Authenticated => fetch token from backend */
-      const xhr=new XMLHttpRequest();
-      xhr.onreadystatechange=function(){
-        if(this.readyState===4){
-          if(this.status===200){console.log("JWT received");callback(this.responseText);}
-          else                 {console.error("JWT error, status:",this.status);callback(null);}
-        }
-      };
-      xhr.onerror=e=>{console.error("XHR error:",e);callback(null);}
-      const url=`/privatekey?email=${encodeURIComponent(ctx.Email)}&brand=${encodeURIComponent(ctx.Brand)}&language=${encodeURIComponent(ctx.UserLanguage)}&sub=${encodeURIComponent(ctx.Sub)}`;
-      xhr.open("GET",url,true);xhr.send();
-    };
-  </script>
-
-  <!-- LCW CUSTOMISATION (style + localisation) ------------------------ -->
-  <script>
-    function lcw(){
-      /* --- Build localisation dictionary depending on currentLanguage --- */
-      const localized_texts = (window.currentLanguage==="fr") ? {
-        webchatTitle:"Assistant virtuel",
-        webchatChatButton:"Clavarder",
-        webchatAlertTitle:"Êtes-vous certain de vouloir quitter la séance de clavardage ?",
-        webchatAlertMessage:"Note : Cela mettra fin à la conversation et vous perdrez votre historique de clavardage.",
-        webchatNoButton:"Non",
-        webchatYesButton:"Oui",
-        webchatLoadingPaneTitle:"Bienvenue au",
-        webchatLoadingPaneSubTitle:"Soutien par clavardage en direct !",
-        webchatLoadingPaneSpinnerText:"Chargement…"
-      } : { /* English (default) */
-        webchatTitle:"Virtual Assistant",
-        webchatChatButton:"Chat",
-        webchatAlertTitle:"Are you sure you want to exit the chat?",
-        webchatAlertMessage:"Note: This will end your conversation, and you will lose your chat history.",
-        webchatNoButton:"No",
-        webchatYesButton:"Yes",
-        webchatLoadingPaneTitle:"Welcome to",
-        webchatLoadingPaneSubTitle:"Live Chat Support!",
-        webchatLoadingPaneSpinnerText:"Loading…"
-      };
-
-      /* --- Return customisation object expected by LCW ------------------ */
-      return {
-        localizationProps : localized_texts,
-        styleProps:{
-          generalStyles:{borderRadius:"10px"}
-        },
-        headerProps:{styleProps:{generalStyleProps:{borderRadius:"10px 10px 0 0"}}},
-        chatButtonProps:{
-          controlProps:{hideChatTextContainer:true},
-          styleProps:{generalStyleProps:{minWidth:"60px",width:"60px",height:"60px"}}
-        },
-        webChatContainerProps:{
-          webChatStyles:{avatarSize:0,suggestedActionBackgroundColor:"black",suggestedActionBorderColor:"black"},
-          renderingMiddlewareProps:{disableAvatarMiddleware:true,avatarTextStyleProps:{display:"none"}}
-        },
-        loadingPaneProps:{
-          controlProps:{titleText:localized_texts.webchatLoadingPaneTitle,
-                        subtitleText:localized_texts.webchatLoadingPaneSubTitle,
-                        hideSpinnerText:true,spinnerSize:3}
-        },
-        footerProps:{controlProps:{hideEmailTranscriptButton:false,
-                                   hideAudioNotificationButton:true,
-                                   rightGroup:{children:["© Microsoft 2023"]}}}
-      };
-    }
-  </script>
-
-  <!-- LIVE CHAT BOOTSTRAPPER ------------------------------------------ -->
-  <script id="Microsoft_Omnichannel_LCWidget"
-          src="https://oc-cdn-ocprod.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
-          data-app-id="99c9d54a-c161-4575-9b89-d416cb1829f6"
-          data-lcw-version="prod"
-          data-org-id="ee50331d-bd60-f011-8ee3-6045bd08ce00"
-          data-org-url="https://m-ee50331d-bd60-f011-8ee3-6045bd08ce00.us.omnichannelengagementhub.com"
-          data-customization-callback="lcw">
-  </script>
-
-  <!-- lcw:ready -> register token provider + start chat ---------------- -->
-  <script>
-    window.addEventListener("lcw:ready",()=>{
-      /* Always register provider – it will decide itself what to return */
-      Microsoft.Omnichannel.LiveChatWidget.SDK.setAuthTokenProvider(auth.getAuthenticationToken);
-
-      Microsoft.Omnichannel.LiveChatWidget.SDK.startChat({
-        inNewWindow:false,
-        customContext:buildContext()
-      });
+    // Close modal on Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
     });
-  </script>
+
+    // Smooth scroll for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+</script>
+
+<!--
+============================================
+    OMNICHANNEL CHAT WIDGET
+    Replace with your actual widget code from:
+    CS Admin Center → Channels → Chat → Code Snippet
+============================================
+-->
+<!--
+<script
+    id="Microsoft_Omnichannel_LCWidget"
+    src="https://oc-cdn-public.azureedge.net/livechatwidget/scripts/LiveChatBootstrapper.js"
+    data-app-id="YOUR-APP-ID-HERE"
+    data-org-id="YOUR-ORG-ID-HERE"
+    data-org-url="https://YOUR-ORG.crm.dynamics.com">
+</script>
+-->
+
 </body>
 </html>
